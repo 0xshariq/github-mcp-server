@@ -1,6 +1,9 @@
+// MCP (Model Context Protocol) SDK imports
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
+
+// Import Git operation functions from our github module
 import {
   gitAddAll,
   gitAdd,
@@ -10,14 +13,17 @@ import {
   gitCommit,
   gitPush,
   gitPull
-} from "./github.js";
+} from "./github";
 
-// Create an MCP server
+// Initialize MCP server with metadata
 const server = new McpServer({
   name: "github-mcp-server",
   version: "1.0.0"
 });
 
+// === GIT STAGING OPERATIONS ===
+
+// Tool: Add all files to staging area
 server.tool(
   "git-add-all",
   "Adds all files to the staging area",
@@ -29,7 +35,7 @@ server.tool(
   }
 );
 
-
+// Tool: Add specific file to staging area
 server.tool(
   "git-add",
   "Adds a specific file to the staging area",
@@ -42,6 +48,7 @@ server.tool(
   }
 );
 
+// Tool: Remove specific file from staging area (unstage)
 server.tool(
   "git-remove",
   "Removes a specific file from the staging area",
@@ -54,6 +61,7 @@ server.tool(
   }
 );
 
+// Tool: Remove all files from staging area (unstage all)
 server.tool(
   "git-remove-all",
   "Removes all files from the staging area",
@@ -64,7 +72,9 @@ server.tool(
     return await gitRemoveAll(args.directory);
   }
 );
-;
+// === REPOSITORY STATUS & INFORMATION ===
+
+// Tool: Check repository status
 server.tool(
   "git-status",
   "Displays the status of the git repository",
@@ -76,7 +86,9 @@ server.tool(
   }
 );
 
+// === COMMIT & SYNC OPERATIONS ===
 
+// Tool: Commit staged changes with message
 server.tool(
   "git-commit",
   "Commits staged files",
@@ -89,6 +101,7 @@ server.tool(
   }
 );
 
+// Tool: Push commits to remote repository
 server.tool(
   "git-push",
   "Pushes committed files to the remote repository",
@@ -100,6 +113,7 @@ server.tool(
   }
 );
 
+// Tool: Pull changes from remote repository
 server.tool(
   "git-pull",
   "Pulls changes from the remote repository",
@@ -111,8 +125,12 @@ server.tool(
   }
 );
 
-// Start receiving messages on stdin and sending messages on stdout
+// === SERVER INITIALIZATION ===
+
+// Setup stdio transport for MCP communication
 const transport = new StdioServerTransport();
+
+// Start the MCP server and begin listening for requests
 (async () => {
   await server.connect(transport);
 })();

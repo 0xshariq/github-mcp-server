@@ -1,10 +1,13 @@
+// Node.js built-in modules for executing shell commands and file operations
 import { exec } from "child_process";
 import { promisify } from "util";
 import * as fs from "fs";
 import * as path from "path";
 
+// Convert callback-based exec to Promise-based for async/await support
 const execAsync = promisify(exec);
 
+// Standard return type for all Git operations - matches MCP server expectations
 export interface GitOperationResult {
   [x: string]: unknown;
   content: Array<{
@@ -14,7 +17,9 @@ export interface GitOperationResult {
   isError?: boolean;
 }
 
-// Helper function to execute git commands safely
+// === UTILITY FUNCTIONS ===
+
+// Executes git commands safely with proper error handling
 async function executeGitCommand(command: string, cwd?: string): Promise<{ stdout: string; stderr: string }> {
   try {
     const result = await execAsync(command, { 
@@ -27,7 +32,7 @@ async function executeGitCommand(command: string, cwd?: string): Promise<{ stdou
   }
 }
 
-// Helper function to check if we're in a git repository
+// Validates if the specified directory is a git repository
 async function isGitRepository(dir?: string): Promise<boolean> {
   try {
     await execAsync('git rev-parse --git-dir', { cwd: dir || process.cwd() });
@@ -37,7 +42,9 @@ async function isGitRepository(dir?: string): Promise<boolean> {
   }
 }
 
-// Git Add All - Adds all files to staging area
+// === GIT STAGING OPERATIONS ===
+
+// Adds all modified and untracked files to the staging area
 export async function gitAddAll(directory?: string): Promise<GitOperationResult> {
   try {
     const workingDir = directory || process.cwd();
@@ -69,7 +76,7 @@ export async function gitAddAll(directory?: string): Promise<GitOperationResult>
   }
 }
 
-// Git Add - Adds a specific file to staging area
+// Adds a specific file to the staging area with validation
 export async function gitAdd(file: string, directory?: string): Promise<GitOperationResult> {
   try {
     const workingDir = directory || process.cwd();
@@ -107,7 +114,7 @@ export async function gitAdd(file: string, directory?: string): Promise<GitOpera
   }
 }
 
-// Git Remove - Removes a specific file from staging area
+// Removes a specific file from the staging area (unstages it)
 export async function gitRemove(file: string, directory?: string): Promise<GitOperationResult> {
   try {
     const workingDir = directory || process.cwd();
@@ -139,7 +146,7 @@ export async function gitRemove(file: string, directory?: string): Promise<GitOp
   }
 }
 
-// Git Remove All - Removes all files from staging area
+// Removes all files from the staging area (unstages everything)
 export async function gitRemoveAll(directory?: string): Promise<GitOperationResult> {
   try {
     const workingDir = directory || process.cwd();
@@ -171,7 +178,9 @@ export async function gitRemoveAll(directory?: string): Promise<GitOperationResu
   }
 }
 
-// Git Status - Shows the status of the repository
+// === REPOSITORY STATUS & INFORMATION ===
+
+// Gets the current status of the repository (staged, unstaged, untracked files)
 export async function gitStatus(directory?: string): Promise<GitOperationResult> {
   try {
     const workingDir = directory || process.cwd();
@@ -208,7 +217,9 @@ export async function gitStatus(directory?: string): Promise<GitOperationResult>
   }
 }
 
-// Git Commit - Commits staged files with a message
+// === COMMIT & SYNC OPERATIONS ===
+
+// Creates a commit with staged files and the provided message
 export async function gitCommit(message: string, directory?: string): Promise<GitOperationResult> {
   try {
     const workingDir = directory || process.cwd();
@@ -246,7 +257,7 @@ export async function gitCommit(message: string, directory?: string): Promise<Gi
   }
 }
 
-// Git Push - Pushes committed changes to remote repository
+// Pushes local commits to the remote repository
 export async function gitPush(directory?: string): Promise<GitOperationResult> {
   try {
     const workingDir = directory || process.cwd();
@@ -278,7 +289,7 @@ export async function gitPush(directory?: string): Promise<GitOperationResult> {
   }
 }
 
-// Git Pull - Pulls changes from remote repository
+// Fetches and merges changes from the remote repository
 export async function gitPull(directory?: string): Promise<GitOperationResult> {
   try {
     const workingDir = directory || process.cwd();

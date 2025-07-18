@@ -5,12 +5,15 @@
   "scripts": {
     "build": "tsc -p .",
     "start": "node dist/index.js",
-    "dev": "tsc && node dist/index.js"
+    "dev": "tsc && node dist/index.js",
+    "test-mcp": "./test-mcp.sh",
+    "inspect": "npx @modelcontextprotocol/inspector node dist/index.js"
   },
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@modelcontextprotocol/inspector": "^0.16.1",
     "@modelcontextprotocol/sdk": "^1.15.1",
     "express": "^5.1.0",
     "zod": "^4.0.5"
