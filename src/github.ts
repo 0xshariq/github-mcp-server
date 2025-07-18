@@ -76,8 +76,8 @@ export async function gitAddAll(directory?: string): Promise<GitOperationResult>
   }
 }
 
-// Adds a specific file to the staging area with validation
-export async function gitAdd(file: string, directory?: string): Promise<GitOperationResult> {
+// Adds specific files to the staging area with validation
+export async function gitAdd(files: string[], directory?: string): Promise<GitOperationResult> {
   try {
     const workingDir = directory || process.cwd();
     
@@ -85,19 +85,27 @@ export async function gitAdd(file: string, directory?: string): Promise<GitOpera
       throw new Error("Not a git repository");
     }
 
-    // Check if file exists
-    const filePath = path.resolve(workingDir, file);
-    if (!fs.existsSync(filePath)) {
-      throw new Error(`File does not exist: ${file}`);
+    if (!files || files.length === 0) {
+      throw new Error("No files specified to add");
     }
 
-    const result = await executeGitCommand(`git add "${file}"`, workingDir);
+    // Check if files exist
+    for (const file of files) {
+      const filePath = path.resolve(workingDir, file);
+      if (!fs.existsSync(filePath)) {
+        throw new Error(`File does not exist: ${file}`);
+      }
+    }
+
+    // Quote each file path to handle spaces and special characters
+    const quotedFiles = files.map(file => `"${file}"`).join(' ');
+    const result = await executeGitCommand(`git add ${quotedFiles}`, workingDir);
     
     return {
       content: [
         {
           type: "text",
-          text: `Successfully added file to staging area: ${file}\n${result.stdout || 'No output from git add command.'}`
+          text: `Successfully added files to staging area: ${files.join(', ')}\n${result.stdout || 'No output from git add command.'}`
         }
       ]
     };
