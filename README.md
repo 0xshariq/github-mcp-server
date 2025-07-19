@@ -370,6 +370,43 @@ npm run dev
 @mcp git-push
 ```
 
+### **Using the CLI Wrapper**
+The MCP CLI wrapper (`mcp-cli.js`) allows direct terminal access to your MCP server:
+
+```bash
+# Basic operations
+npm run mcp git-status
+npm run mcp git-add-all
+npm run mcp git-commit "Fix authentication bug"
+npm run mcp git-push
+
+# File operations with simple syntax
+npm run mcp git-add package.json README.md src/index.ts
+npm run mcp git-remove unwanted-file.txt
+
+# Branch management
+npm run mcp git-branch feature-auth
+npm run mcp git-checkout main
+npm run mcp git-checkout feature-auth --create
+
+# History and information
+npm run mcp git-log 10
+npm run mcp git-diff main
+npm run mcp git-stash "Work in progress"
+
+# Advanced operations
+npm run mcp git-reset soft HEAD~1
+npm run mcp git-clone https://github.com/user/repo.git my-project
+```
+
+### **CLI vs MCP Server Usage**
+
+| Context | Command Format | Example |
+|---------|---------------|---------|
+| **VS Code/Copilot** | `@mcp tool-name {args}` | `@mcp git-commit {"message": "Fix bug"}` |
+| **Terminal CLI** | `npm run mcp tool-name args` | `npm run mcp git-commit "Fix bug"` |
+| **Direct Node** | `node mcp-cli.js tool-name args` | `node mcp-cli.js git-commit "Fix bug"` |
+
 ### **Branch Management**
 ```bash
 # List all branches
@@ -520,11 +557,32 @@ Common AI-assisted workflows:
 4. Restart VS Code after configuration changes
 5. Check VS Code Developer Console for error messages
 
+### **CLI Wrapper Issues**
+```bash
+# Test if MCP server builds correctly
+npm run build
+
+# Test MCP server directly
+npm run inspect
+
+# Test CLI with debug output
+node mcp-cli.js git-status
+
+# Check if dist/index.js exists
+ls -la dist/
+```
+
 ### **Git Operations Failing**
 1. Verify Git is installed and in PATH
 2. Check repository is properly initialized (`git status` works)
 3. Ensure proper permissions for file operations
 4. Validate network connectivity for push/pull operations
+
+### **Common CLI Errors**
+- **"No output received"** → Server not starting, check `npm run build`
+- **"Parse error"** → MCP server response format issue, check server logs
+- **"Operation timed out"** → Network issues or large repository operations
+- **"Process exited with code 1"** → Git command failed, check git status manually
 
 ### **Performance Issues**
 1. Large repositories may have slower status checks

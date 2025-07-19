@@ -10,8 +10,8 @@
     "inspect": "npx @modelcontextprotocol/inspector node dist/index.js",
     "clean": "rm -rf dist",
     "rebuild": "npm run clean && npm run build",
-    "check": "tsc --noEmit",
-    "version": "echo $npm_package_version"
+    "version": "echo $npm_package_version",
+    "mcp": "node mcp-cli.js"
   },
   "author": "Sharique Chaudhary",
   "license": "ISC", 
