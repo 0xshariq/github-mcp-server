@@ -9,6 +9,7 @@ A comprehensive **Model Context Protocol (MCP) server** that provides Git reposi
 - **Comprehensive version control** capabilities (add, commit, push, branch management, etc.)
 - **Error handling and validation** to prevent common Git mistakes
 - **Direct integration** with VS Code and AI assistants like GitHub Copilot
+- **Multiple execution methods**: MCP protocol, CLI wrapper, and **direct git execution**
 
 ## 🏗️ Architecture
 
@@ -17,6 +18,8 @@ The server is built with a modular architecture:
 ### **Core Files:**
 - **`src/index.ts`**: MCP server setup, tool registration, and request handling
 - **`src/github.ts`**: All Git operations with validation and error handling
+- **`mcp-cli.js`**: CLI wrapper for terminal access to MCP server
+- **`direct-git.js`**: Direct git execution without MCP overhead ⚡
 
 ### **Key Features:**
 - **TypeScript-based** for type safety and better development experience
@@ -24,6 +27,7 @@ The server is built with a modular architecture:
 - **Timeout protection** (30s for operations, 5s for validation)
 - **Flexible directory support** - work in any Git repository
 - **Standardized responses** following MCP protocol specifications
+- **Instant execution mode** for automation and scripts
 
 ## 🚀 Features
 
@@ -399,13 +403,38 @@ npm run mcp git-reset soft HEAD~1
 npm run mcp git-clone https://github.com/user/repo.git my-project
 ```
 
+### **Direct Git Execution (New!)**
+For immediate git operations without user prompts, use the direct git executor:
+
+```bash
+# Quick git operations - no prompts, instant execution
+node direct-git.js status                    # Check git status
+node direct-git.js add-all                   # Add all files
+node direct-git.js commit "Your message"     # Commit with message
+node direct-git.js push                      # Push to remote
+node direct-git.js pull                      # Pull from remote
+
+# Add specific files
+node direct-git.js add file1.txt file2.js src/
+
+# Complete workflow in one go
+node direct-git.js add-all && node direct-git.js commit "Complete feature" && node direct-git.js push
+```
+
+**Benefits of Direct Git:**
+- ⚡ **Instant execution** - No "continue" prompts or user interaction
+- 🎯 **Simple syntax** - Just like regular git commands
+- 🔧 **Perfect for automation** - Ideal for scripts and AI assistants
+- ✅ **Clean output** - Clear success/error indicators with emojis
+
 ### **CLI vs MCP Server Usage**
 
-| Context | Command Format | Example |
-|---------|---------------|---------|
-| **VS Code/Copilot** | `@mcp tool-name {args}` | `@mcp git-commit {"message": "Fix bug"}` |
-| **Terminal CLI** | `npm run mcp tool-name args` | `npm run mcp git-commit "Fix bug"` |
-| **Direct Node** | `node mcp-cli.js tool-name args` | `node mcp-cli.js git-commit "Fix bug"` |
+| Context | Command Format | Example | Interaction |
+|---------|---------------|---------|-------------|
+| **VS Code/Copilot** | `@mcp tool-name {args}` | `@mcp git-commit {"message": "Fix bug"}` | MCP Protocol |
+| **Terminal CLI** | `npm run mcp tool-name args` | `npm run mcp git-commit "Fix bug"` | Via MCP Server |
+| **Direct Node** | `node mcp-cli.js tool-name args` | `node mcp-cli.js git-commit "Fix bug"` | Via MCP Server |
+| **Direct Git** | `node direct-git.js operation args` | `node direct-git.js commit "Fix bug"` | **Direct Execution** |
 
 ### **Branch Management**
 ```bash
@@ -456,6 +485,27 @@ npm run inspect
 
 # Test MCP server functionality
 npm run test-mcp
+
+# Use MCP CLI wrapper
+npm run mcp <tool> [args...]
+
+# Quick git operations (NEW!)
+node direct-git.js <operation> [args...]
+```
+
+**Quick Commands Reference:**
+```bash
+# MCP Server approach (via protocol)
+npm run mcp git-status
+npm run mcp git-add-all  
+npm run mcp git-commit "message"
+npm run mcp git-push
+
+# Direct Git approach (instant execution)
+node direct-git.js status
+node direct-git.js add-all
+node direct-git.js commit "message"  
+node direct-git.js push
 ```
 
 ---
@@ -467,8 +517,11 @@ github-mcp-server/
 │   ├── index.ts          # MCP server setup and tool registration
 │   └── github.ts         # Git operations implementation
 ├── dist/                 # Compiled JavaScript (generated)
-├── package.json          # Project configuration and scripts
-├── tsconfig.json         # TypeScript configuration
+├── mcp-cli.js           # CLI wrapper for MCP server access
+├── direct-git.js        # Direct git execution (NEW!)
+├── package.json         # Project configuration and scripts
+├── tsconfig.json        # TypeScript configuration
+└── README.md            # This documentation
 ├── .gitignore           # Git ignore patterns
 └── README.md            # This documentation
 ```
