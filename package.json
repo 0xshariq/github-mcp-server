@@ -1,7 +1,10 @@
 {
   "name": "github-mcp-server",
   "version": "1.1.0",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "bin": {
+    "github-mcp-server": "mcp-cli.js"
+  },
   "scripts": {
     "build": "tsc -p .",
     "start": "node dist/index.js",

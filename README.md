@@ -353,7 +353,73 @@ npm run dev
 
 ---
 
-## 🎮 Usage Examples
+## � Recommended Integration Methods
+
+### **Method 3: CLI Access from Any Project (Recommended)**
+Use the CLI wrapper from any directory without any setup:
+
+```bash
+# From any project directory
+node /home/simplysabir/desktop/shariq-projects/github-mcp-server/mcp-cli.js git-status
+node /home/simplysabir/desktop/shariq-projects/github-mcp-server/mcp-cli.js git-add-all
+node /home/simplysabir/desktop/shariq-projects/github-mcp-server/mcp-cli.js git-commit "message"
+node /home/simplysabir/desktop/shariq-projects/github-mcp-server/mcp-cli.js git-push
+```
+
+**Benefits:**
+- ✅ **Works anywhere** - No project-specific configuration needed
+- ✅ **Instant setup** - Just run commands from any Git repository
+- ✅ **Full feature access** - All 17 git operations available
+- ✅ **No VS Code dependency** - Works in any terminal
+
+### **Method 4: Global NPM Link (Best for Power Users)**
+Make it available as a global command:
+
+```bash
+# One-time setup in your MCP server directory
+cd /home/simplysabir/desktop/shariq-projects/github-mcp-server
+npm link
+
+# Now from any project anywhere:
+github-mcp-server git-status
+github-mcp-server git-add-all
+github-mcp-server git-commit "Complete feature"
+github-mcp-server git-push
+```
+
+**Benefits:**
+- ✅ **Global command** - Simple `github-mcp-server` command from anywhere
+- ✅ **Clean syntax** - Shortest command format
+- ✅ **Cross-project** - Works in any directory on your system
+- ✅ **Easy to remember** - Consistent command structure
+
+### **Create Aliases for Even Easier Usage**
+Add to your `~/.bashrc` or `~/.zshrc`:
+
+```bash
+# Short aliases for git operations
+alias gmcp='node /home/simplysabir/desktop/shariq-projects/github-mcp-server/mcp-cli.js'
+alias gstatus='gmcp git-status'
+alias gadd='gmcp git-add-all'
+alias gcommit='gmcp git-commit'
+alias gpush='gmcp git-push'
+
+# Ultra-short workflow alias
+alias gflow='gmcp git-add-all && gmcp git-commit "Auto commit" && gmcp git-push'
+```
+
+**Usage after aliases:**
+```bash
+gstatus                    # Check status
+gadd                       # Add all files
+gcommit "Fix bug"          # Commit with message
+gpush                      # Push to remote
+gflow                      # Complete workflow in one command
+```
+
+---
+
+## �🎮 Usage Examples
 
 ### **Basic Git Workflow**
 ```bash
