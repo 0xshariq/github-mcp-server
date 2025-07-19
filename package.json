@@ -5,13 +5,17 @@
   "scripts": {
     "build": "tsc -p .",
     "start": "node dist/index.js",
-    "dev": "tsc && node dist/index.js",
-    "test-mcp": "./test-mcp.sh",
-    "inspect": "npx @modelcontextprotocol/inspector node dist/index.js"
+    "dev": "tsc -w & node dist/index.js",
+    "dev:build": "tsc && node dist/index.js",
+    "inspect": "npx @modelcontextprotocol/inspector node dist/index.js",
+    "clean": "rm -rf dist",
+    "rebuild": "npm run clean && npm run build",
+    "check": "tsc --noEmit",
+    "version": "echo $npm_package_version"
   },
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "author": "Sharique Chaudhary",
+  "license": "ISC", 
+  "description": "A comprehensive Model Context Protocol (MCP) server that provides Git repository management capabilities for AI assistants and automation tools.",
   "dependencies": {
     "@modelcontextprotocol/inspector": "^0.16.1",
     "@modelcontextprotocol/sdk": "^1.15.1",

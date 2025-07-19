@@ -13,7 +13,15 @@ import {
   gitStatus,
   gitCommit,
   gitPush,
-  gitPull
+  gitPull,
+  gitBranch,
+  gitCheckout,
+  gitLog,
+  gitDiff,
+  gitStash,
+  gitStashPop,
+  gitReset,
+  gitClone
 } from "./github";
 
 // Initialize MCP server with metadata
@@ -151,6 +159,153 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             }
           }
         }
+      },
+      {
+        name: "git-branch",
+        description: "Lists all branches or creates a new branch",
+        inputSchema: {
+          type: "object",
+          properties: {
+            branchName: {
+              type: "string",
+              description: "Name of the branch to create (leave empty to list branches)"
+            },
+            directory: {
+              type: "string",
+              description: "The directory to run the command in (defaults to current working directory)"
+            }
+          }
+        }
+      },
+      {
+        name: "git-checkout",
+        description: "Switches to a branch or creates and switches to a new branch",
+        inputSchema: {
+          type: "object",
+          properties: {
+            branchName: {
+              type: "string",
+              description: "Name of the branch to switch to"
+            },
+            createNew: {
+              type: "boolean",
+              description: "Create a new branch if it doesn't exist (default: false)"
+            },
+            directory: {
+              type: "string",
+              description: "The directory to run the command in (defaults to current working directory)"
+            }
+          },
+          required: ["branchName"]
+        }
+      },
+      {
+        name: "git-log",
+        description: "Shows commit history",
+        inputSchema: {
+          type: "object",
+          properties: {
+            maxCount: {
+              type: "number",
+              description: "Maximum number of commits to show (default: 10)"
+            },
+            directory: {
+              type: "string",
+              description: "The directory to run the command in (defaults to current working directory)"
+            }
+          }
+        }
+      },
+      {
+        name: "git-diff",
+        description: "Shows differences between commits, branches, or working directory",
+        inputSchema: {
+          type: "object",
+          properties: {
+            target: {
+              type: "string",
+              description: "Target to compare against (commit hash, branch name, etc.)"
+            },
+            directory: {
+              type: "string",
+              description: "The directory to run the command in (defaults to current working directory)"
+            }
+          }
+        }
+      },
+      {
+        name: "git-stash",
+        description: "Stashes current changes",
+        inputSchema: {
+          type: "object",
+          properties: {
+            message: {
+              type: "string",
+              description: "Message for the stash"
+            },
+            directory: {
+              type: "string",
+              description: "The directory to run the command in (defaults to current working directory)"
+            }
+          }
+        }
+      },
+      {
+        name: "git-stash-pop",
+        description: "Applies the most recent stash",
+        inputSchema: {
+          type: "object",
+          properties: {
+            directory: {
+              type: "string",
+              description: "The directory to run the command in (defaults to current working directory)"
+            }
+          }
+        }
+      },
+      {
+        name: "git-reset",
+        description: "Resets repository to a specific commit or state",
+        inputSchema: {
+          type: "object",
+          properties: {
+            mode: {
+              type: "string",
+              enum: ["soft", "mixed", "hard"],
+              description: "Reset mode (default: mixed)"
+            },
+            target: {
+              type: "string",
+              description: "Target commit or reference (default: HEAD)"
+            },
+            directory: {
+              type: "string",
+              description: "The directory to run the command in (defaults to current working directory)"
+            }
+          }
+        }
+      },
+      {
+        name: "git-clone",
+        description: "Clones a repository",
+        inputSchema: {
+          type: "object",
+          properties: {
+            url: {
+              type: "string",
+              description: "Repository URL to clone"
+            },
+            targetDir: {
+              type: "string",
+              description: "Target directory name for the cloned repository"
+            },
+            directory: {
+              type: "string",
+              description: "The directory to run the command in (defaults to current working directory)"
+            }
+          },
+          required: ["url"]
+        }
       }
     ]
   };
@@ -247,6 +402,92 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             {
               type: "text",
               text: JSON.stringify(await gitPull(args?.directory as string))
+            }
+          ]
+        };
+
+      case "git-branch":
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(await gitBranch(args?.branchName as string, args?.directory as string))
+            }
+          ]
+        };
+
+      case "git-checkout":
+        if (!args?.branchName) {
+          throw new Error("branchName parameter is required");
+        }
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(await gitCheckout(args.branchName as string, args?.createNew as boolean, args?.directory as string))
+            }
+          ]
+        };
+
+      case "git-log":
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(await gitLog(args?.maxCount as number, args?.directory as string))
+            }
+          ]
+        };
+
+      case "git-diff":
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(await gitDiff(args?.target as string, args?.directory as string))
+            }
+          ]
+        };
+
+      case "git-stash":
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(await gitStash(args?.message as string, args?.directory as string))
+            }
+          ]
+        };
+
+      case "git-stash-pop":
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(await gitStashPop(args?.directory as string))
+            }
+          ]
+        };
+
+      case "git-reset":
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(await gitReset(args?.mode as 'soft' | 'mixed' | 'hard', args?.target as string, args?.directory as string))
+            }
+          ]
+        };
+
+      case "git-clone":
+        if (!args?.url) {
+          throw new Error("url parameter is required");
+        }
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(await gitClone(args.url as string, args?.directory as string, args?.targetDir as string))
             }
           ]
         };

@@ -1,142 +1,560 @@
 # GitHub MCP Server
 
-## What is this project?
+A comprehensive **Model Context Protocol (MCP) server** that provides Git repository management capabilities for AI assistants. This server exposes Git operations through a standardized interface, enabling AI models to safely and efficiently manage version control tasks.
 
-**GitHub MCP Server** is a tool that lets AI assistants (like ChatGPT or custom bots) i## Architecture (How it's built)
-- **src/index.ts**: Sets up the MCP server and maps incoming tool requests to Git functions. Well-commented code sections include:
-  - Import and server initialization
-  - Git staging operations (add/remove files)
-  - Repository status & information
-  - Commit & sync operations (commit/push/pull)
-- **src/github.ts**: Implements all Git operations, with validation and error handling. Organized into logical sections:
-  - Utility functions for command execution and validation
-  - Git staging operations
-  - Repository status & information
-  - Commit & sync operations
+## 🎯 What is this project?
 
-**Each operation:**
-1. Checks if the directory is a Git repo
-2. Validates inputs (file existence, etc.)
-3. Runs the Git command safely
-4. Returns a structured response (success/error/info)
-5. Handles errors with meaningful messagesith Git repositories in a safe, structured, and automated way. It acts as a bridge between AI models and Git, exposing common Git operations (add, commit, push, etc.) as easy-to-use tools. This makes it possible for AI to help with coding, version control, and collaboration tasks—without direct shell access.
+**GitHub MCP Server** is a bridge between AI assistants and Git repositories. It provides:
+- **Safe Git operations** through a standardized MCP interface
+- **Comprehensive version control** capabilities (add, commit, push, branch management, etc.)
+- **Error handling and validation** to prevent common Git mistakes
+- **Direct integration** with VS Code and AI assistants like GitHub Copilot
 
-## Why use it?
-- **Safe automation:** AI can manage code changes, commits, and syncs without direct shell or file access.
-- **Standardized interface:** Uses the Model Context Protocol (MCP) for consistent, predictable commands.
-- **Error handling:** Prevents common mistakes and provides clear feedback.
-- **Great for bots, assistants, and automation tools.**
+## 🏗️ Architecture
 
-## How does it work? (Step-by-step)
-1. **You (or an AI assistant) send a command** (like "add this file" or "commit changes") to the MCP server.
-2. **The server checks** that the command is valid and the directory is a Git repository.
-3. **The server runs the Git command** (e.g., `git add`, `git commit`) and returns a structured response.
-4. **You get a clear result**—success, error, or details about what happened.
+The server is built with a modular architecture:
 
-## What is the Model Context Protocol (MCP)?
-MCP is a protocol that standardizes how tools (like this server) communicate with AI models. It makes it easy for AI to use complex tools safely, with clear inputs and outputs.
+### **Core Files:**
+- **`src/index.ts`**: MCP server setup, tool registration, and request handling
+- **`src/github.ts`**: All Git operations with validation and error handling
 
----
+### **Key Features:**
+- **TypeScript-based** for type safety and better development experience
+- **Comprehensive error handling** with meaningful error messages
+- **Timeout protection** (30s for operations, 5s for validation)
+- **Flexible directory support** - work in any Git repository
+- **Standardized responses** following MCP protocol specifications
 
-## Features (What can it do?)
-- **Add files** to the staging area (single or all)
-- **Remove files** from staging (unstage)
-- **Check status** of the repository
-- **Commit** changes with custom messages
-- **Push/Pull** to/from remote repositories
-- **Comprehensive error handling**
-- **Works in any directory**
+## 🚀 Features
 
----
+### **📁 File Management**
+- **`git-add`** - Add specific files to staging area
+- **`git-add-all`** - Add all modified/untracked files
+- **`git-remove`** - Remove files from staging area
+- **`git-remove-all`** - Remove all files from staging area
 
-## Available Tools (with simple explanations)
+### **📝 Repository Information**
+- **`git-status`** - Show repository status (staged, modified, untracked files)
+- **`git-log`** - Display commit history with customizable count
+- **`git-diff`** - Show differences between commits/branches/working directory
 
-### `git-add-all`
-> Stage (add) all files in the current directory for commit.
-- **Parameters:**
-  - `directory` (optional): Where to run the command
+### **💾 Commit Operations**
+- **`git-commit`** - Create commits with custom messages
+- **`git-push`** - Push changes to remote repository
+- **`git-pull`** - Pull changes from remote repository
 
-### `git-add`
-> Stage (add) a specific file for commit.
-- **Parameters:**
-  - `file` (required): File to add
-  - `directory` (optional): Where to run the command
+### **🌿 Branch Management**
+- **`git-branch`** - List branches or create new ones
+- **`git-checkout`** - Switch branches or create and switch to new branches
 
-### `git-remove`
-> Unstage a specific file (remove from staging area, but not delete).
-- **Parameters:**
-  - `file` (required): File to unstage
-  - `directory` (optional): Where to run the command
+### **💼 Stash Operations**
+- **`git-stash`** - Temporarily save changes
+- **`git-stash-pop`** - Apply most recent stash
 
-### `git-remove-all`
-> Unstage all files (remove all from staging area).
-- **Parameters:**
-  - `directory` (optional): Where to run the command
-
-### `git-status`
-> Show which files are changed, staged, or untracked.
-- **Parameters:**
-  - `directory` (optional): Where to run the command
-
-### `git-commit`
-> Commit staged files with a message.
-- **Parameters:**
-  - `message` (required): Commit message
-  - `directory` (optional): Where to run the command
-
-### `git-push`
-> Push committed changes to the remote repository.
-- **Parameters:**
-  - `directory` (optional): Where to run the command
-
-### `git-pull`
-> Pull latest changes from the remote repository.
-- **Parameters:**
-  - `directory` (optional): Where to run the command
+### **🔄 Advanced Operations**
+- **`git-reset`** - Reset repository to specific state (soft/mixed/hard)
+- **`git-clone`** - Clone repositories from remote URLs
 
 ---
 
-## Example Usage Scenarios
-- **AI code assistant**: Automatically add, commit, and push code changes after generating code.
-- **Automated bots**: Keep a repo in sync, or clean up uncommitted changes.
-- **Teaching tools**: Let students interact with Git safely via a web interface or chatbot.
+## 📋 Complete Tool Reference
+
+### File Staging Operations
+
+#### `git-add`
+Adds specific files to the staging area.
+```json
+{
+  "name": "git-add",
+  "parameters": {
+    "files": ["file1.txt", "src/file2.js"],  // Required: Array of file paths
+    "directory": "/path/to/repo"              // Optional: Working directory
+  }
+}
+```
+
+#### `git-add-all`
+Adds all modified and untracked files to staging area.
+```json
+{
+  "name": "git-add-all",
+  "parameters": {
+    "directory": "/path/to/repo"  // Optional: Working directory
+  }
+}
+```
+
+#### `git-remove`
+Removes a specific file from staging area (unstages it).
+```json
+{
+  "name": "git-remove",
+  "parameters": {
+    "file": "filename.txt",       // Required: File to unstage
+    "directory": "/path/to/repo"  // Optional: Working directory
+  }
+}
+```
+
+#### `git-remove-all`
+Removes all files from staging area.
+```json
+{
+  "name": "git-remove-all",
+  "parameters": {
+    "directory": "/path/to/repo"  // Optional: Working directory
+  }
+}
+```
+
+### Repository Information
+
+#### `git-status`
+Shows current repository status.
+```json
+{
+  "name": "git-status",
+  "parameters": {
+    "directory": "/path/to/repo"  // Optional: Working directory
+  }
+}
+```
+
+#### `git-log`
+Displays commit history.
+```json
+{
+  "name": "git-log",
+  "parameters": {
+    "maxCount": 5,                // Optional: Number of commits (default: 10)
+    "directory": "/path/to/repo"  // Optional: Working directory
+  }
+}
+```
+
+#### `git-diff`
+Shows differences between commits, branches, or working directory.
+```json
+{
+  "name": "git-diff",
+  "parameters": {
+    "target": "main",             // Optional: Compare target (branch/commit)
+    "directory": "/path/to/repo"  // Optional: Working directory
+  }
+}
+```
+
+### Commit & Sync Operations
+
+#### `git-commit`
+Creates a commit with staged changes.
+```json
+{
+  "name": "git-commit",
+  "parameters": {
+    "message": "Add new feature",  // Required: Commit message
+    "directory": "/path/to/repo"   // Optional: Working directory
+  }
+}
+```
+
+#### `git-push`
+Pushes local commits to remote repository.
+```json
+{
+  "name": "git-push",
+  "parameters": {
+    "directory": "/path/to/repo"  // Optional: Working directory
+  }
+}
+```
+
+#### `git-pull`
+Pulls changes from remote repository.
+```json
+{
+  "name": "git-pull",
+  "parameters": {
+    "directory": "/path/to/repo"  // Optional: Working directory
+  }
+}
+```
+
+### Branch Management
+
+#### `git-branch`
+Lists all branches or creates a new branch.
+```json
+{
+  "name": "git-branch",
+  "parameters": {
+    "branchName": "new-feature",  // Optional: Create branch with this name
+    "directory": "/path/to/repo"  // Optional: Working directory
+  }
+}
+```
+
+#### `git-checkout`
+Switches to a branch or creates and switches to a new branch.
+```json
+{
+  "name": "git-checkout",
+  "parameters": {
+    "branchName": "feature-branch",  // Required: Branch name
+    "createNew": true,               // Optional: Create if doesn't exist (default: false)
+    "directory": "/path/to/repo"     // Optional: Working directory
+  }
+}
+```
+
+### Stash Operations
+
+#### `git-stash`
+Temporarily saves current changes.
+```json
+{
+  "name": "git-stash",
+  "parameters": {
+    "message": "Work in progress",  // Optional: Stash message
+    "directory": "/path/to/repo"    // Optional: Working directory
+  }
+}
+```
+
+#### `git-stash-pop`
+Applies the most recent stash.
+```json
+{
+  "name": "git-stash-pop",
+  "parameters": {
+    "directory": "/path/to/repo"  // Optional: Working directory
+  }
+}
+```
+
+### Advanced Operations
+
+#### `git-reset`
+Resets repository to a specific state.
+```json
+{
+  "name": "git-reset",
+  "parameters": {
+    "mode": "mixed",              // Optional: "soft"|"mixed"|"hard" (default: "mixed")
+    "target": "HEAD~1",           // Optional: Target commit (default: "HEAD")
+    "directory": "/path/to/repo"  // Optional: Working directory
+  }
+}
+```
+
+#### `git-clone`
+Clones a repository from a remote URL.
+```json
+{
+  "name": "git-clone",
+  "parameters": {
+    "url": "https://github.com/user/repo.git",  // Required: Repository URL
+    "targetDir": "my-project",                  // Optional: Target directory name
+    "directory": "/path/to/parent"              // Optional: Parent directory
+  }
+}
+```
 
 ---
 
-## Installation
+## 🛠️ Installation & Setup
 
-1. **Clone the repository:**
+### **Prerequisites**
+- Node.js 16+ 
+- Git installed and accessible in PATH
+- TypeScript (for development)
+
+### **1. Clone and Install**
 ```bash
 git clone https://github.com/0xshariq/github-mcp-server.git
 cd github-mcp-server
-```
-2. **Install dependencies:**
-```bash
 npm install
 ```
-3. **Build the project:**
+
+### **2. Build the Server**
 ```bash
 npm run build
 ```
 
----
-
-## Running the Server
-
-Start the MCP server:
+### **3. Test the Server**
 ```bash
-npm start
-```
-The server listens for MCP protocol messages on stdin/stdout.
+# Test MCP server functionality
+npm run inspect
 
-### For development (auto-rebuild):
-```bash
+# Run in development mode (auto-rebuild)
 npm run dev
 ```
 
 ---
 
-## Project Structure
+## 🔧 VS Code Integration
+
+### **Method 1: Project-Level Setup**
+
+1. **Add to your project's `.vscode/settings.json`:**
+```json
+{
+  "mcpServers": {
+    "github-mcp-server": {
+      "command": "node",
+      "args": ["/absolute/path/to/github-mcp-server/dist/index.js"],
+      "env": {},
+      "disabled": false
+    }
+  }
+}
+```
+
+### **Method 2: Global Setup**
+
+1. **Open VS Code User Settings** (`Ctrl+Shift+P` → "Preferences: Open User Settings (JSON)")
+
+2. **Add MCP server configuration:**
+```json
+{
+  "chat.mcp.discovery.enabled": true,
+  "mcpServers": {
+    "github-mcp-server": {
+      "command": "node",
+      "args": ["/absolute/path/to/github-mcp-server/dist/index.js"],
+      "env": {},
+      "disabled": false
+    }
+  }
+}
+```
+
+3. **For WSL users:**
+```json
+{
+  "mcpServers": {
+    "github-mcp-server": {
+      "command": "wsl",
+      "args": [
+        "node", 
+        "/home/username/path/to/github-mcp-server/dist/index.js"
+      ],
+      "env": {},
+      "disabled": false
+    }
+  }
+}
+```
+
+4. **Restart VS Code** and the tools will be available in GitHub Copilot Chat
+
+---
+
+## 🎮 Usage Examples
+
+### **Basic Git Workflow**
+```bash
+# Check repository status
+@mcp git-status
+
+# Add specific files
+@mcp git-add {"files": ["src/index.ts", "README.md"]}
+
+# Add all files  
+@mcp git-add-all
+
+# Commit changes
+@mcp git-commit {"message": "Add new features and documentation"}
+
+# Push to remote
+@mcp git-push
+```
+
+### **Branch Management**
+```bash
+# List all branches
+@mcp git-branch
+
+# Create and switch to new branch
+@mcp git-checkout {"branchName": "feature/new-feature", "createNew": true}
+
+# Switch to existing branch
+@mcp git-checkout {"branchName": "main"}
+```
+
+### **Advanced Operations**
+```bash
+# View commit history
+@mcp git-log {"maxCount": 5}
+
+# See differences
+@mcp git-diff {"target": "main"}
+
+# Stash current work
+@mcp git-stash {"message": "Work in progress"}
+
+# Apply stash later
+@mcp git-stash-pop
+
+# Reset to previous commit
+@mcp git-reset {"mode": "soft", "target": "HEAD~1"}
+```
+
+---
+
+## 📊 Development Scripts
+
+```bash
+# Build TypeScript to JavaScript
+npm run build
+
+# Start the MCP server
+npm start
+
+# Development mode with auto-rebuild
+npm run dev
+
+# Test MCP server with inspector
+npm run inspect
+
+# Test MCP server functionality
+npm run test-mcp
+```
+
+---
+
+## 🏗️ Project Structure
+```
+github-mcp-server/
+├── src/
+│   ├── index.ts          # MCP server setup and tool registration
+│   └── github.ts         # Git operations implementation
+├── dist/                 # Compiled JavaScript (generated)
+├── package.json          # Project configuration and scripts
+├── tsconfig.json         # TypeScript configuration
+├── .gitignore           # Git ignore patterns
+└── README.md            # This documentation
+```
+
+## 🔧 Code Architecture
+
+### **`src/index.ts`** - MCP Server Core
+- **Server Initialization**: Sets up MCP server with metadata and capabilities
+- **Tool Registration**: Defines all available Git tools with schemas
+- **Request Handling**: Processes tool calls and routes to appropriate functions
+- **Error Management**: Centralized error handling and response formatting
+
+### **`src/github.ts`** - Git Operations Engine  
+- **Utility Functions**: Command execution, repository validation, error handling
+- **File Operations**: Add, remove, status checking with comprehensive validation
+- **Commit Management**: Commit creation, push/pull with conflict detection
+- **Branch Operations**: Branch creation, switching, listing
+- **Advanced Features**: Stashing, resetting, cloning, diff analysis
+
+### **Key Design Principles:**
+1. **Type Safety**: Full TypeScript implementation with proper interfaces
+2. **Error Resilience**: Comprehensive error handling with meaningful messages  
+3. **Validation**: Input validation and repository state checking
+4. **Modularity**: Clear separation between MCP protocol and Git operations
+5. **Timeout Protection**: All operations have appropriate timeouts
+
+---
+
+## 🛡️ Error Handling & Safety
+
+The server includes comprehensive error handling:
+
+- **🔍 Repository Validation**: Ensures directory is a valid Git repository
+- **📁 File Existence Checks**: Validates files exist before Git operations
+- **⏱️ Timeout Protection**: 30-second timeout for operations, 5-second for validation
+- **🚫 Input Sanitization**: Prevents command injection and handles special characters
+- **📝 Detailed Error Messages**: Clear, actionable error descriptions
+- **🔄 Graceful Degradation**: Operations fail safely without corrupting repository state
+
+### **Common Error Scenarios:**
+- **Not a Git repository** → Clear guidance on repository initialization
+- **File not found** → Specific file path and existence details
+- **No staged changes** → Instructions on staging files before commit
+- **Network issues** → Detailed connection and authentication guidance
+- **Merge conflicts** → Conflict resolution recommendations
+
+---
+
+## 🤝 Usage in AI Assistants
+
+### **GitHub Copilot Integration**
+Once configured in VS Code, use tools directly in Copilot Chat:
+```
+@github Use git-add to stage my changes
+@github Commit these changes with message "Fix authentication bug"  
+@github Push the changes to the remote repository
+```
+
+### **Custom AI Applications**
+The MCP server can be integrated into any application supporting the Model Context Protocol:
+
+```typescript
+// Example integration
+const mcpClient = new MCPClient();
+await mcpClient.connect("github-mcp-server");
+
+// Use Git operations
+const result = await mcpClient.callTool("git-status", {});
+const statusInfo = JSON.parse(result.content[0].text);
+```
+
+### **Workflow Automation**
+Common AI-assisted workflows:
+- **Code Review Prep**: Status check → Add files → Commit → Push
+- **Branch Management**: Create branch → Switch → Make changes → Merge
+- **Emergency Fixes**: Stash work → Switch to main → Fix → Commit → Push → Switch back → Pop stash
+
+---
+
+## 🔍 Troubleshooting
+
+### **MCP Server Not Recognized**
+1. Check VS Code settings syntax (valid JSON)
+2. Verify absolute path to `dist/index.js` 
+3. Ensure server builds successfully (`npm run build`)
+4. Restart VS Code after configuration changes
+5. Check VS Code Developer Console for error messages
+
+### **Git Operations Failing**
+1. Verify Git is installed and in PATH
+2. Check repository is properly initialized (`git status` works)
+3. Ensure proper permissions for file operations
+4. Validate network connectivity for push/pull operations
+
+### **Performance Issues**
+1. Large repositories may have slower status checks
+2. Network operations (push/pull/clone) depend on connection speed
+3. Use `maxCount` parameter in `git-log` to limit output
+4. Consider using `git-diff` with specific targets for large repositories
+
+---
+
+## 🎯 Best Practices
+
+### **For AI Assistant Usage:**
+- Always check status before major operations
+- Use descriptive commit messages  
+- Stash work before switching branches
+- Pull latest changes before starting new work
+
+### **For Developers:**
+- Test MCP server locally before deployment
+- Use TypeScript for type safety when extending
+- Follow existing error handling patterns
+- Add timeout protection for new operations
+
+### **For Repository Management:**
+- Keep operations atomic (one logical change per commit)
+- Use branch operations for feature development
+- Regular status checks to maintain awareness
+- Utilize stash for temporary work preservation
+
+---
 ```
 github-mcp-server/
 ├── src/
