@@ -1,9 +1,10 @@
-# GitHub MCP Server
+# Github MCP Server
+
 🔗 **[View on MCP Market](https://mcpmarket.com/server/github-git-assistant)**
 <br />
 🔗 **[View on MCP Registry](https://mcp.so/server/github-mcp-server/Sharique%20Chaudhary)**
 <br />
-📦 **[Available on npm](https://www.npmjs.com/packages/github-mcp-server)**
+📦 **[Available on npm](https://www.npmjs.com/package/@0xshariq/github-mcp-server)**
 
 A **Model Context Protocol (MCP) server** that provides **29 Git operations + 11 workflow combinations** for AI assistants and developers. This server exposes comprehensive Git repository management through a standardized interface, enabling AI models and developers to safely manage complex version control workflows.
 
@@ -11,7 +12,7 @@ A **Model Context Protocol (MCP) server** that provides **29 Git operations + 11
 
 ```bash
 # Install from npm (recommended)
-npm install -g github-mcp-server
+npm install -g @0xshariq/github-mcp-server
 
 # Test the installation
 gstatus
@@ -21,6 +22,7 @@ glist
 ## 🎯 About
 
 **GitHub MCP Server** bridges AI assistants with Git repositories and provides powerful developer productivity tools. It provides:
+
 - **Safe Git operations** through a standardized MCP interface (29 operations)
 - **Complete version control** capabilities including advanced operations (tag, merge, rebase, cherry-pick, blame, bisect)
 - **31 workflow combinations** for enhanced developer productivity
@@ -34,6 +36,7 @@ glist
 This server provides comprehensive Git repository management through two main categories:
 
 ### 📁 **Basic Git Operations** (17 operations)
+
 Essential daily Git commands organized in [`bin/basic/`](bin/basic/) - see **[Basic Operations Guide](bin/basic/README.md)** for detailed documentation.
 
 - **File Management**: Add, remove files from staging area
@@ -44,7 +47,8 @@ Essential daily Git commands organized in [`bin/basic/`](bin/basic/) - see **[Ba
 - **Stash Operations**: Temporarily save changes
 - **Reset Operations**: Repository state management
 
-### 🚀 **Advanced Git Operations** (12 operations) 
+### 🚀 **Advanced Git Operations** (12 operations)
+
 Sophisticated workflows and automation in [`bin/advanced/`](bin/advanced/) - see **[Advanced Workflows Guide](bin/advanced/README.md)** for comprehensive documentation.
 
 - **Workflow Combinations**: Complete flows (add→commit→push), quick commits, sync operations
@@ -113,7 +117,7 @@ github-mcp-server/
 ## 📖 Documentation Structure
 
 - **[bin/basic/README.md](bin/basic/README.md)** - Complete guide to 17 essential Git operations
-- **[bin/advanced/README.md](bin/advanced/README.md)** - Comprehensive advanced workflows documentation  
+- **[bin/advanced/README.md](bin/advanced/README.md)** - Comprehensive advanced workflows documentation
 - **[markdown/INSTALLATION.md](markdown/INSTALLATION.md)** - Step-by-step installation for all platforms
 - **[markdown/MCP_UNIVERSAL_CONFIG.md](markdown/MCP_UNIVERSAL_CONFIG.md)** - Universal MCP configuration for all LLM clients
 - **[markdown/QUICK_REFERENCES.md](markdown/QUICK_REFERENCES.md)** - Copy-paste commands for quick reference
@@ -123,6 +127,7 @@ github-mcp-server/
 ## 🔧 Technical Architecture
 
 ### 📡 **MCP Server Core** (src/index.ts)
+
 - **29 Tool Registrations** with complete JSON schemas
 - **Enhanced Metadata** with operation tracking and performance monitoring
 - **Input Validation** using Zod schemas for type safety
@@ -130,6 +135,7 @@ github-mcp-server/
 - **Cross-platform Compatibility** with environment normalization
 
 ### ⚙️ **Git Operations Engine** (src/github.ts)
+
 - **Comprehensive Implementation** of all 29 Git operations
 - **Security Features** - Command injection prevention and input sanitization
 - **Enhanced Error Handling** with context-aware messaging for common scenarios
@@ -137,6 +143,7 @@ github-mcp-server/
 - **Safety Checks** - Repository validation and file existence verification
 
 ### 🖥️ **Enhanced CLI System**
+
 - **Smart Organization** - Tools categorized by basic vs advanced operations
 - **Directory-Aware Help** - References to specific README files for detailed guidance
 - **Progressive Learning** - Clear path from basic to advanced operations
@@ -151,7 +158,9 @@ github-mcp-server/
 - **📝 Detailed Error Messages**: Clear, actionable error descriptions
 
 ## License
+
 ISC License
 
 ## Author
+
 Created for use with AI assistants that support the Model Context Protocol.

@@ -14,7 +14,7 @@ Simple step-by-step installation for GitHub MCP Server. Works on Windows, macOS,
 
 ```bash
 # Install globally from npm
-npm install -g github-mcp-server
+npm install -g @0xshariq/github-mcp-server
 
 # Test the installation
 gstatus
@@ -30,12 +30,12 @@ glist
 
 ### Update to Latest Version:
 ```bash
-npm update -g github-mcp-server
+npm update -g @0xshariq/github-mcp-server
 ```
 
 ### Uninstall:
 ```bash
-npm uninstall -g github-mcp-server
+npm uninstall -g @0xshariq/github-mcp-server
 ```
 
 ---
@@ -166,7 +166,7 @@ After installing via npm or manually, configure your LLM client to use GitHub MC
 {
   "mcpServers": {
     "github-mcp-server": {
-      "command": "github-mcp-server",
+      "command": "@0xshariq/github-mcp-server",
       "args": [],
       "env": {}
     }
@@ -186,7 +186,7 @@ After installing via npm or manually, configure your LLM client to use GitHub MC
       "mcpServers": [
         {
           "name": "github-mcp-server",
-          "command": "github-mcp-server",
+          "command": "@0xshariq/github-mcp-server",
           "args": [],
           "env": {}
         }
@@ -200,7 +200,7 @@ After installing via npm or manually, configure your LLM client to use GitHub MC
 ```json
 {
   "name": "github-mcp-server",
-  "command": ["github-mcp-server"],
+  "command": ["@0xshariq/github-mcp-server"],
   "env": {},
   "description": "GitHub MCP Server for Git operations"
 }

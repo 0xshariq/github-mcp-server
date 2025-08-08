@@ -1,5 +1,5 @@
 {
-  "name": "github-mcp-server",
+  "name": "@0xshariq/github-mcp-server",
   "version": "2.0.0",
   "main": "dist/index.js",
   "description": "A comprehensive Model Context Protocol (MCP) server that provides Git repository management capabilities for AI assistants and automation tools. Includes 29 Git operations + 11 workflow combinations with complete CLI alias system and advanced developer productivity tools.",
@@ -88,7 +88,7 @@
     "version": "echo $npm_package_version",
     "mcp": "node mcp-cli.js",
     "install:global": "pnpm run build && npm install -g .",
-    "uninstall:global": "npm uninstall -g github-mcp-server",
+    "uninstall:global": "npm uninstall -g @0xshariq/github-mcp-server",
     "dev:install": "pnpm run build && pnpm run install:global",
     "start:mcp": "node dist/index.js",
     "prepublishOnly": "npm run build",
