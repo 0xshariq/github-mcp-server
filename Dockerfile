@@ -1,36 +1,6 @@
-# GitHub MCP Server - Multi-stage Docker Build
+# GitHub MCP Server - Docker Build
 # This Dockerfile creates an optimized container for the GitHub MCP Server
-# with Git capabilities and organized CLI aliases (basic/advanced workflows)
-
-# Build stage
-FROM node:20-alpine AS builder
-
-# Set working directory
-WORKDIR /app
-
-# Install build dependencies
-RUN apk add --no-cache \
-    git \
-    openssh-client \
-    ca-certificates
-
-# Copy package files
-COPY package*.json ./
-COPY pnpm-lock.yaml ./
-COPY tsconfig.json ./
-
-# Install pnpm and dependencies
-RUN npm install -g pnpm && \
-    pnpm install --frozen-lockfile && \
-    pnpm store prune
-
-# Copy source code
-COPY src/ ./src/
-COPY bin/ ./bin/
-COPY mcp-cli.js ./
-
-# Build the TypeScript project
-RUN npm run build
+# using the published npm package for easy deployment
 
 # Production stage
 FROM node:20-alpine AS production
@@ -51,21 +21,8 @@ RUN addgroup -g 1001 -S nodejs && \
 # Set working directory
 WORKDIR /app
 
-# Copy built application from builder stage
-COPY --from=builder --chown=mcp:nodejs /app/dist ./dist
-COPY --from=builder --chown=mcp:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=mcp:nodejs /app/package*.json ./
-COPY --from=builder --chown=mcp:nodejs /app/mcp-cli.js ./
-
-# Copy and make CLI aliases executable
-COPY --from=builder --chown=mcp:nodejs /app/bin ./bin
-RUN chmod +x bin/basic/*.js && \
-    chmod +x bin/advanced/*.js && \
-    chmod +x mcp-cli.js
-
-# Create Git configuration directory
-RUN mkdir -p /home/mcp/.gitconfig && \
-    chown mcp:nodejs /home/mcp/.gitconfig
+# Install the published npm package globally
+RUN npm install -g @0xshariq/github-mcp-server@2.0.1
 
 # Create data directory for repositories
 RUN mkdir -p /app/data && \
@@ -83,12 +40,27 @@ EXPOSE 3000
 # Switch to non-root user
 USER mcp
 
-# Create symlinks for global CLI access (optional)
-ENV PATH="/app/bin:$PATH"
-
 # Security settings
 ENV NODE_ENV=production
 ENV NODE_OPTIONS="--max-old-space-size=512"
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD github-mcp-server --version || exit 1
+
+# Set default command to start MCP server
+CMD ["github-mcp-server"]
+
+# Metadata labels
+LABEL \
+    org.opencontainers.image.title="GitHub MCP Server" \
+    org.opencontainers.image.description="Enhanced Git workflow management through MCP with 29 Git operations, CLI aliases, and MCP integration" \
+    org.opencontainers.image.version="2.0.1" \
+    org.opencontainers.image.authors="Sharique Chaudhary" \
+    org.opencontainers.image.source="https://github.com/0xshariq/github-mcp-server" \
+    org.opencontainers.image.licenses="ISC" \
+    org.opencontainers.image.documentation="https://github.com/0xshariq/github-mcp-server/blob/main/README.md" \
+    org.opencontainers.image.url="https://www.npmjs.com/package/@0xshariq/github-mcp-server"
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
@@ -101,7 +73,7 @@ CMD ["node", "dist/index.js"]
 LABEL \
     org.opencontainers.image.title="GitHub MCP Server" \
     org.opencontainers.image.description="Enhanced Git workflow management through MCP with 15 basic operations, 14 advanced workflows, and comprehensive remote management" \
-    org.opencontainers.image.version="1.8.4" \
+    org.opencontainers.image.version="2.0.1" \
     org.opencontainers.image.authors="Sharique Chaudhary" \
     org.opencontainers.image.source="https://github.com/0xshariq/github-mcp-server" \
     org.opencontainers.image.licenses="ISC" \

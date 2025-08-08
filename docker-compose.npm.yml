@@ -1,0 +1,98 @@
+# Docker Compose for GitHub MCP Server - NPM Package Version
+# This version uses the published npm package directly instead of building from source
+
+version: '3.8'
+
+services:
+  github-mcp-server:
+    image: node:20-alpine
+    container_name: github-mcp-server-npm
+    restart: unless-stopped
+    
+    # Install npm package on startup
+    command: >
+      sh -c "
+        apk add --no-cache git openssh-client ca-certificates bash &&
+        npm install -g @0xshariq/github-mcp-server@2.0.1 &&
+        addgroup -g 1001 -S nodejs &&
+        adduser -S mcp -u 1001 -G nodejs &&
+        mkdir -p /app/data &&
+        chown mcp:nodejs /app/data &&
+        git config --global user.name 'MCP Server' &&
+        git config --global user.email 'mcp@container.local' &&
+        git config --global init.defaultBranch main &&
+        git config --global safe.directory '*' &&
+        su mcp -s /bin/sh -c 'github-mcp-server'
+      "
+    
+    # Environment variables
+    environment:
+      - NODE_ENV=production
+      - MCP_PORT=3000
+    
+    # Port mapping (if HTTP interface is added later)
+    ports:
+      - "3000:3000"
+    
+    # Volume mounts for Git repositories and configuration
+    volumes:
+      - ./data:/app/data
+      - ~/.gitconfig:/home/mcp/.gitconfig:ro
+      - ~/.ssh:/home/mcp/.ssh:ro
+    
+    # Working directory
+    working_dir: /app
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "github-mcp-server", "--version"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+    
+    # Labels for better organization
+    labels:
+      - "com.github.0xshariq.github-mcp-server=true"
+      - "com.github.0xshariq.version=2.0.1"
+      - "com.github.0xshariq.type=npm-package"
+      
+  # Alternative service using pre-built image (when available)
+  github-mcp-server-prebuilt:
+    # This would be used if you publish a Docker image to registry
+    # image: 0xshariq/github-mcp-server:2.0.1
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: github-mcp-server-prebuilt
+    restart: unless-stopped
+    profiles: ["prebuilt"]  # Only start with --profile prebuilt
+    
+    environment:
+      - NODE_ENV=production
+      - MCP_PORT=3000
+    
+    ports:
+      - "3001:3000"  # Different port to avoid conflict
+    
+    volumes:
+      - ./data:/app/data
+      - ~/.gitconfig:/home/mcp/.gitconfig:ro
+      - ~/.ssh:/home/mcp/.ssh:ro
+    
+    healthcheck:
+      test: ["CMD", "github-mcp-server", "--version"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

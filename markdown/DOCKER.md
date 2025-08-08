@@ -4,37 +4,70 @@ Use GitHub MCP Server with Docker - no installation needed! Everything just work
 
 ## 🚀 Super Quick Start
 
-### 1. Get the Docker Image
+### Option 1: Use Published npm Package (Recommended)
 ```bash
-docker pull 0xshariq/github-mcp-server:latest
+# Using docker-compose with npm package
+docker-compose -f docker-compose.npm.yml up
+
+# Or run directly with npm package
+docker run -it --rm node:20-alpine sh -c "
+  apk add --no-cache git &&
+  npm install -g @0xshariq/github-mcp-server@2.0.1 &&
+  github-mcp-server --help
+"
 ```
 
-### 2. Run It
+### Option 2: Build from Source
 ```bash
-docker run -it --rm 0xshariq/github-mcp-server:latest
+# Clone and build
+git clone https://github.com/0xshariq/github-mcp-server.git
+cd github-mcp-server
+docker-compose up --build
 ```
 
-### 3. Try It Out
-Inside the container, try these commands:
+### Option 3: Pre-built Image (Coming Soon)
 ```bash
-gstatus
-glist
+# Will be available after Docker Hub publishing
+docker pull 0xshariq/github-mcp-server:2.0.1
+docker run -it --rm 0xshariq/github-mcp-server:2.0.1
 ```
-
-**That's it!** You're using GitHub MCP Server.
 
 ---
 
 ## 📁 Working with Your Projects
 
-To use it with your actual Git projects:
+### Using npm Package Version
+```bash
+# Go to your project folder first
+cd /path/to/your/project
 
+# Run with npm package and mount your project
+docker run -it --rm \
+  -v $(pwd):/workspace \
+  -w /workspace \
+  node:20-alpine sh -c "
+    apk add --no-cache git &&
+    npm install -g @0xshariq/github-mcp-server@2.0.1 &&
+    exec sh
+  "
+
+# Inside the container, use all commands
+gstatus
+gadd
+gcommit \"your message\"
+gpush
+```
+
+### Using Built Image
 ```bash
 # Go to your project folder first
 cd /path/to/your/project
 
 # Run Docker with access to your files
-docker run -it --rm -v $(pwd):/app/workspace -w /app/workspace 0xshariq/github-mcp-server:latest
+docker run -it --rm \
+  -v $(pwd):/app/workspace \
+  -w /app/workspace \
+  0xshariq/github-mcp-server:2.0.1
 
 # Now you can use all the git commands on your project
 gstatus

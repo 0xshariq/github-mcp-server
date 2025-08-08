@@ -6,7 +6,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      target: production
     container_name: github-mcp-server
     restart: unless-stopped
     
@@ -28,9 +27,9 @@ services:
     # Working directory
     working_dir: /app
     
-    # Health check
+    # Health check (updated for npm package)
     healthcheck:
-      test: ["CMD", "node", "-e", "console.log('Health check passed')"]
+      test: ["CMD", "github-mcp-server", "--version"]
       interval: 30s
       timeout: 5s
       retries: 3
