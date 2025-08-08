@@ -2,6 +2,33 @@
   "name": "github-mcp-server",
   "version": "1.8.4",
   "main": "dist/index.js",
+  "description": "A comprehensive Model Context Protocol (MCP) server that provides Git repository management capabilities for AI assistants and automation tools. Includes 29 Git operations + 11 workflow combinations with complete CLI alias system and advanced developer productivity tools.",
+  "keywords": ["mcp", "model-context-protocol", "git", "ai", "assistant", "automation", "cli", "workflow", "github", "version-control"],
+  "homepage": "https://github.com/0xshariq/github-mcp-server#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/0xshariq/github-mcp-server.git"
+  },
+  "bugs": {
+    "url": "https://github.com/0xshariq/github-mcp-server/issues"
+  },
+  "author": {
+    "name": "Sharique Chaudhary",
+    "email": "your-email@domain.com",
+    "url": "https://github.com/0xshariq"
+  },
+  "license": "ISC",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "files": [
+    "dist/",
+    "mcp-cli.js",
+    "README.md",
+    "markdown/",
+    "bin/",
+    "start-mcp.sh"
+  ],
   "bin": {
     "github-mcp-server": "mcp-cli.js",
     "gms": "mcp-cli.js",
@@ -55,11 +82,10 @@
     "install:global": "pnpm run build && npm install -g .",
     "uninstall:global": "npm uninstall -g github-mcp-server",
     "dev:install": "pnpm run build && pnpm run install:global",
-    "start:mcp": "node dist/index.js"
+    "start:mcp": "node dist/index.js",
+    "prepublishOnly": "npm run build",
+    "postinstall": "npm run build"
   },
-  "author": "Sharique Chaudhary",
-  "license": "ISC", 
-  "description": "A comprehensive Model Context Protocol (MCP) server that provides Git repository management capabilities for AI assistants and automation tools. Includes 29 Git operations + 11 workflow combinations with complete CLI alias system and advanced developer productivity tools.",
   "dependencies": {
     "@modelcontextprotocol/inspector": "^0.16.1",
     "@modelcontextprotocol/sdk": "^1.15.1",

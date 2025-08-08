@@ -1,0 +1,42 @@
+# Source files (only include built dist/)
+src/
+tsconfig.json
+
+# Development files
+.vscode/
+.git/
+.gitignore
+*.log
+npm-debug.log*
+
+# Test files
+test/
+tests/
+__tests__/
+
+# Development dependencies
+node_modules/
+pnpm-lock.yaml
+package-lock.json
+
+# Environment files
+.env
+.env.*
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+
+# Docker files (optional, include if needed)
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Development scripts (keep the important ones)
+setup-global.sh
+test-*.md
+*.backup

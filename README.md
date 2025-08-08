@@ -2,8 +2,21 @@
 🔗 **[View on MCP Market](https://mcpmarket.com/server/github-git-assistant)**
 <br />
 🔗 **[View on MCP Registry](https://mcp.so/server/github-mcp-server/Sharique%20Chaudhary)**
+<br />
+📦 **[Available on npm](https://www.npmjs.com/packages/github-mcp-server)**
 
 A **Model Context Protocol (MCP) server** that provides **29 Git operations + 11 workflow combinations** for AI assistants and developers. This server exposes comprehensive Git repository management through a standardized interface, enabling AI models and developers to safely manage complex version control workflows.
+
+## 🚀 Quick Installation
+
+```bash
+# Install from npm (recommended)
+npm install -g github-mcp-server
+
+# Test the installation
+gstatus
+glist
+```
 
 ## 🎯 About
 

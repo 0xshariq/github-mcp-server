@@ -8,7 +8,41 @@ Simple step-by-step installation for GitHub MCP Server. Works on Windows, macOS,
 - **Git** - [Download here](https://git-scm.com/)
 - A terminal or command prompt
 
-## � Quick Install (All Platforms)
+## 🚀 NPM Package Installation (Recommended)
+
+**The easiest way to install GitHub MCP Server from npm registry:**
+
+```bash
+# Install globally from npm
+npm install -g github-mcp-server
+
+# Test the installation
+gstatus
+glist
+```
+
+**That's it!** ✅ You now have access to all 29 aliases globally.
+
+### Available Commands After NPM Install:
+- **Main commands**: `github-mcp-server`, `gms` (short alias)
+- **17 Basic operations**: `gstatus`, `gadd`, `gcommit`, `gpush`, `gpull`, `gbranch`, `gcheckout`, `glog`, `gdiff`, `gstash`, `gpop`, `greset`, `gclone`, `ginit`, `gremote`
+- **12 Advanced workflows**: `gflow`, `gquick`, `gsync`, `gdev`, `gworkflow`, `gfix`, `gfresh`, `gbackup`, `gclean`, `gsave`, `glist`, `grelease`, `gtag`, `gmerge`, `grebase`, `gcherry`, `gblame`, `gbisect`
+
+### Update to Latest Version:
+```bash
+npm update -g github-mcp-server
+```
+
+### Uninstall:
+```bash
+npm uninstall -g github-mcp-server
+```
+
+---
+
+## 🛠️ Manual Installation (From Source)
+
+## 🛠️ Manual Installation (From Source)
 
 ### Step 1: Download the Code
 ```bash
@@ -121,12 +155,73 @@ Same steps as Ubuntu/Debian above.
 
 ---
 
-## 🔧 VS Code Setup
+## 🔧 MCP Configuration for LLM Clients
 
-After installing, add this to your VS Code settings:
+After installing via npm or manually, configure your LLM client to use GitHub MCP Server:
 
-### For Local Installation
-Add to `.vscode/settings.json` in your project:
+### For NPM Installation (Recommended)
+
+**Claude Desktop** (`~/.config/claude/claude_desktop_config.json` or `%APPDATA%\Claude\claude_desktop_config.json`):
+```json
+{
+  "mcpServers": {
+    "github-mcp-server": {
+      "command": "github-mcp-server",
+      "args": [],
+      "env": {}
+    }
+  }
+}
+```
+
+**VS Code (Continue Extension)** (`~/.continue/config.json`):
+```json
+{
+  "models": [
+    {
+      "title": "GitHub MCP Assistant",
+      "provider": "anthropic",
+      "model": "claude-3-5-sonnet-20241022",
+      "contextLength": 200000,
+      "mcpServers": [
+        {
+          "name": "github-mcp-server",
+          "command": "github-mcp-server",
+          "args": [],
+          "env": {}
+        }
+      ]
+    }
+  ]
+}
+```
+
+**Open WebUI** (Admin Panel → Tools → MCP Servers):
+```json
+{
+  "name": "github-mcp-server",
+  "command": ["github-mcp-server"],
+  "env": {},
+  "description": "GitHub MCP Server for Git operations"
+}
+```
+
+### For Manual Installation (From Source)
+
+**Claude Desktop**:
+```json
+{
+  "mcpServers": {
+    "github-mcp-server": {
+      "command": "node",
+      "args": ["/absolute/path/to/github-mcp-server/dist/index.js"],
+      "env": {}
+    }
+  }
+}
+```
+
+**VS Code Settings** (`.vscode/settings.json`):
 ```json
 {
   "mcpServers": {
@@ -141,21 +236,6 @@ Add to `.vscode/settings.json` in your project:
 ```
 
 **Important:** Replace `/absolute/path/to/github-mcp-server` with the real path where you installed it.
-
-### For Global Installation
-Add to your global VS Code settings:
-```json
-{
-  "mcpServers": {
-    "github-mcp-server": {
-      "command": "gms",
-      "args": [],
-      "env": {},
-      "disabled": false
-    }
-  }
-}
-```
 
 ---
 
