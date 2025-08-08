@@ -1,9 +1,20 @@
 {
   "name": "github-mcp-server",
-  "version": "1.8.4",
+  "version": "2.0.0",
   "main": "dist/index.js",
   "description": "A comprehensive Model Context Protocol (MCP) server that provides Git repository management capabilities for AI assistants and automation tools. Includes 29 Git operations + 11 workflow combinations with complete CLI alias system and advanced developer productivity tools.",
-  "keywords": ["mcp", "model-context-protocol", "git", "ai", "assistant", "automation", "cli", "workflow", "github", "version-control"],
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "git",
+    "ai",
+    "assistant",
+    "automation",
+    "cli",
+    "workflow",
+    "github",
+    "version-control"
+  ],
   "homepage": "https://github.com/0xshariq/github-mcp-server#readme",
   "repository": {
     "type": "git",
@@ -32,7 +43,6 @@
   "bin": {
     "github-mcp-server": "mcp-cli.js",
     "gms": "mcp-cli.js",
-    
     "gstatus": "mcp-cli.js",
     "gadd": "mcp-cli.js",
     "gcommit": "mcp-cli.js",
@@ -48,7 +58,6 @@
     "gclone": "mcp-cli.js",
     "ginit": "mcp-cli.js",
     "gremote": "mcp-cli.js",
-    
     "gflow": "mcp-cli.js",
     "gquick": "mcp-cli.js",
     "gsync": "mcp-cli.js",
@@ -61,7 +70,6 @@
     "gsave": "mcp-cli.js",
     "glist": "mcp-cli.js",
     "grelease": "mcp-cli.js",
-    
     "gtag": "mcp-cli.js",
     "gmerge": "mcp-cli.js",
     "grebase": "mcp-cli.js",
