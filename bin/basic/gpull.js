@@ -17,7 +17,7 @@
 
 import { spawn } from 'child_process';
 import path from 'path';
-const { validateRepository, showHelp, showRepoContext } = require('../advanced/common');
+import { validateRepository, showHelp, showRepoContext } from '../advanced/common';
 
 // Get command line arguments
 const args = process.argv.slice(2);

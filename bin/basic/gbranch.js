@@ -17,7 +17,10 @@
 
 import { spawn } from 'child_process';
 import path from 'path';
-const { validateRepository, showHelp, showRepoContext } = require('../advanced/common');
+import chalk from 'chalk';
+import common from '../advanced/common.js';
+
+const { validateRepository, showHelp, showRepoContext } = common;
 
 // Get command line arguments
 const args = process.argv.slice(2);

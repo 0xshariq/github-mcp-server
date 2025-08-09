@@ -5,6 +5,7 @@
 
 import { execSync } from 'child_process';
 import path from 'path';
+import chalk from 'chalk';
 
 /**
  * Get current repository information
@@ -34,14 +35,14 @@ function getRepoInfo() {
 function showRepoContext() {
   const info = getRepoInfo();
   if (!info) {
-    console.log('⚠️  Not in a Git repository');
+    console.log(chalk.yellow('⚠️  Not in a Git repository'));
     return false;
   }
   
-  console.log(`📁 Repository: ${info.repoName} (${info.currentDir})`);
-  console.log(`🌿 Branch: ${info.currentBranch}`);
-  console.log(`🔗 Remote: ${info.remoteUrl}`);
-  console.log(`📍 Working Directory: ${info.workingDir}`);
+  console.log(chalk.blue('📁 Repository: ') + chalk.bold.white(info.repoName) + chalk.gray(` (${info.currentDir})`));
+  console.log(chalk.green('🌿 Branch: ') + chalk.bold.cyan(info.currentBranch));
+  console.log(chalk.magenta('🔗 Remote: ') + chalk.dim(info.remoteUrl));
+  console.log(chalk.yellow('📍 Working Directory: ') + chalk.dim(info.workingDir));
   return true;
 }
 
@@ -51,14 +52,14 @@ function showRepoContext() {
 function validateRepository(operation = 'operation') {
   const info = getRepoInfo();
   if (!info) {
-    console.error(`❌ Error: Not in a Git repository`);
-    console.log(`💡 Navigate to your project directory and try again`);
+    console.error(chalk.red(`❌ Error: Not in a Git repository`));
+    console.log(chalk.yellow(`💡 Navigate to your project directory and try again`));
     return false;
   }
   
   // Show context before dangerous operations
   if (operation.includes('push') || operation.includes('flow')) {
-    console.log(`🔍 Repository Context Check:`);
+    console.log(chalk.blue(`🔍 Repository Context Check:`));
     showRepoContext();
     console.log(''); // blank line
   }
@@ -70,17 +71,23 @@ function validateRepository(operation = 'operation') {
  * Standard help header
  */
 function showHelp(command, description, usage, examples = []) {
-  console.log(`
-🚀 ${command} - ${description}
-
-Usage:
-${usage}
-
-Examples:
-${examples.map(ex => `  ${ex}`).join('\n')}
-
-💡 This command respects your current working directory and repository.
-`);
+  console.log();
+  console.log(chalk.bold.cyan(`🚀 ${command}`) + chalk.gray(' - ') + chalk.bold.white(description));
+  console.log(chalk.dim('═'.repeat(50)));
+  console.log();
+  
+  console.log(chalk.bold.yellow('Usage:'));
+  console.log(usage.split('\n').map(line => line.trim() ? chalk.green(line.trim()) : '').join('\n'));
+  console.log();
+  
+  if (examples.length > 0) {
+    console.log(chalk.bold.yellow('Examples:'));
+    examples.forEach(ex => console.log(chalk.blue(`  ${ex}`)));
+    console.log();
+  }
+  
+  console.log(chalk.bold.green('💡 This command respects your current working directory and repository.'));
+  console.log();
 }
 
 export default {

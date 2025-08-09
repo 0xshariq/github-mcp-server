@@ -22,7 +22,7 @@
  */
 
 import { spawn } from 'child_process';
-const { showHelp, validateRepository } = require('../advanced/common');
+import { validateRepository, showHelp } from '../advanced/common';
 
 const args = process.argv.slice(2);
 

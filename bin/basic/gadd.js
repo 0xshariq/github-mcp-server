@@ -2,33 +2,26 @@
 
 import { spawn } from 'child_process';
 import path from 'path';
-
-// Colors for better output
-const colors = {
-  reset: '\x1b[0m',
-  bright: '\x1b[1m',
-  red: '\x1b[31m',
-  green: '\x1b[32m',
-  yellow: '\x1b[33m',
-  blue: '\x1b[34m',
-  cyan: '\x1b[36m'
-};
+import chalk from 'chalk';
 
 function showHelp() {
-  console.log(`
-${colors.cyan}${colors.bright}📝 gadd - Enhanced Git Add Alias${colors.reset}
-
-${colors.yellow}Usage:${colors.reset}
-  gadd                    Add all modified files (smart mode)
-  gadd file1 file2...     Add specific files
-  gadd --help, -h         Show this help
-  gadd --status, -s       Show status before adding
-
-${colors.yellow}Examples:${colors.reset}
-  ${colors.green}gadd${colors.reset}                    Smart add all changes
-  ${colors.green}gadd src/file.js${colors.reset}        Add specific file
-  ${colors.green}gadd -s${colors.reset}                 Check status first
-`);
+  console.log();
+  console.log(chalk.bold.cyan('📝 gadd') + chalk.gray(' - ') + chalk.bold.white('Enhanced Git Add Alias'));
+  console.log(chalk.dim('═'.repeat(50)));
+  console.log();
+  
+  console.log(chalk.bold.yellow('Usage:'));
+  console.log(chalk.green('  gadd') + chalk.gray('                    Add all modified files (smart mode)'));
+  console.log(chalk.green('  gadd file1 file2...') + chalk.gray('     Add specific files'));
+  console.log(chalk.green('  gadd --help, -h') + chalk.gray('         Show this help'));
+  console.log(chalk.green('  gadd --status, -s') + chalk.gray('       Show status before adding'));
+  console.log();
+  
+  console.log(chalk.bold.yellow('Examples:'));
+  console.log(chalk.blue('  gadd') + chalk.gray('                    Smart add all changes'));
+  console.log(chalk.blue('  gadd src/file.js') + chalk.gray('        Add specific file'));
+  console.log(chalk.blue('  gadd -s') + chalk.gray('                 Check status first'));
+  console.log();
 }
 
 async function runCommand(args) {

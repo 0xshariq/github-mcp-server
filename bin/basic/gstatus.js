@@ -17,36 +17,42 @@
 
 import { spawn } from 'child_process';
 import path from 'path';
+import chalk from 'chalk';
 
 // Get command line arguments
 const args = process.argv.slice(2);
 
 // Help functionality
 if (args.includes('-h') || args.includes('--help')) {
-  console.log(`
-📊 gstatus - Enhanced Git Status
-
-Usage:
-  gstatus                 Show complete repository status
-  gstatus --branch        Show current branch information
-  gstatus --remote        Show remote repository information
-  gstatus -h, --help      Show this help
-
-Features:
-  • Repository context (directory, remote URL, current branch)
-  • File change summary
-  • Helpful next-step suggestions
-
-Examples:
-  gstatus                 Complete status overview
-  gstatus --branch        Just branch info
+  console.log();
+  console.log(chalk.bold.cyan('📊 gstatus') + chalk.gray(' - ') + chalk.bold.white('Enhanced Git Status'));
+  console.log(chalk.dim('═'.repeat(50)));
+  console.log();
   
-💡 This shows what repository you're working in to prevent accidents!
-`);
+  console.log(chalk.bold.yellow('Usage:'));
+  console.log(chalk.green('  gstatus') + chalk.gray('                 Show complete repository status'));
+  console.log(chalk.green('  gstatus --branch') + chalk.gray('        Show current branch information'));
+  console.log(chalk.green('  gstatus --remote') + chalk.gray('        Show remote repository information'));
+  console.log(chalk.green('  gstatus -h, --help') + chalk.gray('      Show this help'));
+  console.log();
+  
+  console.log(chalk.bold.magenta('Features:'));
+  console.log(chalk.cyan('  •') + chalk.white(' Repository context (directory, remote URL, current branch)'));
+  console.log(chalk.cyan('  •') + chalk.white(' File change summary'));
+  console.log(chalk.cyan('  •') + chalk.white(' Helpful next-step suggestions'));
+  console.log();
+  
+  console.log(chalk.bold.blue('Examples:'));
+  console.log(chalk.yellow('  gstatus') + chalk.gray('                 Complete status overview'));
+  console.log(chalk.yellow('  gstatus --branch') + chalk.gray('        Just branch info'));
+  console.log();
+  
+  console.log(chalk.bold.green('💡 This shows what repository you\'re working in to prevent accidents!'));
+  console.log();
   process.exit(0);
 }
 
-console.log('📊 Checking repository status...');
+console.log(chalk.bold.cyan('📊 Checking repository status...'));
 
 // Execute git commands directly in current directory
 async function getGitStatus() {

@@ -11,39 +11,27 @@
 import { spawn } from "child_process";
 import fs from "fs";
 import path from "path";
-
-// Colors for better output
-const colors = {
-  reset: "\x1b[0m",
-  bright: "\x1b[1m",
-  red: "\x1b[31m",
-  green: "\x1b[32m",
-  yellow: "\x1b[33m",
-  blue: "\x1b[34m",
-  cyan: "\x1b[36m",
-};
+import chalk from "chalk";
+  
 
 function showHelp() {
-  console.log(`
-${colors.cyan}${colors.bright}🎯 ginit - Enhanced Git Initialize${colors.reset}
-
-${colors.yellow}Usage:${colors.reset}
-  ginit              Initialize new Git repository in current directory
-  ginit --help, -h   Show this help
-
-${colors.yellow}Examples:${colors.reset}
-  ${colors.green}ginit${colors.reset}              Create new Git repository
-
-${colors.yellow}What it does:${colors.reset}
-  • Checks if directory is already a Git repository
-  • Creates .git directory and initializes repository
-  • Sets up initial Git configuration
-
-${colors.yellow}Next steps after ginit:${colors.reset}
-  ${colors.green}gadd ${colors.reset}                      By Default Add all files (If you give file name, it will add that file)
-  ${colors.green}gcommit "Initial commit"${colors.reset}   Create first commit
-  ${colors.green}gremote add origin <url>${colors.reset}   Add remote repository
-`);
+  console.log();
+  console.log(chalk.bold.cyan('🎯 ginit') + chalk.gray(' - ') + chalk.bold.white('Enhanced Git Initialize'));
+  console.log(chalk.dim('═'.repeat(50)));
+  console.log();
+  
+  console.log(chalk.bold.yellow('Usage:'));
+  console.log(chalk.green('  ginit') + chalk.gray('              Initialize new Git repository in current directory'));
+  console.log(chalk.green('  ginit --help, -h') + chalk.gray('   Show this help'));
+  console.log();
+  
+  console.log(chalk.bold.yellow('Examples:'));
+  console.log(chalk.blue('  ginit') + chalk.gray('              Create new Git repository'));
+  console.log();
+  
+  console.log(chalk.bold.yellow('What it does:'));
+  console.log(chalk.cyan('  •') + chalk.white(' Checks if directory is already a Git repository'));
+  console.log(chalk.cyan('  •') + chalk.white(' Creates .git directory and initializes repository'));
 }
 
 function executeGitCommand(gitArgs) {
