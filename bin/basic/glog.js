@@ -15,8 +15,8 @@
  * - Compact display options
  */
 
-const { spawn } = require('child_process');
-const path = require('path');
+import { spawn } from 'child_process';
+import path from 'path';
 const { validateRepository, showHelp } = require('../advanced/common');
 
 // Get command line arguments

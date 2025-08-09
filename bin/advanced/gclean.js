@@ -15,8 +15,8 @@
  * - Detailed cleanup reporting and statistics
  */
 
-const { execSync } = require('child_process');
-const readline = require('readline');
+import { execSync } from 'child_process';
+import readline from 'readline';
 
 function executeGitCommand(command, description) {
     try {
@@ -406,6 +406,6 @@ async function main() {
     }
 }
 
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
     main().catch(console.error);
 }

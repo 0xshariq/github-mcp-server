@@ -13,8 +13,8 @@
  *   --simple      Show simple list without examples
  */
 
-const { spawn } = require('child_process');
-const path = require('path');
+import { spawn } from 'child_process';
+import path from 'path';
 
 // Enhanced tool information with categories, examples, and aliases
 const TOOLS_CATALOG = {

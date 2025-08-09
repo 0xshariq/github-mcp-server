@@ -21,7 +21,7 @@
  *   gremote set-url https://new.url/repo.git upstream
  */
 
-const { spawn } = require('child_process');
+import { spawn } from 'child_process';
 const { showHelp, validateRepository } = require('../advanced/common');
 
 const args = process.argv.slice(2);

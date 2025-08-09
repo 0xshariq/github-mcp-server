@@ -14,8 +14,8 @@
  * - Backup cleanup and management
  */
 
-const { execSync } = require('child_process');
-const path = require('path');
+import { execSync } from 'child_process';
+import path from 'path';
 
 function executeGitCommand(command, description) {
     try {
@@ -379,6 +379,6 @@ function main() {
     }
 }
 
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
     main();
 }

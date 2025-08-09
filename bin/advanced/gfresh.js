@@ -16,8 +16,8 @@
  * - Multiple safety levels
  */
 
-const { spawn } = require('child_process');
-const path = require('path');
+import { spawn } from 'child_process';
+import path from 'path';
 
 // Get the directory where this script is located
 const binDir = __dirname;

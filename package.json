@@ -2,6 +2,7 @@
   "name": "@0xshariq/github-mcp-server",
   "version": "2.0.1",
   "main": "dist/index.js",
+  "type": "module",
   "description": "A comprehensive Model Context Protocol (MCP) server that provides Git repository management capabilities for AI assistants and automation tools. Includes 29 Git operations + 11 workflow combinations with complete CLI alias system and advanced developer productivity tools.",
   "keywords": [
     "mcp",
@@ -80,25 +81,13 @@
   "scripts": {
     "build": "tsc -p .",
     "start": "node dist/index.js",
-    "dev": "tsc -w & node dist/index.js",
-    "dev:build": "tsc && node dist/index.js",
     "inspect": "npx @modelcontextprotocol/inspector node dist/index.js",
-    "clean": "rm -rf dist",
-    "rebuild": "pnpm run clean && pnpm run build",
-    "version": "echo $npm_package_version",
-    "mcp": "node mcp-cli.js",
-    "install:global": "pnpm run build && npm install -g .",
-    "uninstall:global": "npm uninstall -g @0xshariq/github-mcp-server",
-    "dev:install": "pnpm run build && pnpm run install:global",
-    "start:mcp": "node dist/index.js",
-    "prepublishOnly": "npm run build",
-    "postinstall": "npm run build"
+    "clean": "rm -rf dist"
   },
   "dependencies": {
     "@modelcontextprotocol/inspector": "^0.16.1",
     "@modelcontextprotocol/sdk": "^1.15.1",
-    "express": "^5.1.0",
-    "zod": "^4.0.5"
+    "chalk": "^5.5.0"
   },
   "devDependencies": {
     "@types/node": "^24.0.14",

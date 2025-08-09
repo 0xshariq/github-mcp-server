@@ -3,8 +3,8 @@
  * Provides repository validation and safety checks
  */
 
-const { execSync } = require('child_process');
-const path = require('path');
+import { execSync } from 'child_process';
+import path from 'path';
 
 /**
  * Get current repository information
@@ -83,7 +83,7 @@ ${examples.map(ex => `  ${ex}`).join('\n')}
 `);
 }
 
-module.exports = {
+export default {
   getRepoInfo,
   showRepoContext,
   validateRepository,
