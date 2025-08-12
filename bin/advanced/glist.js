@@ -15,6 +15,10 @@
 
 import { spawn } from 'child_process';
 import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Enhanced tool information with categories, examples, and aliases
 const TOOLS_CATALOG = {
@@ -183,35 +187,41 @@ function showCategoryTools(categoryName) {
   });
 }
 
-// Main execution
-const mode = parseArguments();
+async function main() {
+  // Main execution
+  const mode = parseArguments();
 
-if (mode === 'help') {
-  process.exit(0);
-} else if (mode === 'simple') {
-  showSimpleList();
-  process.exit(0);
-} else if (typeof mode === 'object' && mode.type === 'category') {
-  showCategoryTools(mode.value);
-  process.exit(0);
-} else if (mode === 'enhanced') {
-  // Show enhanced help by default
-  showEnhancedHelp();
-  process.exit(0);
+  if (mode === 'help') {
+    process.exit(0);
+  } else if (mode === 'simple') {
+    showSimpleList();
+    process.exit(0);
+  } else if (typeof mode === 'object' && mode.type === 'category') {
+    showCategoryTools(mode.value);
+    process.exit(0);
+  } else if (mode === 'enhanced') {
+    // Show enhanced help by default
+    showEnhancedHelp();
+    process.exit(0);
+  }
+
+  // Fallback to original MCP CLI list command if needed
+  const cliPath = path.join(__dirname, '..', '..', 'mcp-cli.js');
+  const child = spawn('node', [cliPath, 'list'], {
+    stdio: 'inherit',
+    cwd: process.cwd()
+  });
+
+  child.on('error', (error) => {
+    console.error('❌ Error running glist:', error.message);
+    process.exit(1);
+  });
+
+  child.on('exit', (code) => {
+    process.exit(code);
+  });
 }
 
-// Fallback to original MCP CLI list command if needed
-const cliPath = path.join(__dirname, '..', '..', 'mcp-cli.js');
-const child = spawn('node', [cliPath, 'list'], {
-  stdio: 'inherit',
-  cwd: process.cwd()
-});
-
-child.on('error', (error) => {
-  console.error('❌ Error running glist:', error.message);
-  process.exit(1);
-});
-
-child.on('exit', (code) => {
-  process.exit(code);
-});
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main();
+}

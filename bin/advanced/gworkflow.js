@@ -16,6 +16,7 @@
 
 import { execSync } from 'child_process';
 import path from 'path';
+import fs from 'fs';
 
 function executeGitCommand(command, description) {
     try {
@@ -313,7 +314,7 @@ function createReleaseWorkflow(version, options = {}) {
     console.log('\n📝 Step 4: Updating version information');
     try {
         const packagePath = path.join(process.cwd(), 'package.json');
-        if (require('fs').existsSync(packagePath)) {
+        if (fs.existsSync(packagePath)) {
             executeGitCommand(`npm version ${version} --no-git-tag-version`, 'Updating package.json version');
         }
     } catch (error) {

@@ -16,6 +16,7 @@
 
 import { execSync } from 'child_process';
 import path from 'path';
+import fs from 'fs';
 
 function executeGitCommand(command, description) {
     try {
@@ -129,7 +130,7 @@ Message: ${message || 'Automated backup'}
 `;
         
         try {
-            require('fs').writeFileSync('.backup-metadata', metadataContent);
+            fs.writeFileSync('.backup-metadata', metadataContent);
             executeGitCommand('git add .backup-metadata', 'Adding backup metadata');
             executeGitCommand(`git commit -m "Backup: ${message || 'Automated backup'}"`, 'Committing backup');
         } catch (err) {

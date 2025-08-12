@@ -18,9 +18,11 @@
 
 import { spawn } from 'child_process';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
 // Get the directory where this script is located
-const binDir = __dirname;
+const __filename = fileURLToPath(import.meta.url);
+const binDir = path.dirname(__filename);
 
 // Get command line arguments
 const args = process.argv.slice(2);
