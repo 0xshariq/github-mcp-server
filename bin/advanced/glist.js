@@ -187,41 +187,35 @@ function showCategoryTools(categoryName) {
   });
 }
 
-async function main() {
-  // Main execution
-  const mode = parseArguments();
+// Main execution
+const mode = parseArguments();
 
-  if (mode === 'help') {
-    process.exit(0);
-  } else if (mode === 'simple') {
-    showSimpleList();
-    process.exit(0);
-  } else if (typeof mode === 'object' && mode.type === 'category') {
-    showCategoryTools(mode.value);
-    process.exit(0);
-  } else if (mode === 'enhanced') {
-    // Show enhanced help by default
-    showEnhancedHelp();
-    process.exit(0);
-  }
-
-  // Fallback to original MCP CLI list command if needed
-  const cliPath = path.join(__dirname, '..', '..', 'mcp-cli.js');
-  const child = spawn('node', [cliPath, 'list'], {
-    stdio: 'inherit',
-    cwd: process.cwd()
-  });
-
-  child.on('error', (error) => {
-    console.error('❌ Error running glist:', error.message);
-    process.exit(1);
-  });
-
-  child.on('exit', (code) => {
-    process.exit(code);
-  });
+if (mode === 'help') {
+  process.exit(0);
+} else if (mode === 'simple') {
+  showSimpleList();
+  process.exit(0);
+} else if (typeof mode === 'object' && mode.type === 'category') {
+  showCategoryTools(mode.value);
+  process.exit(0);
+} else if (mode === 'enhanced') {
+  // Show enhanced help by default
+  showEnhancedHelp();
+  process.exit(0);
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
-  main();
-}
+// Fallback to original MCP CLI list command if needed
+const cliPath = path.join(__dirname, '..', '..', 'mcp-cli.js');
+const child = spawn('node', [cliPath, 'list'], {
+  stdio: 'inherit',
+  cwd: process.cwd()
+});
+
+child.on('error', (error) => {
+  console.error('❌ Error running glist:', error.message);
+  process.exit(1);
+});
+
+child.on('exit', (code) => {
+  process.exit(code);
+});

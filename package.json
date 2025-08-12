@@ -26,12 +26,12 @@
   },
   "author": {
     "name": "Sharique Chaudhary",
-    "email": "your-email@domain.com",
+    "email": "khanshariq92213@gmail.com",
     "url": "https://github.com/0xshariq"
   },
   "license": "ISC",
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=20.0.0"
   },
   "files": [
     "dist/",
