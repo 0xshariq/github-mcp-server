@@ -64,24 +64,15 @@ function showHelp() {
   console.log(chalk.gray('\n═══════════════════════════════════════════════════════════'));
 }
 
-// Tool catalog with enhanced information
+// Tool catalog with enhanced information - Complete catalog of all 26 aliases
 const TOOLS_CATALOG = {
-  'File Staging': {
-    description: 'Tools for staging and preparing files for commits',
+  'File Staging & Status': {
+    description: 'Tools for staging files and checking repository state',
     icon: '📁',
     basic: [
-      { name: 'gadd', description: 'Stage all or specific files', example: 'gadd', usage: 'gadd [files...]' },
-    ],
-    advanced: []
-  },
-  
-  'Repository Status': {
-    description: 'Check repository state and view changes',
-    icon: '📊',
-    basic: [
+      { name: 'gadd', description: 'Stage all or specific files', example: 'gadd src/', usage: 'gadd [files...]' },
       { name: 'gstatus', description: 'Show repository status', example: 'gstatus', usage: 'gstatus' },
-      { name: 'gdiff', description: 'Show file differences', example: 'gdiff', usage: 'gdiff [commit]' },
-      { name: 'glog', description: 'View commit history', example: 'glog -5', usage: 'glog [count]' }
+      { name: 'gdiff', description: 'Show file differences', example: 'gdiff HEAD', usage: 'gdiff [commit]' }
     ],
     advanced: []
   },
@@ -90,11 +81,12 @@ const TOOLS_CATALOG = {
     description: 'Create and manage commits',
     icon: '📝',
     basic: [
-      { name: 'gcommit', description: 'Create commit with message', example: 'gcommit "fix bug"', usage: 'gcommit "message"' }
+      { name: 'gcommit', description: 'Create commit with message', example: 'gcommit "fix: update API"', usage: 'gcommit "message"' },
+      { name: 'glog', description: 'View commit history', example: 'glog --graph -10', usage: 'glog [options]' }
     ],
     advanced: [
-      { name: 'gquick', description: 'Quick add + commit workflow', example: 'gquick "quick fix"', usage: 'gquick [message]' },
-      { name: 'gsave', description: 'Quick save with smart messaging', example: 'gsave --wip', usage: 'gsave [options]' }
+      { name: 'gquick', description: 'Quick add + commit workflow', example: 'gquick "hotfix: login bug"', usage: 'gquick "message"' },
+      { name: 'gsave', description: 'Quick save with smart messaging', example: 'gsave --wip "debugging"', usage: 'gsave [options]' }
     ]
   },
   
@@ -102,11 +94,11 @@ const TOOLS_CATALOG = {
     description: 'Create, switch, and manage branches',
     icon: '🌿',
     basic: [
-      { name: 'gbranch', description: 'List or create branches', example: 'gbranch feature-auth', usage: 'gbranch [name]' },
-      { name: 'gcheckout', description: 'Switch branches', example: 'gcheckout main', usage: 'gcheckout <branch>' }
+      { name: 'gbranch', description: 'List or create branches', example: 'gbranch feature/auth-system', usage: 'gbranch [name]' },
+      { name: 'gcheckout', description: 'Switch or create branches', example: 'gcheckout -b feature/new-ui', usage: 'gcheckout <branch> [-b]' }
     ],
     advanced: [
-      { name: 'gdev', description: 'Developer workflow manager', example: 'gdev feature-login', usage: 'gdev [branch-name]' }
+      { name: 'gdev', description: 'Developer workflow manager', example: 'gdev feature/user-profile', usage: 'gdev [branch-name]' }
     ]
   },
   
@@ -114,12 +106,12 @@ const TOOLS_CATALOG = {
     description: 'Synchronize with remote repositories',
     icon: '🌐',
     basic: [
-      { name: 'gpush', description: 'Push commits to remote', example: 'gpush', usage: 'gpush' },
-      { name: 'gpull', description: 'Pull changes from remote', example: 'gpull', usage: 'gpull' },
-      { name: 'gremote', description: 'Manage remote connections', example: 'gremote', usage: 'gremote [command]' }
+      { name: 'gpush', description: 'Push commits to remote', example: 'gpush origin main', usage: 'gpush [remote] [branch]' },
+      { name: 'gpull', description: 'Pull changes from remote', example: 'gpull --rebase', usage: 'gpull [options]' },
+      { name: 'gremote', description: 'Manage remote connections', example: 'gremote add upstream url', usage: 'gremote [command] [args]' }
     ],
     advanced: [
-      { name: 'gsync', description: 'Advanced synchronization', example: 'gsync --all', usage: 'gsync [options]' }
+      { name: 'gsync', description: 'Advanced repository synchronization', example: 'gsync --all --prune', usage: 'gsync [options]' }
     ]
   },
   
@@ -127,12 +119,13 @@ const TOOLS_CATALOG = {
     description: 'Manage commit history and recover changes',
     icon: '⏰',
     basic: [
-      { name: 'greset', description: 'Reset repository state', example: 'greset --soft', usage: 'greset [mode]' },
-      { name: 'gstash', description: 'Stash uncommitted changes', example: 'gstash', usage: 'gstash [message]' },
-      { name: 'gpop', description: 'Restore stashed changes', example: 'gpop', usage: 'gpop' }
+      { name: 'greset', description: 'Reset repository state', example: 'greset --soft HEAD~1', usage: 'greset [mode] [commit]' },
+      { name: 'gstash', description: 'Stash uncommitted changes', example: 'gstash "wip: new feature"', usage: 'gstash [message]' },
+      { name: 'gpop', description: 'Restore stashed changes', example: 'gpop stash@{0}', usage: 'gpop [stash-ref]' }
     ],
     advanced: [
-      { name: 'gbackup', description: 'Create repository backups', example: 'gbackup --branch', usage: 'gbackup [strategy]' }
+      { name: 'gbackup', description: 'Create repository backups', example: 'gbackup --branch --tags', usage: 'gbackup [strategy]' },
+      { name: 'gfix', description: 'Fix repository issues', example: 'gfix --conflicts --force', usage: 'gfix [issue-type]' }
     ]
   },
   
@@ -140,31 +133,32 @@ const TOOLS_CATALOG = {
     description: 'Initialize and configure repositories',
     icon: '🏗️',
     basic: [
-      { name: 'ginit', description: 'Initialize new repository', example: 'ginit', usage: 'ginit' },
-      { name: 'gclone', description: 'Clone remote repository', example: 'gclone user/repo', usage: 'gclone <url>' }
+      { name: 'ginit', description: 'Initialize new repository', example: 'ginit --bare', usage: 'ginit [options]' },
+      { name: 'gclone', description: 'Clone remote repository', example: 'gclone user/repo my-folder', usage: 'gclone <url> [dir]' }
     ],
-    advanced: []
-  },
-  
-  'Advanced Workflows': {
-    description: 'Complex development workflows and automation',
-    icon: '⚡',
-    basic: [],
     advanced: [
-      { name: 'gworkflow', description: 'Feature/hotfix workflows', example: 'gworkflow feature auth', usage: 'gworkflow <type> <name>' },
-      { name: 'gflow', description: 'Complete development workflow', example: 'gflow --review', usage: 'gflow [options]' },
-      { name: 'grelease', description: 'Release management', example: 'grelease v1.2.0', usage: 'grelease <version>' }
+      { name: 'gfresh', description: 'Fresh repository setup', example: 'gfresh --clean --deps', usage: 'gfresh [options]' }
     ]
   },
   
-  'Maintenance': {
+  'Workflow Automation': {
+    description: 'Complete development workflows and automation',
+    icon: '⚡',
+    basic: [],
+    advanced: [
+      { name: 'gflow', description: 'Complete add-commit-push workflow', example: 'gflow "feat: add login" src/', usage: 'gflow "message" [files...]' },
+      { name: 'gworkflow', description: 'Feature/hotfix workflows', example: 'gworkflow feature auth-system', usage: 'gworkflow <type> <name>' },
+      { name: 'grelease', description: 'Release management', example: 'grelease v1.2.0 --changelog', usage: 'grelease <version> [options]' },
+      { name: 'glist', description: 'List all available git tools', example: 'glist --advanced --search commit', usage: 'glist [options]' }
+    ]
+  },
+  
+  'Maintenance & Cleanup': {
     description: 'Repository maintenance and cleanup',
     icon: '🧹',
     basic: [],
     advanced: [
-      { name: 'gclean', description: 'Clean repository artifacts', example: 'gclean --branches', usage: 'gclean [options]' },
-      { name: 'gfresh', description: 'Fresh repository setup', example: 'gfresh', usage: 'gfresh' },
-      { name: 'gfix', description: 'Fix repository issues', example: 'gfix --conflicts', usage: 'gfix [issue]' }
+      { name: 'gclean', description: 'Clean repository artifacts', example: 'gclean --branches --cache', usage: 'gclean [options]' }
     ]
   }
 };
@@ -266,9 +260,9 @@ async function main() {
     const availableTools = getAvailableTools();
     const totalTools = availableTools.basic.length + availableTools.advanced.length;
     
-    console.log(chalk.cyan(`\n📊 Tool Summary: ${totalTools} tools available`));
-    console.log(chalk.gray(`   • Basic: ${availableTools.basic.length} tools`));
-    console.log(chalk.gray(`   • Advanced: ${availableTools.advanced.length} tools`));
+    console.log(chalk.cyan(`\n📊 Tool Summary: ${totalTools} tools available (26 total)`));
+    console.log(chalk.gray(`   • Basic: ${availableTools.basic.length} tools (15 available)`));
+    console.log(chalk.gray(`   • Advanced: ${availableTools.advanced.length} tools (11 available)`));
     
     if (searchArg) {
       // Search mode
