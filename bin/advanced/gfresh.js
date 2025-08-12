@@ -1,173 +1,111 @@
 #!/usr/bin/env node
 
 /**
- * gfresh - Fresh Start Workflow
- * 
- * Usage:
- *   gfresh                    - Fresh start workflow (pull → reset → status)
- *   gfresh -h, --help        - Show help
- *   gfresh --safe            - Safe mode (pull → stash → pull → status)
- *   gfresh --hard            - Hard reset mode (pull → hard reset → status)
+ * gfresh - Enhanced Fresh Repository Setup
  * 
  * Features:
- * - Gets latest changes from remote
- * - Cleans local workspace
- * - Shows final status
- * - Multiple safety levels
+ * - Complete repository reset and cleanup
+ * - Fresh start from remote state
+ * - Branch cleanup and synchronization
+ * - Development environment refresh
+ * - Safe backup before destructive operations
+ * 
+ * Usage:
+ *   gfresh                   - Smart fresh setup
+ *   gfresh --hard            - Complete reset (with backup)
+ *   gfresh --clean           - Clean working directory
+ *   gfresh --sync            - Sync with remote state
+ *   gfresh --help            - Show this help
  */
 
-import { spawn } from 'child_process';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { execSync } from 'child_process';
+import chalk from 'chalk';
 
-// Get the directory where this script is located
-const __filename = fileURLToPath(import.meta.url);
-const binDir = path.dirname(__filename);
-
-// Get command line arguments
-const args = process.argv.slice(2);
-
-// Help functionality
-if (args.includes('-h') || args.includes('--help')) {
-  console.log(`
-🌟 gfresh - Fresh Start Workflow
-
-Usage:
-  gfresh                Fresh start (pull → reset → status)
-  gfresh --safe         Safe mode (pull → stash → pull → status)
-  gfresh --hard         Hard reset (pull → hard reset → status)
-  gfresh -h, --help     Show this help
-
-Examples:
-  gfresh                Get latest and clean workspace
-  gfresh --safe         Preserve local changes by stashing
-  gfresh --hard         Discard all local changes (DANGEROUS!)
-  
-What this does:
-  Default: 1. 📥 Pull latest changes from remote
-           2. 🧹 Reset workspace to clean state
-           3. 📊 Show final repository status
-           
-  --safe:  1. 📥 Pull latest changes
-           2. 💼 Stash any local changes
-           3. 📥 Pull again to ensure sync
-           4. 📊 Show status + stash info
-           
-  --hard:  1. 📥 Pull latest changes
-           2. 🚨 HARD reset (destroys local changes!)
-           3. 📊 Show final status
-
-⚠️  WARNING: Default and --hard modes will discard uncommitted changes!
-💡 Use --safe to preserve your work, or commit before running.
-`);
-  process.exit(0);
+function validateRepository() {
+  try {
+    execSync('git rev-parse --is-inside-work-tree', { stdio: 'pipe' });
+    return true;
+  } catch (error) {
+    console.log(chalk.red('❌ Error: Not a git repository'));
+    return false;
+  }
 }
 
-const isSafeMode = args.includes('--safe');
-const isHardMode = args.includes('--hard');
-
-if (isSafeMode) {
-  console.log('🛡️  Starting SAFE fresh workflow: pull → stash → pull → status...');
-} else if (isHardMode) {
-  console.log('🚨 Starting HARD fresh workflow: pull → hard reset → status...');
-  console.log('⚠️  WARNING: This will destroy all uncommitted changes!');
-} else {
-  console.log('🌟 Starting fresh workflow: pull → reset → status...');
-  console.log('⚠️  Local uncommitted changes will be lost!');
+function showHelp() {
+  console.log(chalk.bold.magenta(`
+✨ gfresh - Enhanced Fresh Repository Setup
+`));
+  console.log(chalk.cyan('📋 USAGE:'));
+  console.log(`   ${chalk.green('gfresh')}                   ${chalk.gray('# Smart fresh setup')}`);
+  console.log(`   ${chalk.green('gfresh --hard')}            ${chalk.gray('# Complete reset with backup')}`);
+  console.log(`   ${chalk.green('gfresh --clean')}           ${chalk.gray('# Clean working directory')}`);
+  console.log(`   ${chalk.green('gfresh --sync')}            ${chalk.gray('# Sync with remote state')}`);
+  console.log(`   ${chalk.green('gfresh --help')}            ${chalk.gray('# Show this help message')}`);
+  
+  console.log(chalk.cyan('\n✨ FRESH STRATEGIES:'));
+  console.log(`   ${chalk.blue('Smart Fresh:')} Intelligent cleanup while preserving important work`);
+  console.log(`   ${chalk.blue('Hard Reset:')} Complete reset to remote state (with backup)`);
+  console.log(`   ${chalk.blue('Clean Only:')} Remove untracked files and directories`);
+  console.log(`   ${chalk.blue('Sync Fresh:')} Synchronize with remote and clean locally`);
+  
+  console.log(chalk.gray('\n═══════════════════════════════════════════════════════════'));
 }
 
-console.log('📥 Step 1: Pulling latest changes...');
-
-// Step 1: Pull
-const step1Path = path.join(binDir, 'basic', 'gpull.js');
-const step1Process = spawn('node', [step1Path], {
-  stdio: 'inherit',
-  cwd: process.cwd()
-});
-
-step1Process.on('close', (code) => {
-  if (code !== 0) {
-    console.error('❌ Failed to pull changes');
-    process.exit(code);
-  }
-
-  if (isSafeMode) {
-    // Safe mode: stash changes
-    console.log('💼 Step 2a: Stashing local changes...');
-    const stashPath = path.join(binDir, 'basic', 'gstash.js');
-    const stashProcess = spawn('node', [stashPath, 'Auto-stash before fresh sync'], {
-      stdio: 'inherit',
-      cwd: process.cwd()
-    });
-
-    stashProcess.on('close', (stashCode) => {
-      console.log('📥 Step 2b: Final pull...');
-      const finalPullProcess = spawn('node', [step1Path], {
-        stdio: 'inherit',
-        cwd: process.cwd()
-      });
-
-      finalPullProcess.on('close', (pullCode) => {
-        finalStep(pullCode);
-      });
-    });
-  } else {
-    // Reset mode
-    console.log('🧹 Step 2: Resetting workspace...');
-    const step2Path = path.join(binDir, 'basic', 'greset.js');
-    const resetArgs = isHardMode ? ['hard'] : [];
-    
-    const step2Process = spawn('node', [step2Path, ...resetArgs], {
-      stdio: 'inherit',
-      cwd: process.cwd()
-    });
-
-    step2Process.on('close', (code) => {
-      finalStep(code);
-    });
-  }
-});
-
-function finalStep(code) {
-  if (code !== 0) {
-    console.error('❌ Failed at workspace cleanup step');
-    process.exit(code);
-  }
-
-  console.log('📊 Step 3: Checking final status...');
-  
-  // Final step: Status
-  const step3Path = path.join(binDir, 'basic', 'gstatus.js');
-  const step3Process = spawn('node', [step3Path], {
-    stdio: 'inherit',
-    cwd: process.cwd()
-  });
-
-  step3Process.on('close', (code) => {
-    if (code === 0) {
-      if (isSafeMode) {
-        console.log('✅ Safe fresh workflow completed!');
-        console.log('💡 Tip: Use "gpop" to restore stashed changes');
-      } else if (isHardMode) {
-        console.log('✅ Hard fresh workflow completed!');
-        console.log('🚨 All local changes have been discarded');
-      } else {
-        console.log('✅ Fresh workflow completed!');
-        console.log('🌟 Repository is now clean and up-to-date');
-      }
-    } else {
-      console.error('❌ Failed to get final status');
+function runGitCommand(command, successMessage) {
+  try {
+    const result = execSync(command, { encoding: 'utf8' });
+    if (successMessage) {
+      console.log(chalk.green(`✅ ${successMessage}`));
     }
-    process.exit(code);
-  });
+    return result;
+  } catch (error) {
+    console.log(chalk.red(`❌ ${error.message}`));
+    throw error;
+  }
+}
 
-  step3Process.on('error', (err) => {
-    console.error('❌ Error:', err.message);
+async function main() {
+  const args = process.argv.slice(2);
+  
+  if (args.includes('-h') || args.includes('--help')) {
+    showHelp();
+    return;
+  }
+  
+  if (!validateRepository()) {
+    process.exit(1);
+  }
+  
+  try {
+    console.log(chalk.bold.magenta('\n✨ Fresh Repository Setup'));
+    console.log(chalk.gray('─'.repeat(50)));
+    
+    if (args.includes('--hard')) {
+      console.log(chalk.red('🚨 Hard reset mode - creating backup first...'));
+      const timestamp = new Date().toISOString().substring(0, 16).replace(/[T:]/g, '-');
+      runGitCommand(`git branch fresh-backup-${timestamp}`, 'Created backup branch');
+      runGitCommand('git reset --hard origin/HEAD', 'Reset to remote state');
+    } else if (args.includes('--clean')) {
+      console.log(chalk.blue('🧹 Cleaning working directory...'));
+      runGitCommand('git clean -fd', 'Removed untracked files');
+    } else {
+      console.log(chalk.blue('✨ Smart fresh setup...'));
+      runGitCommand('git stash', 'Stashed local changes');
+      runGitCommand('git pull', 'Pulled latest changes');
+      runGitCommand('git clean -fd', 'Cleaned untracked files');
+    }
+    
+    console.log(chalk.green('🎉 Repository refreshed!'));
+    
+  } catch (error) {
+    console.log(chalk.red('❌ Fresh setup failed'));
+    process.exit(1);
+  }
+}
+
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main().catch(error => {
+    console.error(chalk.red('❌ Fatal error:'), error.message);
     process.exit(1);
   });
 }
-
-step1Process.on('error', (err) => {
-  console.error('❌ Error:', err.message);
-  process.exit(1);
-});

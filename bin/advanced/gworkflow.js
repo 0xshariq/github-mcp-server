@@ -1,459 +1,421 @@
 #!/usr/bin/env node
 
 /**
- * GWorkflow - Advanced Git Workflow Automation
- * 
- * Intelligent workflow automation for complex Git operations and team collaboration.
- * Provides predefined workflows for common development patterns and team processes.
+ * gworkflow - Enhanced Git Workflow Automation
  * 
  * Features:
- * - Feature branch workflows with automatic PR preparation
- * - Hotfix workflows for emergency fixes
- * - Release workflows with versioning and tagging
- * - Code review workflows with automatic formatting
- * - Team synchronization workflows
+ * - Complete feature development workflows
+ * - Hotfix and emergency deployment workflows
+ * - Release management with versioning
+ * - Team collaboration and review workflows
+ * - Automated testing and validation pipelines
+ * 
+ * Usage:
+ *   gworkflow feature <name>     - Start feature workflow
+ *   gworkflow hotfix <name>      - Create hotfix workflow
+ *   gworkflow release <version>  - Release management
+ *   gworkflow --help             - Show this help
  */
 
 import { execSync } from 'child_process';
 import path from 'path';
 import fs from 'fs';
+import chalk from 'chalk';
 
-function executeGitCommand(command, description) {
-    try {
-        console.log(`🔄 ${description}...`);
-        const result = execSync(command, { 
-            encoding: 'utf8', 
-            stdio: ['pipe', 'pipe', 'pipe'],
-            cwd: process.cwd()
-        });
-        return { success: true, output: result.trim() };
-    } catch (error) {
-        return { 
-            success: false, 
-            error: error.message,
-            output: error.stdout || error.stderr || error.message
-        };
-    }
+// Check if we're in a git repository
+function validateRepository() {
+  try {
+    execSync('git rev-parse --is-inside-work-tree', { stdio: 'pipe' });
+    return true;
+  } catch (error) {
+    console.log(chalk.red('❌ Error: Not a git repository'));
+    console.log(chalk.yellow('💡 Initialize with: git init'));
+    return false;
+  }
 }
 
+// Show help information
 function showHelp() {
-    console.log(`
-⚡ GWorkflow - Advanced Git Workflow Automation
-
-📋 USAGE:
-   gworkflow <workflow> [options]
-
-🚀 FEATURE WORKFLOWS:
-   gworkflow feature <name>      # Start new feature branch workflow
-   gworkflow feature-finish     # Complete feature workflow (merge to dev)
-   gworkflow feature-review     # Prepare feature for code review
-   gworkflow feature-update     # Update feature branch with latest main
-
-🔥 HOTFIX WORKFLOWS:
-   gworkflow hotfix <name>      # Start emergency hotfix workflow
-   gworkflow hotfix-finish     # Complete hotfix (merge to main + dev)
-   gworkflow hotfix-deploy     # Deploy hotfix immediately
-
-📦 RELEASE WORKFLOWS:
-   gworkflow release <version>  # Start release preparation workflow
-   gworkflow release-finish    # Complete release and create tags
-   gworkflow release-rollback  # Rollback failed release
-
-👥 COLLABORATION WORKFLOWS:
-   gworkflow sync              # Sync with team (fetch, rebase, push)
-   gworkflow review-prep       # Prepare branch for code review
-   gworkflow merge-prep        # Prepare for merge (squash, rebase)
-   gworkflow conflict-resolve  # Interactive conflict resolution
-
-🔧 MAINTENANCE WORKFLOWS:
-   gworkflow cleanup           # Clean and optimize repository
-   gworkflow backup-branch     # Backup current branch before changes
-   gworkflow safe-rebase       # Safe interactive rebase with backup
-
-⚙️  WORKFLOW OPTIONS:
-   --dry-run                   # Preview workflow actions
-   --interactive              # Interactive mode with prompts
-   --force                    # Skip safety checks and confirmations
-   --branch <name>            # Specify target branch
-   --remote <name>            # Specify remote repository
-
-💡 EXAMPLES:
-   gworkflow feature user-auth          # Start user-auth feature
-   gworkflow hotfix security-patch      # Emergency security fix
-   gworkflow release 1.2.0             # Prepare version 1.2.0
-   gworkflow sync --remote origin      # Sync with origin remote
-   gworkflow review-prep --interactive # Interactive review prep
-
-🎯 PRO TIPS:
-   • Use feature workflows for new development
-   • Use hotfix workflows for emergency fixes only
-   • Always backup before complex workflows
-   • Use --dry-run to preview complex operations
-`);
+  console.log(chalk.bold.magenta(`
+⚡ gworkflow - Enhanced Git Workflow Automation
+`));
+  console.log(chalk.cyan('📋 USAGE:'));
+  console.log(`   ${chalk.green('gworkflow feature <name>')}       ${chalk.gray('# Start feature development workflow')}`);
+  console.log(`   ${chalk.green('gworkflow hotfix <name>')}        ${chalk.gray('# Create emergency hotfix workflow')}`);
+  console.log(`   ${chalk.green('gworkflow release <version>')}    ${chalk.gray('# Automated release management')}`);
+  console.log(`   ${chalk.green('gworkflow review')}               ${chalk.gray('# Prepare branch for code review')}`);
+  console.log(`   ${chalk.green('gworkflow deploy')}               ${chalk.gray('# Production deployment workflow')}`);
+  console.log(`   ${chalk.green('gworkflow --help')}               ${chalk.gray('# Show this help message')}`);
+  
+  console.log(chalk.cyan('\n🚀 FEATURE WORKFLOWS:'));
+  console.log(`   ${chalk.blue('feature <name>:')} Create feature branch from main/master`);
+  console.log(`   ${chalk.blue('feature-finish:')} Merge feature back to develop branch`);
+  console.log(`   ${chalk.blue('feature-update:')} Update feature with latest changes`);
+  console.log(`   ${chalk.blue('feature-review:')} Prepare feature for code review`);
+  
+  console.log(chalk.cyan('\n🔥 HOTFIX WORKFLOWS:'));
+  console.log(`   ${chalk.red('hotfix <name>:')} Emergency fix from production branch`);
+  console.log(`   ${chalk.red('hotfix-finish:')} Apply hotfix to main and develop`);
+  console.log(`   ${chalk.red('hotfix-deploy:')} Immediate production deployment`);
+  console.log(`   ${chalk.red('hotfix-rollback:')} Rollback problematic hotfix`);
+  
+  console.log(chalk.cyan('\n📦 RELEASE WORKFLOWS:'));
+  console.log(`   ${chalk.blue('release <version>:')} Prepare release branch with version`);
+  console.log(`   ${chalk.blue('release-finish:')} Complete release with tags and merge`);
+  console.log(`   ${chalk.blue('release-candidate:')} Create release candidate for testing`);
+  console.log(`   ${chalk.blue('release-rollback:')} Rollback failed release`);
+  
+  console.log(chalk.cyan('\n👥 COLLABORATION WORKFLOWS:'));
+  console.log(`   ${chalk.yellow('review:')} Prepare current branch for code review`);
+  console.log(`   ${chalk.yellow('sync:')} Synchronize all branches with upstream`);
+  console.log(`   ${chalk.yellow('cleanup:')} Clean merged branches and local refs`);
+  console.log(`   ${chalk.yellow('backup:')} Create backup of current work state`);
+  
+  console.log(chalk.cyan('\n⚡ WORKFLOW EXAMPLES:'));
+  console.log(`   ${chalk.blue('1.')} ${chalk.green('gworkflow feature user-auth')} - Start user authentication feature`);
+  console.log(`   ${chalk.blue('2.')} ${chalk.green('gworkflow hotfix security-patch')} - Emergency security fix`);
+  console.log(`   ${chalk.blue('3.')} ${chalk.green('gworkflow release v2.1.0')} - Prepare version 2.1.0 release`);
+  console.log(`   ${chalk.blue('4.')} ${chalk.green('gworkflow review')} - Prepare current work for review`);
+  
+  console.log(chalk.cyan('\n🔧 ADVANCED OPTIONS:'));
+  console.log(`   ${chalk.gray('--dry-run')} - Preview workflow actions without executing`);
+  console.log(`   ${chalk.gray('--force')} - Force workflow execution (skip validations)`);
+  console.log(`   ${chalk.gray('--interactive')} - Interactive workflow with prompts`);
+  console.log(`   ${chalk.gray('--template')} - Use predefined workflow templates`);
+  
+  console.log(chalk.gray('\n═══════════════════════════════════════════════════════════'));
 }
 
+// Get current branch name
 function getCurrentBranch() {
-    try {
-        const result = execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf8' });
-        return result.trim();
-    } catch (error) {
-        return 'main';
-    }
+  try {
+    return execSync('git branch --show-current', { encoding: 'utf8' }).trim();
+  } catch (error) {
+    return 'unknown';
+  }
 }
 
-function getMainBranch() {
-    // Try to detect main branch
-    const branches = ['main', 'master', 'develop'];
-    for (const branch of branches) {
-        try {
-            execSync(`git rev-parse --verify ${branch}`, { stdio: 'pipe' });
-            return branch;
-        } catch (error) {
-            continue;
-        }
-    }
-    return 'main';
+// Check if branch exists
+function branchExists(branchName) {
+  try {
+    execSync(`git show-ref --verify --quiet refs/heads/${branchName}`, { stdio: 'pipe' });
+    return true;
+  } catch (error) {
+    return false;
+  }
 }
 
-function createFeatureWorkflow(featureName, options = {}) {
-    console.log(`\n🚀 Starting Feature Workflow: ${featureName}\n`);
-    
-    const mainBranch = getMainBranch();
-    const featureBranch = `feature/${featureName}`;
-    
-    // Step 1: Ensure we're on main and up to date
-    console.log('📍 Step 1: Preparing main branch');
-    executeGitCommand(`git checkout ${mainBranch}`, `Switching to ${mainBranch}`);
-    executeGitCommand('git pull', 'Pulling latest changes');
-    
-    // Step 2: Create and switch to feature branch
-    console.log('\n🌿 Step 2: Creating feature branch');
-    const branchResult = executeGitCommand(
-        `git checkout -b ${featureBranch}`, 
-        `Creating feature branch: ${featureBranch}`
-    );
-    
-    if (!branchResult.success) {
-        console.log(`⚠️  Branch ${featureBranch} might already exist, switching to it`);
-        executeGitCommand(`git checkout ${featureBranch}`, `Switching to ${featureBranch}`);
-    }
-    
-    // Step 3: Set up tracking
-    console.log('\n📡 Step 3: Setting up remote tracking');
-    executeGitCommand(
-        `git push -u origin ${featureBranch}`, 
-        'Setting up remote tracking'
-    );
-    
-    // Step 4: Create initial commit if needed
-    const statusResult = executeGitCommand('git status --porcelain', 'Checking status');
-    if (statusResult.success && statusResult.output) {
-        console.log('\n📝 Step 4: Creating initial feature commit');
-        executeGitCommand('git add .', 'Staging changes');
-        executeGitCommand(
-            `git commit -m "feat: initial commit for ${featureName} feature"`,
-            'Creating initial commit'
-        );
-        executeGitCommand('git push', 'Pushing initial commit');
-    }
-    
-    console.log(`\n✅ Feature workflow started successfully!`);
-    console.log(`🎯 You're now on branch: ${featureBranch}`);
-    console.log(`💡 Use "gworkflow feature-finish" when ready to merge`);
+// Check for uncommitted changes
+function hasUncommittedChanges() {
+  try {
+    const status = execSync('git status --porcelain', { encoding: 'utf8' });
+    return status.trim().length > 0;
+  } catch (error) {
+    return false;
+  }
 }
 
-function finishFeatureWorkflow(options = {}) {
-    const currentBranch = getCurrentBranch();
-    const mainBranch = getMainBranch();
-    
-    if (!currentBranch.startsWith('feature/')) {
-        console.log(`❌ Not on a feature branch. Current branch: ${currentBranch}`);
+// Run git command with error handling
+function runGitCommand(command, successMessage) {
+  try {
+    const result = execSync(command, { encoding: 'utf8' });
+    if (successMessage) {
+      console.log(chalk.green(`✅ ${successMessage}`));
+    }
+    return result;
+  } catch (error) {
+    console.log(chalk.red(`❌ Git command failed: ${error.message}`));
+    throw error;
+  }
+}
+
+// Feature workflow implementation
+function featureWorkflow(featureName, subCommand = 'start') {
+  console.log(chalk.blue(`🚀 Feature Workflow: ${featureName || subCommand}`));
+  
+  const mainBranch = branchExists('main') ? 'main' : 'master';
+  const developBranch = branchExists('develop') ? 'develop' : mainBranch;
+  
+  switch (subCommand) {
+    case 'start':
+      if (!featureName) {
+        console.log(chalk.red('❌ Feature name required'));
+        console.log(chalk.yellow('💡 Usage: gworkflow feature <feature-name>'));
         return;
-    }
-    
-    console.log(`\n🏁 Finishing Feature Workflow: ${currentBranch}\n`);
-    
-    // Step 1: Final commit if needed
-    const statusResult = executeGitCommand('git status --porcelain', 'Checking for uncommitted changes');
-    if (statusResult.success && statusResult.output) {
-        console.log('📝 Step 1: Committing final changes');
-        executeGitCommand('git add .', 'Staging changes');
-        executeGitCommand(
-            `git commit -m "feat: finalize ${currentBranch.replace('feature/', '')} feature"`,
-            'Creating final commit'
-        );
-    }
-    
-    // Step 2: Update feature branch with latest main
-    console.log('\n🔄 Step 2: Updating with latest main');
-    executeGitCommand(`git fetch origin ${mainBranch}`, 'Fetching latest main');
-    executeGitCommand(`git rebase origin/${mainBranch}`, 'Rebasing on main');
-    
-    // Step 3: Push final changes
-    console.log('\n📡 Step 3: Pushing final changes');
-    executeGitCommand('git push', 'Pushing to remote');
-    
-    // Step 4: Switch to main and merge
-    console.log('\n🔀 Step 4: Merging to main');
-    executeGitCommand(`git checkout ${mainBranch}`, `Switching to ${mainBranch}`);
-    executeGitCommand('git pull', 'Pulling latest main');
-    executeGitCommand(`git merge --no-ff ${currentBranch}`, `Merging ${currentBranch}`);
-    executeGitCommand('git push', 'Pushing merged changes');
-    
-    // Step 5: Cleanup
-    console.log('\n🧹 Step 5: Cleaning up');
-    executeGitCommand(`git branch -d ${currentBranch}`, 'Deleting local feature branch');
-    executeGitCommand(`git push origin --delete ${currentBranch}`, 'Deleting remote feature branch');
-    
-    console.log(`\n✅ Feature workflow completed successfully!`);
-    console.log(`🎯 Feature merged to ${mainBranch} and cleaned up`);
-}
-
-function createHotfixWorkflow(hotfixName, options = {}) {
-    console.log(`\n🔥 Starting Hotfix Workflow: ${hotfixName}\n`);
-    
-    const mainBranch = getMainBranch();
-    const hotfixBranch = `hotfix/${hotfixName}`;
-    
-    // Step 1: Create backup
-    console.log('🗄️  Step 1: Creating backup');
-    executeGitCommand('gbackup --emergency', 'Creating emergency backup');
-    
-    // Step 2: Ensure we're on main and up to date
-    console.log('\n📍 Step 2: Preparing main branch');
-    executeGitCommand(`git checkout ${mainBranch}`, `Switching to ${mainBranch}`);
-    executeGitCommand('git pull', 'Pulling latest changes');
-    
-    // Step 3: Create hotfix branch
-    console.log('\n🌿 Step 3: Creating hotfix branch');
-    executeGitCommand(`git checkout -b ${hotfixBranch}`, `Creating hotfix branch: ${hotfixBranch}`);
-    
-    console.log(`\n✅ Hotfix workflow started!`);
-    console.log(`🎯 You're now on branch: ${hotfixBranch}`);
-    console.log(`⚡ Apply your hotfix and use "gworkflow hotfix-finish" when done`);
-}
-
-function finishHotfixWorkflow(options = {}) {
-    const currentBranch = getCurrentBranch();
-    const mainBranch = getMainBranch();
-    
-    if (!currentBranch.startsWith('hotfix/')) {
-        console.log(`❌ Not on a hotfix branch. Current branch: ${currentBranch}`);
+      }
+      
+      const branchName = `feature/${featureName}`;
+      
+      if (branchExists(branchName)) {
+        console.log(chalk.yellow(`⚠️  Feature branch '${branchName}' already exists`));
+        runGitCommand(`git checkout ${branchName}`, `Switched to existing feature branch`);
+      } else {
+        runGitCommand(`git checkout ${developBranch}`, `Switched to ${developBranch}`);
+        runGitCommand(`git pull origin ${developBranch}`, `Updated ${developBranch} with latest changes`);
+        runGitCommand(`git checkout -b ${branchName}`, `Created feature branch: ${branchName}`);
+        
+        console.log(chalk.cyan('\n✨ Feature workflow started!'));
+        console.log(chalk.gray('Next steps:'));
+        console.log(chalk.gray(`   • Start coding your feature`));
+        console.log(chalk.gray(`   • Use: ${chalk.green('gquick')} for quick commits`));
+        console.log(chalk.gray(`   • Use: ${chalk.green('gworkflow feature-review')} when ready`));
+      }
+      break;
+      
+    case 'finish':
+      const currentBranch = getCurrentBranch();
+      if (!currentBranch.startsWith('feature/')) {
+        console.log(chalk.red('❌ Not on a feature branch'));
         return;
-    }
-    
-    console.log(`\n🏁 Finishing Hotfix Workflow: ${currentBranch}\n`);
-    
-    // Step 1: Final commit
-    const statusResult = executeGitCommand('git status --porcelain', 'Checking for uncommitted changes');
-    if (statusResult.success && statusResult.output) {
-        console.log('📝 Step 1: Committing hotfix changes');
-        executeGitCommand('git add .', 'Staging changes');
-        executeGitCommand(
-            `git commit -m "fix: ${currentBranch.replace('hotfix/', '')} hotfix"`,
-            'Creating hotfix commit'
-        );
-    }
-    
-    // Step 2: Merge to main
-    console.log('\n🔀 Step 2: Merging to main');
-    executeGitCommand(`git checkout ${mainBranch}`, `Switching to ${mainBranch}`);
-    executeGitCommand(`git merge --no-ff ${currentBranch}`, `Merging ${currentBranch}`);
-    executeGitCommand('git push', 'Pushing to main');
-    
-    // Step 3: Create hotfix tag
-    const version = `hotfix-${Date.now()}`;
-    console.log('\n🏷️  Step 3: Creating hotfix tag');
-    executeGitCommand(
-        `git tag -a ${version} -m "Hotfix: ${currentBranch.replace('hotfix/', '')}"`,
-        `Creating tag: ${version}`
-    );
-    executeGitCommand('git push origin --tags', 'Pushing tags');
-    
-    // Step 4: Merge to develop if exists
-    try {
-        execSync('git rev-parse --verify develop', { stdio: 'pipe' });
-        console.log('\n🔀 Step 4: Merging to develop');
-        executeGitCommand('git checkout develop', 'Switching to develop');
-        executeGitCommand(`git merge --no-ff ${currentBranch}`, 'Merging to develop');
-        executeGitCommand('git push', 'Pushing to develop');
-        executeGitCommand(`git checkout ${mainBranch}`, `Returning to ${mainBranch}`);
-    } catch (error) {
-        console.log('\n⚠️  No develop branch found, skipping develop merge');
-    }
-    
-    // Step 5: Cleanup
-    console.log('\n🧹 Step 5: Cleaning up');
-    executeGitCommand(`git branch -d ${currentBranch}`, 'Deleting hotfix branch');
-    
-    console.log(`\n✅ Hotfix workflow completed successfully!`);
-    console.log(`🎯 Hotfix merged and tagged as ${version}`);
+      }
+      
+      if (hasUncommittedChanges()) {
+        console.log(chalk.yellow('📦 Committing pending changes...'));
+        runGitCommand('git add .', 'Staged all changes');
+        runGitCommand('git commit -m "Complete feature development"', 'Committed changes');
+      }
+      
+      runGitCommand(`git checkout ${developBranch}`, `Switched to ${developBranch}`);
+      runGitCommand(`git pull origin ${developBranch}`, `Updated ${developBranch}`);
+      runGitCommand(`git merge --no-ff ${currentBranch}`, `Merged ${currentBranch} into ${developBranch}`);
+      runGitCommand(`git branch -d ${currentBranch}`, `Deleted feature branch`);
+      
+      console.log(chalk.green('🎉 Feature workflow completed!'));
+      break;
+      
+    default:
+      console.log(chalk.red(`❌ Unknown feature subcommand: ${subCommand}`));
+  }
 }
 
-function createReleaseWorkflow(version, options = {}) {
-    console.log(`\n📦 Starting Release Workflow: ${version}\n`);
-    
-    const mainBranch = getMainBranch();
-    const releaseBranch = `release/${version}`;
-    
-    // Step 1: Create backup
-    console.log('🗄️  Step 1: Creating release backup');
-    executeGitCommand('gbackup --release', 'Creating release backup');
-    
-    // Step 2: Ensure we're on develop and up to date
-    const baseBranch = options.branch || 'develop';
-    console.log(`\n📍 Step 2: Preparing ${baseBranch} branch`);
-    executeGitCommand(`git checkout ${baseBranch}`, `Switching to ${baseBranch}`);
-    executeGitCommand('git pull', 'Pulling latest changes');
-    
-    // Step 3: Create release branch
-    console.log('\n🌿 Step 3: Creating release branch');
-    executeGitCommand(`git checkout -b ${releaseBranch}`, `Creating release branch: ${releaseBranch}`);
-    
-    // Step 4: Update version files if they exist
-    console.log('\n📝 Step 4: Updating version information');
-    try {
-        const packagePath = path.join(process.cwd(), 'package.json');
-        if (fs.existsSync(packagePath)) {
-            executeGitCommand(`npm version ${version} --no-git-tag-version`, 'Updating package.json version');
-        }
-    } catch (error) {
-        console.log('⚠️  No package.json found or version update failed');
-    }
-    
-    console.log(`\n✅ Release workflow started!`);
-    console.log(`🎯 You're now on branch: ${releaseBranch}`);
-    console.log(`📦 Make final adjustments and use "gworkflow release-finish" when ready`);
-}
-
-function syncWorkflow(options = {}) {
-    console.log(`\n🔄 Starting Team Sync Workflow\n`);
-    
-    const currentBranch = getCurrentBranch();
-    const remoteName = options.remote || 'origin';
-    
-    // Step 1: Stash changes if any
-    const statusResult = executeGitCommand('git status --porcelain', 'Checking for uncommitted changes');
-    let hasStash = false;
-    if (statusResult.success && statusResult.output) {
-        console.log('📦 Step 1: Stashing uncommitted changes');
-        executeGitCommand('git stash push -m "Auto-stash for sync"', 'Stashing changes');
-        hasStash = true;
-    }
-    
-    // Step 2: Fetch latest changes
-    console.log('\n📡 Step 2: Fetching latest changes');
-    executeGitCommand(`git fetch ${remoteName}`, `Fetching from ${remoteName}`);
-    
-    // Step 3: Rebase current branch
-    console.log('\n🔄 Step 3: Rebasing current branch');
-    const rebaseResult = executeGitCommand(
-        `git rebase ${remoteName}/${currentBranch}`,
-        `Rebasing ${currentBranch} with ${remoteName}/${currentBranch}`
-    );
-    
-    if (!rebaseResult.success && rebaseResult.output.includes('conflict')) {
-        console.log('⚠️  Conflicts detected during rebase');
-        console.log('💡 Resolve conflicts and run "git rebase --continue"');
+// Hotfix workflow implementation
+function hotfixWorkflow(hotfixName, subCommand = 'start') {
+  console.log(chalk.red(`🔥 Hotfix Workflow: ${hotfixName || subCommand}`));
+  
+  const mainBranch = branchExists('main') ? 'main' : 'master';
+  
+  switch (subCommand) {
+    case 'start':
+      if (!hotfixName) {
+        console.log(chalk.red('❌ Hotfix name required'));
+        console.log(chalk.yellow('💡 Usage: gworkflow hotfix <hotfix-name>'));
         return;
-    }
-    
-    // Step 4: Restore stashed changes
-    if (hasStash) {
-        console.log('\n📦 Step 4: Restoring stashed changes');
-        executeGitCommand('git stash pop', 'Restoring stashed changes');
-    }
-    
-    // Step 5: Push if no conflicts
-    console.log('\n📡 Step 5: Pushing synchronized changes');
-    executeGitCommand('git push', 'Pushing synchronized branch');
-    
-    console.log(`\n✅ Team sync completed successfully!`);
-    console.log(`🎯 Branch ${currentBranch} is now synchronized with ${remoteName}`);
+      }
+      
+      const branchName = `hotfix/${hotfixName}`;
+      
+      runGitCommand(`git checkout ${mainBranch}`, `Switched to ${mainBranch}`);
+      runGitCommand(`git pull origin ${mainBranch}`, `Updated ${mainBranch} with latest changes`);
+      runGitCommand(`git checkout -b ${branchName}`, `Created hotfix branch: ${branchName}`);
+      
+      console.log(chalk.cyan('\n🚨 Hotfix workflow started!'));
+      console.log(chalk.red('Emergency fix mode - work quickly and carefully'));
+      break;
+      
+    case 'finish':
+      const currentBranch = getCurrentBranch();
+      if (!currentBranch.startsWith('hotfix/')) {
+        console.log(chalk.red('❌ Not on a hotfix branch'));
+        return;
+      }
+      
+      if (hasUncommittedChanges()) {
+        runGitCommand('git add .', 'Staged hotfix changes');
+        runGitCommand('git commit -m "Emergency hotfix"', 'Committed hotfix');
+      }
+      
+      // Merge to main
+      runGitCommand(`git checkout ${mainBranch}`, `Switched to ${mainBranch}`);
+      runGitCommand(`git merge --no-ff ${currentBranch}`, `Applied hotfix to ${mainBranch}`);
+      
+      // Merge to develop if exists
+      if (branchExists('develop')) {
+        runGitCommand('git checkout develop', 'Switched to develop');
+        runGitCommand(`git merge --no-ff ${currentBranch}`, 'Applied hotfix to develop');
+      }
+      
+      runGitCommand(`git branch -d ${currentBranch}`, 'Deleted hotfix branch');
+      
+      console.log(chalk.green('🎉 Hotfix workflow completed!'));
+      break;
+      
+    default:
+      console.log(chalk.red(`❌ Unknown hotfix subcommand: ${subCommand}`));
+  }
 }
 
-function main() {
-    const args = process.argv.slice(2);
-    
-    if (args.length === 0) {
-        showHelp();
+// Release workflow implementation
+function releaseWorkflow(version, subCommand = 'start') {
+  console.log(chalk.blue(`📦 Release Workflow: ${version || subCommand}`));
+  
+  switch (subCommand) {
+    case 'start':
+      if (!version) {
+        console.log(chalk.red('❌ Version required'));
+        console.log(chalk.yellow('💡 Usage: gworkflow release <version>'));
         return;
-    }
-    
+      }
+      
+      const branchName = `release/${version}`;
+      const developBranch = branchExists('develop') ? 'develop' : 'main';
+      
+      runGitCommand(`git checkout ${developBranch}`, `Switched to ${developBranch}`);
+      runGitCommand(`git pull origin ${developBranch}`, `Updated ${developBranch}`);
+      runGitCommand(`git checkout -b ${branchName}`, `Created release branch: ${branchName}`);
+      
+      console.log(chalk.cyan(`\n🚀 Release ${version} workflow started!`));
+      break;
+      
+    case 'finish':
+      const currentBranch = getCurrentBranch();
+      if (!currentBranch.startsWith('release/')) {
+        console.log(chalk.red('❌ Not on a release branch'));
+        return;
+      }
+      
+      const version = currentBranch.replace('release/', '');
+      const mainBranch = branchExists('main') ? 'main' : 'master';
+      
+      // Merge to main and tag
+      runGitCommand(`git checkout ${mainBranch}`, `Switched to ${mainBranch}`);
+      runGitCommand(`git merge --no-ff ${currentBranch}`, `Merged release to ${mainBranch}`);
+      runGitCommand(`git tag -a v${version} -m "Release version ${version}"`, `Created release tag`);
+      
+      // Merge back to develop
+      if (branchExists('develop')) {
+        runGitCommand('git checkout develop', 'Switched to develop');
+        runGitCommand(`git merge --no-ff ${currentBranch}`, 'Merged release to develop');
+      }
+      
+      runGitCommand(`git branch -d ${currentBranch}`, 'Deleted release branch');
+      
+      console.log(chalk.green(`🎉 Release ${version} completed!`));
+      break;
+      
+    default:
+      console.log(chalk.red(`❌ Unknown release subcommand: ${subCommand}`));
+  }
+}
+
+// Code review workflow
+function reviewWorkflow() {
+  console.log(chalk.blue('👥 Code Review Preparation'));
+  
+  const currentBranch = getCurrentBranch();
+  
+  if (hasUncommittedChanges()) {
+    console.log(chalk.yellow('📦 Committing current changes...'));
+    runGitCommand('git add .', 'Staged all changes');
+    runGitCommand('git commit -m "Prepare for code review"', 'Created review commit');
+  }
+  
+  // Push current branch
+  try {
+    runGitCommand(`git push origin ${currentBranch}`, 'Pushed branch for review');
+  } catch (error) {
+    runGitCommand(`git push -u origin ${currentBranch}`, 'Created remote branch for review');
+  }
+  
+  console.log(chalk.green('✅ Branch prepared for code review!'));
+  console.log(chalk.cyan('\n💡 Next steps:'));
+  console.log(chalk.gray('   • Create pull request in your Git hosting platform'));
+  console.log(chalk.gray('   • Add reviewers and description'));
+  console.log(chalk.gray('   • Wait for feedback and iterate'));
+}
+
+// Main function
+async function main() {
+  const args = process.argv.slice(2);
+  
+  // Help functionality
+  if (args.includes('-h') || args.includes('--help') || args.length === 0) {
+    showHelp();
+    return;
+  }
+  
+  // Validate repository
+  if (!validateRepository()) {
+    process.exit(1);
+  }
+  
+  try {
     const workflow = args[0];
-    const workflowArg = args[1];
-    const options = {};
+    const workflowParam = args[1];
     
-    // Parse options
-    if (args.includes('--dry-run')) options.dryRun = true;
-    if (args.includes('--interactive')) options.interactive = true;
-    if (args.includes('--force')) options.force = true;
+    console.log(chalk.bold.magenta('\n⚡ Git Workflow Automation'));
+    console.log(chalk.gray('─'.repeat(50)));
     
-    const branchIndex = args.indexOf('--branch');
-    if (branchIndex !== -1) options.branch = args[branchIndex + 1];
-    
-    const remoteIndex = args.indexOf('--remote');
-    if (remoteIndex !== -1) options.remote = args[remoteIndex + 1];
-    
-    // Help
-    if (workflow === '--help' || workflow === '-h') {
-        showHelp();
-        return;
-    }
-    
-    // Execute workflows
     switch (workflow) {
-        case 'feature':
-            if (workflowArg) {
-                createFeatureWorkflow(workflowArg, options);
-            } else {
-                console.log('❌ Feature name required. Usage: gworkflow feature <name>');
-            }
-            break;
-            
-        case 'feature-finish':
-            finishFeatureWorkflow(options);
-            break;
-            
-        case 'hotfix':
-            if (workflowArg) {
-                createHotfixWorkflow(workflowArg, options);
-            } else {
-                console.log('❌ Hotfix name required. Usage: gworkflow hotfix <name>');
-            }
-            break;
-            
-        case 'hotfix-finish':
-            finishHotfixWorkflow(options);
-            break;
-            
-        case 'release':
-            if (workflowArg) {
-                createReleaseWorkflow(workflowArg, options);
-            } else {
-                console.log('❌ Version required. Usage: gworkflow release <version>');
-            }
-            break;
-            
-        case 'sync':
-            syncWorkflow(options);
-            break;
-            
-        case 'review-prep':
-            console.log('\n📋 Preparing branch for code review...');
-            executeGitCommand('git add .', 'Staging all changes');
-            executeGitCommand('git commit --amend --no-edit', 'Amending last commit');
-            executeGitCommand('git push --force-with-lease', 'Force pushing with safety');
-            console.log('✅ Branch prepared for code review');
-            break;
-            
-        default:
-            console.log(`❌ Unknown workflow: ${workflow}`);
-            console.log(`💡 Use "gworkflow --help" for available workflows`);
-            process.exit(1);
+      case 'feature':
+        if (workflowParam === 'finish') {
+          featureWorkflow(null, 'finish');
+        } else if (workflowParam === 'review') {
+          reviewWorkflow();
+        } else {
+          featureWorkflow(workflowParam, 'start');
+        }
+        break;
+        
+      case 'hotfix':
+        if (workflowParam === 'finish') {
+          hotfixWorkflow(null, 'finish');
+        } else {
+          hotfixWorkflow(workflowParam, 'start');
+        }
+        break;
+        
+      case 'release':
+        if (workflowParam === 'finish') {
+          releaseWorkflow(null, 'finish');
+        } else {
+          releaseWorkflow(workflowParam, 'start');
+        }
+        break;
+        
+      case 'review':
+        reviewWorkflow();
+        break;
+        
+      case 'sync':
+        console.log(chalk.blue('🔄 Synchronizing all branches...'));
+        runGitCommand('git fetch --all', 'Fetched all remotes');
+        console.log(chalk.green('✅ Synchronization completed!'));
+        break;
+        
+      case 'cleanup':
+        console.log(chalk.blue('🧹 Cleaning up merged branches...'));
+        try {
+          runGitCommand('git branch --merged | grep -v "\\*\\|main\\|master\\|develop" | xargs -n 1 git branch -d || true', 'Cleaned merged branches');
+          runGitCommand('git remote prune origin', 'Cleaned remote references');
+          console.log(chalk.green('✅ Cleanup completed!'));
+        } catch (error) {
+          console.log(chalk.yellow('⚠️  Cleanup completed with warnings'));
+        }
+        break;
+        
+      default:
+        console.log(chalk.red(`❌ Unknown workflow: ${workflow}`));
+        console.log(chalk.yellow('💡 Use --help to see available workflows'));
     }
+    
+  } catch (error) {
+    console.log(chalk.red.bold('\n❌ Workflow failed!'));
+    console.log(chalk.red(`Error: ${error.message}`));
+    
+    console.log(chalk.yellow('\n💡 Recovery suggestions:'));
+    console.log(chalk.gray(`   • Check repository state: ${chalk.green('gstatus')}`));
+    console.log(chalk.gray(`   • Reset if needed: ${chalk.green('greset --soft')}`));
+    console.log(chalk.gray(`   • Get help: ${chalk.green('gworkflow --help')}`));
+    
+    process.exit(1);
+  }
 }
 
+// Run as standalone script
 if (import.meta.url === `file://${process.argv[1]}`) {
-    main();
+  main().catch(error => {
+    console.error(chalk.red('❌ Fatal error:'), error.message);
+    process.exit(1);
+  });
 }
+

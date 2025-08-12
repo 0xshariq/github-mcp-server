@@ -1,221 +1,342 @@
 #!/usr/bin/env node
 
 /**
- * GLIST - GitHub MCP Server Tool Explorer
+ * glist - Enhanced Git Tools Explorer
  * 
- * A powerful command to explore all available Git operations in the MCP server.
- * Provides categorized listing, usage examples, and quick reference information.
+ * Features:
+ * - Comprehensive catalog of all available git aliases
+ * - Categorized tool listings with descriptions
+ * - Usage examples and workflow suggestions
+ * - Quick reference and help system
+ * - Tool statistics and discovery features
  * 
- * Usage: glist [options]
- * Options:
- *   --help, -h    Show detailed help information
- *   --category    Show tools by specific category
- *   --simple      Show simple list without examples
+ * Usage:
+ *   glist                    - Show all available tools
+ *   glist --basic            - Show basic aliases only
+ *   glist --advanced         - Show advanced aliases only
+ *   glist --category <name>  - Show specific category
+ *   glist --help             - Show this help
  */
 
-import { spawn } from 'child_process';
+import { execSync } from 'child_process';
 import path from 'path';
-import { fileURLToPath } from 'url';
+import fs from 'fs';
+import chalk from 'chalk';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Check if we're in a git repository
+function validateRepository() {
+  try {
+    execSync('git rev-parse --is-inside-work-tree', { stdio: 'pipe' });
+    return true;
+  } catch (error) {
+    console.log(chalk.yellow('⚠️  Not in a git repository - showing tools anyway'));
+    return false;
+  }
+}
 
-// Enhanced tool information with categories, examples, and aliases
+// Show help information
+function showHelp() {
+  console.log(chalk.bold.magenta(`
+📚 glist - Enhanced Git Tools Explorer
+`));
+  console.log(chalk.cyan('📋 USAGE:'));
+  console.log(`   ${chalk.green('glist')}                      ${chalk.gray('# Show all available tools')}`);
+  console.log(`   ${chalk.green('glist --basic')}              ${chalk.gray('# Show basic aliases only')}`);
+  console.log(`   ${chalk.green('glist --advanced')}           ${chalk.gray('# Show advanced aliases only')}`);
+  console.log(`   ${chalk.green('glist --category staging')}   ${chalk.gray('# Show specific category')}`);
+  console.log(`   ${chalk.green('glist --search "commit"')}    ${chalk.gray('# Search for tools')}`);
+  console.log(`   ${chalk.green('glist --help')}               ${chalk.gray('# Show this help message')}`);
+  
+  console.log(chalk.cyan('\n🎯 CATEGORIES:'));
+  console.log(`   ${chalk.blue('staging')} - File staging and preparation`);
+  console.log(`   ${chalk.blue('commits')} - Commit operations and history`);
+  console.log(`   ${chalk.blue('branches')} - Branch management`);
+  console.log(`   ${chalk.blue('remotes')} - Remote repository operations`);
+  console.log(`   ${chalk.blue('workflow')} - Advanced workflow automation`);
+  console.log(`   ${chalk.blue('maintenance')} - Repository maintenance`);
+  
+  console.log(chalk.cyan('\n⚡ FEATURES:'));
+  console.log(`   ${chalk.yellow('•')} ${chalk.white('Complete Catalog:')} All 25+ git aliases with examples`);
+  console.log(`   ${chalk.yellow('•')} ${chalk.white('Usage Examples:')} Real-world usage scenarios`);
+  console.log(`   ${chalk.yellow('•')} ${chalk.white('Workflow Guidance:')} Best practices and workflows`);
+  console.log(`   ${chalk.yellow('•')} ${chalk.white('Quick Reference:')} Fast lookup for any tool`);
+  
+  console.log(chalk.gray('\n═══════════════════════════════════════════════════════════'));
+}
+
+// Tool catalog with enhanced information
 const TOOLS_CATALOG = {
-  'File Operations': {
-    description: 'Manage staging area and file tracking',
-    tools: [
-      { name: 'git-add-all', alias: 'gadd', description: 'Add all modified files to staging', example: 'gadd' },
-      { name: 'git-add', alias: 'gadd file.js', description: 'Add specific files to staging', example: 'gadd package.json src/index.ts' },
-      { name: 'git-remove', alias: null, description: 'Remove file from staging area', example: 'npm run mcp git-remove unwanted.txt' },
-      { name: 'git-remove-all', alias: null, description: 'Remove all files from staging', example: 'npm run mcp git-remove-all' }
+  'File Staging': {
+    description: 'Tools for staging and preparing files for commits',
+    icon: '📁',
+    basic: [
+      { name: 'gadd', description: 'Stage all or specific files', example: 'gadd', usage: 'gadd [files...]' },
+    ],
+    advanced: []
+  },
+  
+  'Repository Status': {
+    description: 'Check repository state and view changes',
+    icon: '📊',
+    basic: [
+      { name: 'gstatus', description: 'Show repository status', example: 'gstatus', usage: 'gstatus' },
+      { name: 'gdiff', description: 'Show file differences', example: 'gdiff', usage: 'gdiff [commit]' },
+      { name: 'glog', description: 'View commit history', example: 'glog -5', usage: 'glog [count]' }
+    ],
+    advanced: []
+  },
+  
+  'Commit Operations': {
+    description: 'Create and manage commits',
+    icon: '📝',
+    basic: [
+      { name: 'gcommit', description: 'Create commit with message', example: 'gcommit "fix bug"', usage: 'gcommit "message"' }
+    ],
+    advanced: [
+      { name: 'gquick', description: 'Quick add + commit workflow', example: 'gquick "quick fix"', usage: 'gquick [message]' },
+      { name: 'gsave', description: 'Quick save with smart messaging', example: 'gsave --wip', usage: 'gsave [options]' }
     ]
   },
-  'Information & History': {
-    description: 'Repository status, history, and comparison tools',
-    tools: [
-      { name: 'git-status', alias: 'gstatus', description: 'Show repository status (staged, modified, untracked)', example: 'gstatus' },
-      { name: 'git-log', alias: 'glog', description: 'Display commit history with customizable count', example: 'glog 5' },
-      { name: 'git-diff', alias: 'gdiff', description: 'Show differences between versions', example: 'gdiff main' }
-    ]
-  },
-  'Commit & Sync': {
-    description: 'Save changes and synchronize with remote repositories',
-    tools: [
-      { name: 'git-commit', alias: 'gcommit', description: 'Commit staged changes with message', example: 'gcommit "Fix authentication bug"' },
-      { name: 'git-push', alias: 'gpush', description: 'Push commits to remote repository', example: 'gpush' },
-      { name: 'git-pull', alias: 'gpull', description: 'Pull latest changes from remote', example: 'gpull' }
-    ]
-  },
+  
   'Branch Management': {
-    description: 'Create, switch, and manage git branches',
-    tools: [
-      { name: 'git-branch', alias: 'gbranch', description: 'List all branches or create new branch', example: 'gbranch feature-auth' },
-      { name: 'git-checkout', alias: 'gcheckout', description: 'Switch branches or create and switch', example: 'gcheckout main' }
+    description: 'Create, switch, and manage branches',
+    icon: '🌿',
+    basic: [
+      { name: 'gbranch', description: 'List or create branches', example: 'gbranch feature-auth', usage: 'gbranch [name]' },
+      { name: 'gcheckout', description: 'Switch branches', example: 'gcheckout main', usage: 'gcheckout <branch>' }
+    ],
+    advanced: [
+      { name: 'gdev', description: 'Developer workflow manager', example: 'gdev feature-login', usage: 'gdev [branch-name]' }
     ]
   },
-  'Remote Management': {
-    description: 'Manage remote repository connections',
-    tools: [
-      { name: 'git-remote-list', alias: 'gremote', description: 'List all configured remote repositories', example: 'gremote' },
-      { name: 'git-remote-add', alias: 'gremote-add', description: 'Add new remote repository', example: 'gremote-add origin https://github.com/user/repo.git' },
-      { name: 'git-remote-remove', alias: 'gremote-remove', description: 'Remove existing remote repository', example: 'gremote-remove backup' },
-      { name: 'git-remote-set-url', alias: 'gremote-set-url', description: 'Change URL of existing remote', example: 'gremote-set-url origin https://new-url.git' }
+  
+  'Remote Operations': {
+    description: 'Synchronize with remote repositories',
+    icon: '🌐',
+    basic: [
+      { name: 'gpush', description: 'Push commits to remote', example: 'gpush', usage: 'gpush' },
+      { name: 'gpull', description: 'Pull changes from remote', example: 'gpull', usage: 'gpull' },
+      { name: 'gremote', description: 'Manage remote connections', example: 'gremote', usage: 'gremote [command]' }
+    ],
+    advanced: [
+      { name: 'gsync', description: 'Advanced synchronization', example: 'gsync --all', usage: 'gsync [options]' }
     ]
   },
-  'Advanced Operations': {
-    description: 'Stashing, reset, and repository cloning',
-    tools: [
-      { name: 'git-stash', alias: 'gstash', description: 'Temporarily save current changes', example: 'gstash "WIP: refactoring"' },
-      { name: 'git-stash-pop', alias: 'gpop', description: 'Apply and remove most recent stash', example: 'gpop' },
-      { name: 'git-reset', alias: 'greset', description: 'Reset repository to specific state', example: 'greset soft HEAD~1' },
-      { name: 'git-clone', alias: 'gclone', description: 'Clone repository from remote URL', example: 'gclone https://github.com/user/repo.git' }
+  
+  'History & Recovery': {
+    description: 'Manage commit history and recover changes',
+    icon: '⏰',
+    basic: [
+      { name: 'greset', description: 'Reset repository state', example: 'greset --soft', usage: 'greset [mode]' },
+      { name: 'gstash', description: 'Stash uncommitted changes', example: 'gstash', usage: 'gstash [message]' },
+      { name: 'gpop', description: 'Restore stashed changes', example: 'gpop', usage: 'gpop' }
+    ],
+    advanced: [
+      { name: 'gbackup', description: 'Create repository backups', example: 'gbackup --branch', usage: 'gbackup [strategy]' }
     ]
   },
-  'Workflow Shortcuts': {
-    description: 'Powerful combinations for common Git workflows',
-    tools: [
-      { name: 'Combined: gflow', alias: 'gflow', description: 'Complete workflow: add → commit → push', example: 'gflow "Implement new feature"' },
-      { name: 'Combined: gquick', alias: 'gquick', description: 'Quick commit: add → commit (no push)', example: 'gquick "Fix typo"' },
-      { name: 'Combined: gsync', alias: 'gsync', description: 'Sync and status: pull → status', example: 'gsync' },
-      { name: 'Combined: gfresh', alias: 'gfresh', description: 'Fresh start: stash → pull → pop → status', example: 'gfresh --safe' }
-    ]
+  
+  'Repository Setup': {
+    description: 'Initialize and configure repositories',
+    icon: '🏗️',
+    basic: [
+      { name: 'ginit', description: 'Initialize new repository', example: 'ginit', usage: 'ginit' },
+      { name: 'gclone', description: 'Clone remote repository', example: 'gclone user/repo', usage: 'gclone <url>' }
+    ],
+    advanced: []
   },
-  'Developer Workflows': {
-    description: 'Advanced workflow automation for daily development',
-    tools: [
-      { name: 'Combined: gdev', alias: 'gdev', description: 'Developer session management and branch workflows', example: 'gdev feature-auth' },
-      { name: 'Combined: gsave', alias: 'gsave', description: 'Quick save workflows with auto-timestamped commits', example: 'gsave --push' },
-      { name: 'Combined: gfix', alias: 'gfix', description: 'Quick fix workflows and commit amendments', example: 'gfix "bug fix"' },
-      { name: 'Combined: grelease', alias: 'grelease', description: 'Release management with versioning and tagging', example: 'grelease --patch' }
-    ]
-  },
+  
   'Advanced Workflows': {
-    description: 'Professional-grade automation for complex operations',
-    tools: [
-      { name: 'Combined: gworkflow', alias: 'gworkflow', description: 'Advanced Git workflow automation (feature, hotfix, release)', example: 'gworkflow feature user-auth' },
-      { name: 'Combined: gbackup', alias: 'gbackup', description: 'Comprehensive backup and archive workflows', example: 'gbackup --emergency' },
-      { name: 'Combined: gclean', alias: 'gclean', description: 'Repository cleanup and maintenance workflows', example: 'gclean --all --backup' }
+    description: 'Complex development workflows and automation',
+    icon: '⚡',
+    basic: [],
+    advanced: [
+      { name: 'gworkflow', description: 'Feature/hotfix workflows', example: 'gworkflow feature auth', usage: 'gworkflow <type> <name>' },
+      { name: 'gflow', description: 'Complete development workflow', example: 'gflow --review', usage: 'gflow [options]' },
+      { name: 'grelease', description: 'Release management', example: 'grelease v1.2.0', usage: 'grelease <version>' }
+    ]
+  },
+  
+  'Maintenance': {
+    description: 'Repository maintenance and cleanup',
+    icon: '🧹',
+    basic: [],
+    advanced: [
+      { name: 'gclean', description: 'Clean repository artifacts', example: 'gclean --branches', usage: 'gclean [options]' },
+      { name: 'gfresh', description: 'Fresh repository setup', example: 'gfresh', usage: 'gfresh' },
+      { name: 'gfix', description: 'Fix repository issues', example: 'gfix --conflicts', usage: 'gfix [issue]' }
     ]
   }
 };
 
-function showEnhancedHelp() {
-  const totalTools = Object.values(TOOLS_CATALOG).reduce((total, category) => total + category.tools.length, 0);
+// Get all available tools from filesystem
+function getAvailableTools() {
+  const tools = { basic: [], advanced: [] };
   
-  console.log('\n🚀 GLIST - GitHub MCP Server Tool Explorer\n');
-  console.log(`📊 Total Available: ${totalTools} Git operations + 18 workflow combinations\n`);
-  
-  Object.entries(TOOLS_CATALOG).forEach(([categoryName, categoryInfo]) => {
-    console.log(`\n📁 ${categoryName}`);
-    console.log(`   ${categoryInfo.description}\n`);
+  try {
+    const basicPath = path.join(path.dirname(import.meta.url.replace('file://', '')), '..', 'basic');
+    const advancedPath = path.join(path.dirname(import.meta.url.replace('file://', '')), '..', 'advanced');
     
-    categoryInfo.tools.forEach(tool => {
-      const aliasInfo = tool.alias && tool.alias !== null ? ` (${tool.alias})` : '';
-      console.log(`   ${tool.name.padEnd(18)}${aliasInfo.padEnd(25)} - ${tool.description}`);
-      if (tool.example) {
-        console.log(`   ${''.padEnd(18)} Example: ${tool.example}`);
-      }
-      console.log('');
-    });
-  });
+    if (fs.existsSync(basicPath)) {
+      const basicFiles = fs.readdirSync(basicPath).filter(file => file.endsWith('.js') && !file.includes('README'));
+      tools.basic = basicFiles.map(file => file.replace('.js', ''));
+    }
+    
+    if (fs.existsSync(advancedPath)) {
+      const advancedFiles = fs.readdirSync(advancedPath).filter(file => file.endsWith('.js') && !file.includes('README') && !file.includes('common'));
+      tools.advanced = advancedFiles.map(file => file.replace('.js', ''));
+    }
+  } catch (error) {
+    console.log(chalk.yellow('⚠️  Could not scan tool directories'));
+  }
   
-  console.log('\n⚡ Usage Methods:');
-  console.log('   🔥 Ultra-fast:  gms git-status');
-  console.log('   🚀 Aliases:     gstatus');
-  console.log('   📋 Full:        npm run mcp git-status');
-  console.log('');
-  console.log('💡 Pro Tips:');
-  console.log('   • Use gstatus before any operation to check current state');
-  console.log('   • Use gflow "message" for complete add→commit→push workflow');
-  console.log('   • Use glist again anytime to see this comprehensive guide');
-  console.log('   • All aliases work from any Git repository after npm link');
-  console.log('');
+  return tools;
 }
 
-function parseArguments() {
+// Display tools by category
+function displayCategory(categoryName, categoryData, showBasic = true, showAdvanced = true) {
+  console.log(chalk.bold.blue(`\n${categoryData.icon} ${categoryName}`));
+  console.log(chalk.gray(categoryData.description));
+  
+  if (showBasic && categoryData.basic.length > 0) {
+    console.log(chalk.cyan('\n  📚 Basic Tools:'));
+    categoryData.basic.forEach(tool => {
+      console.log(chalk.green(`   ${tool.name.padEnd(12)}`), chalk.white(tool.description));
+      console.log(chalk.gray(`   ${''.padEnd(12)} Usage: ${tool.usage}`));
+      console.log(chalk.gray(`   ${''.padEnd(12)} Example: ${chalk.yellow(tool.example)}`));
+    });
+  }
+  
+  if (showAdvanced && categoryData.advanced.length > 0) {
+    console.log(chalk.cyan('\n  ⚡ Advanced Tools:'));
+    categoryData.advanced.forEach(tool => {
+      console.log(chalk.green(`   ${tool.name.padEnd(12)}`), chalk.white(tool.description));
+      console.log(chalk.gray(`   ${''.padEnd(12)} Usage: ${tool.usage}`));
+      console.log(chalk.gray(`   ${''.padEnd(12)} Example: ${chalk.yellow(tool.example)}`));
+    });
+  }
+}
+
+// Search tools by keyword
+function searchTools(keyword) {
+  const results = [];
+  
+  for (const [categoryName, categoryData] of Object.entries(TOOLS_CATALOG)) {
+    const allTools = [...categoryData.basic, ...categoryData.advanced];
+    
+    allTools.forEach(tool => {
+      if (tool.name.includes(keyword) || tool.description.toLowerCase().includes(keyword.toLowerCase())) {
+        results.push({ ...tool, category: categoryName });
+      }
+    });
+  }
+  
+  return results;
+}
+
+// Main function
+async function main() {
   const args = process.argv.slice(2);
   
-  if (args.includes('--help') || args.includes('-h')) {
-    showEnhancedHelp();
-    return 'help';
-  }
-  
-  if (args.includes('--simple')) {
-    return 'simple';
-  }
-  
-  const categoryFlag = args.findIndex(arg => arg === '--category');
-  if (categoryFlag !== -1 && args[categoryFlag + 1]) {
-    return { type: 'category', value: args[categoryFlag + 1] };
-  }
-  
-  return 'enhanced';
-}
-
-function showSimpleList() {
-  console.log('\n🔧 GitHub MCP Server - Available Tools:\n');
-  
-  Object.entries(TOOLS_CATALOG).forEach(([categoryName, categoryInfo]) => {
-    console.log(`${categoryName}:`);
-    categoryInfo.tools.forEach(tool => {
-      const aliasInfo = tool.alias && tool.alias !== null ? ` (${tool.alias})` : '';
-      console.log(`  ${tool.name}${aliasInfo}`);
-    });
-    console.log('');
-  });
-}
-
-function showCategoryTools(categoryName) {
-  const category = TOOLS_CATALOG[categoryName];
-  if (!category) {
-    console.log(`❌ Category "${categoryName}" not found.`);
-    console.log('\nAvailable categories:');
-    Object.keys(TOOLS_CATALOG).forEach(cat => console.log(`  ${cat}`));
+  // Help functionality
+  if (args.includes('-h') || args.includes('--help')) {
+    showHelp();
     return;
   }
   
-  console.log(`\n📁 ${categoryName}`);
-  console.log(`${category.description}\n`);
+  // Check repository (optional for this tool)
+  const inRepo = validateRepository();
   
-  category.tools.forEach(tool => {
-    const aliasInfo = tool.alias && tool.alias !== null ? ` (${tool.alias})` : '';
-    console.log(`${tool.name}${aliasInfo}`);
-    console.log(`  ${tool.description}`);
-    if (tool.example) console.log(`  Example: ${tool.example}`);
-    console.log('');
+  try {
+    const basicMode = args.includes('--basic');
+    const advancedMode = args.includes('--advanced');
+    const categoryArg = args.find(arg => arg === '--category') ? args[args.indexOf('--category') + 1] : null;
+    const searchArg = args.find(arg => arg === '--search') ? args[args.indexOf('--search') + 1] : null;
+    
+    console.log(chalk.bold.magenta('\n📚 Git Tools Explorer'));
+    console.log(chalk.gray('─'.repeat(50)));
+    
+    if (inRepo) {
+      const currentBranch = execSync('git branch --show-current', { encoding: 'utf8' }).trim();
+      console.log(chalk.blue(`📍 Repository: ${process.cwd().split('/').pop()}`));
+      console.log(chalk.blue(`🌿 Current Branch: ${currentBranch}`));
+    }
+    
+    // Get available tools
+    const availableTools = getAvailableTools();
+    const totalTools = availableTools.basic.length + availableTools.advanced.length;
+    
+    console.log(chalk.cyan(`\n📊 Tool Summary: ${totalTools} tools available`));
+    console.log(chalk.gray(`   • Basic: ${availableTools.basic.length} tools`));
+    console.log(chalk.gray(`   • Advanced: ${availableTools.advanced.length} tools`));
+    
+    if (searchArg) {
+      // Search mode
+      console.log(chalk.blue(`\n🔍 Search Results for "${searchArg}":`));
+      const results = searchTools(searchArg);
+      
+      if (results.length === 0) {
+        console.log(chalk.yellow('   No tools found matching your search'));
+      } else {
+        results.forEach(tool => {
+          console.log(chalk.green(`   ${tool.name.padEnd(12)}`), chalk.white(tool.description));
+          console.log(chalk.gray(`   ${''.padEnd(12)} Category: ${tool.category}`));
+          console.log(chalk.gray(`   ${''.padEnd(12)} Example: ${chalk.yellow(tool.example)}`));
+        });
+      }
+      
+    } else if (categoryArg) {
+      // Category mode
+      const category = Object.entries(TOOLS_CATALOG).find(([name]) => 
+        name.toLowerCase().includes(categoryArg.toLowerCase())
+      );
+      
+      if (category) {
+        displayCategory(category[0], category[1], !advancedMode, !basicMode);
+      } else {
+        console.log(chalk.red(`❌ Category "${categoryArg}" not found`));
+        console.log(chalk.cyan('\n💡 Available categories:'));
+        Object.keys(TOOLS_CATALOG).forEach(cat => {
+          console.log(chalk.gray(`   • ${cat.toLowerCase()}`));
+        });
+      }
+      
+    } else {
+      // Full listing
+      const showBasic = !advancedMode;
+      const showAdvanced = !basicMode;
+      
+      for (const [categoryName, categoryData] of Object.entries(TOOLS_CATALOG)) {
+        if ((showBasic && categoryData.basic.length > 0) || (showAdvanced && categoryData.advanced.length > 0)) {
+          displayCategory(categoryName, categoryData, showBasic, showAdvanced);
+        }
+      }
+      
+      console.log(chalk.cyan('\n💡 Quick Tips:'));
+      console.log(chalk.gray('   • Use --help on any tool for detailed information'));
+      console.log(chalk.gray('   • Basic tools: everyday git operations'));
+      console.log(chalk.gray('   • Advanced tools: workflow automation & power features'));
+      console.log(chalk.gray(`   • Search tools: ${chalk.green('glist --search "commit"')}`));
+      console.log(chalk.gray(`   • Category filter: ${chalk.green('glist --category staging')}`));
+    }
+    
+    console.log(chalk.gray('\n⚡ Get started: try'), chalk.green('gstatus'), chalk.gray('to check your repository!'));
+    
+  } catch (error) {
+    console.log(chalk.red.bold('\n❌ Tool exploration failed!'));
+    console.log(chalk.red(`Error: ${error.message}`));
+    
+    console.log(chalk.yellow('\n💡 Fallback suggestions:'));
+    console.log(chalk.gray(`   • Check your current directory`));
+    console.log(chalk.gray(`   • Try: ${chalk.green('glist --help')}`));
+    console.log(chalk.gray(`   • Basic tools work anywhere`));
+  }
+}
+
+// Run as standalone script
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main().catch(error => {
+    console.error(chalk.red('❌ Fatal error:'), error.message);
+    process.exit(1);
   });
 }
-
-// Main execution
-const mode = parseArguments();
-
-if (mode === 'help') {
-  process.exit(0);
-} else if (mode === 'simple') {
-  showSimpleList();
-  process.exit(0);
-} else if (typeof mode === 'object' && mode.type === 'category') {
-  showCategoryTools(mode.value);
-  process.exit(0);
-} else if (mode === 'enhanced') {
-  // Show enhanced help by default
-  showEnhancedHelp();
-  process.exit(0);
-}
-
-// Fallback to original MCP CLI list command if needed
-const cliPath = path.join(__dirname, '..', '..', 'mcp-cli.js');
-const child = spawn('node', [cliPath, 'list'], {
-  stdio: 'inherit',
-  cwd: process.cwd()
-});
-
-child.on('error', (error) => {
-  console.error('❌ Error running glist:', error.message);
-  process.exit(1);
-});
-
-child.on('exit', (code) => {
-  process.exit(code);
-});

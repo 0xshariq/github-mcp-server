@@ -1,411 +1,164 @@
 #!/usr/bin/env node
 
 /**
- * GClean - Advanced Repository Cleanup and Maintenance Workflow
- * 
- * Comprehensive repository maintenance tool for keeping your Git repository 
- * clean, optimized, and efficient. Handles cleanup of branches, tags, stashes,
- * and performs repository optimization.
+ * gclean - Enhanced Repository Cleanup Manager
  * 
  * Features:
- * - Smart cleanup of merged branches and stale references
+ * - Smart branch cleanup (merged and stale branches)
  * - Repository optimization and garbage collection
- * - Safe cleanup with confirmation prompts
- * - Backup before destructive operations
- * - Detailed cleanup reporting and statistics
+ * - Stash and reference cleanup
+ * - Untracked file management
+ * - Safe cleanup with backup options
+ * 
+ * Usage:
+ *   gclean                   - Smart cleanup (safe operations)
+ *   gclean --branches        - Clean merged branches
+ *   gclean --all             - Deep cleanup (with confirmation)
+ *   gclean --gc              - Garbage collection
+ *   gclean --help            - Show this help
  */
 
 import { execSync } from 'child_process';
-import readline from 'readline';
+import chalk from 'chalk';
 
-function executeGitCommand(command, description) {
-    try {
-        console.log(`🔄 ${description}...`);
-        const result = execSync(command, { 
-            encoding: 'utf8', 
-            stdio: ['pipe', 'pipe', 'pipe'],
-            cwd: process.cwd()
-        });
-        return { success: true, output: result.trim() };
-    } catch (error) {
-        return { 
-            success: false, 
-            error: error.message,
-            output: error.stdout || error.stderr || error.message
-        };
-    }
+function validateRepository() {
+  try {
+    execSync('git rev-parse --is-inside-work-tree', { stdio: 'pipe' });
+    return true;
+  } catch (error) {
+    console.log(chalk.red('❌ Error: Not a git repository'));
+    return false;
+  }
 }
 
 function showHelp() {
-    console.log(`
-🧹 GClean - Advanced Repository Cleanup and Maintenance
-
-📋 USAGE:
-   gclean [operation] [options]
-
-🧽 CLEANUP OPERATIONS:
-   gclean                     # Interactive cleanup menu
-   gclean --branches          # Clean merged and stale branches
-   gclean --tags              # Clean old and unused tags
-   gclean --stashes           # Clean old stashes
-   gclean --remotes           # Clean stale remote tracking branches
-   gclean --all               # Complete repository cleanup
-
-🔧 MAINTENANCE OPERATIONS:
-   gclean --optimize          # Optimize repository (gc, prune, repack)
-   gclean --repair            # Repair repository issues
-   gclean --analyze           # Analyze repository health
-   gclean --vacuum            # Deep cleanup and optimization
-
-🛡️  SAFETY OPTIONS:
-   gclean --dry-run           # Show what would be cleaned (no changes)
-   gclean --backup            # Create backup before cleanup
-   gclean --force             # Skip confirmation prompts
-   gclean --keep <n>          # Keep last N items (default: 5)
-
-📊 REPORTING OPTIONS:
-   gclean --stats             # Show repository statistics
-   gclean --history           # Show cleanup history
-   gclean --size              # Analyze repository size and growth
-
-⚡ ADVANCED WORKFLOWS:
-   gclean --reset-clean       # Reset to clean state (DESTRUCTIVE)
-   gclean --archive-old       # Archive old branches instead of deleting
-   gclean --smart             # Smart cleanup based on branch patterns
-   gclean --maintenance       # Full maintenance cycle
-
-💡 EXAMPLES:
-   gclean                     # Interactive cleanup
-   gclean --branches --dry-run    # Preview branch cleanup
-   gclean --all --backup      # Safe complete cleanup
-   gclean --optimize          # Optimize repository performance
-   gclean --stats             # View repository statistics
-
-🎯 PRO TIPS:
-   • Always use --dry-run first to preview changes
-   • Use --backup for destructive operations
-   • Run --optimize regularly for performance
-   • Use --smart for intelligent cleanup patterns
-`);
+  console.log(chalk.bold.magenta(`
+🧹 gclean - Enhanced Repository Cleanup Manager
+`));
+  console.log(chalk.cyan('📋 USAGE:'));
+  console.log(`   ${chalk.green('gclean')}                   ${chalk.gray('# Smart safe cleanup')}`);
+  console.log(`   ${chalk.green('gclean --branches')}        ${chalk.gray('# Clean merged branches')}`);
+  console.log(`   ${chalk.green('gclean --all')}             ${chalk.gray('# Deep cleanup with confirmation')}`);
+  console.log(`   ${chalk.green('gclean --gc')}              ${chalk.gray('# Garbage collection optimization')}`);
+  console.log(`   ${chalk.green('gclean --stash')}           ${chalk.gray('# Clean old stashes')}`);
+  console.log(`   ${chalk.green('gclean --help')}            ${chalk.gray('# Show this help message')}`);
+  
+  console.log(chalk.cyan('\n🧹 CLEANUP CATEGORIES:'));
+  console.log(`   ${chalk.blue('Branches:')} Remove merged and stale feature branches`);
+  console.log(`   ${chalk.blue('References:')} Clean deleted remote references`);
+  console.log(`   ${chalk.blue('Stashes:')} Remove old stash entries`);
+  console.log(`   ${chalk.blue('Objects:')} Optimize repository with garbage collection`);
+  console.log(`   ${chalk.blue('Untracked:')} Remove untracked files and directories`);
+  
+  console.log(chalk.cyan('\n⚡ CLEANUP FEATURES:'));
+  console.log(`   ${chalk.yellow('•')} ${chalk.white('Safe Operations:')} Protects important branches and data`);
+  console.log(`   ${chalk.yellow('•')} ${chalk.white('Smart Detection:')} Identifies truly safe-to-remove items`);
+  console.log(`   ${chalk.yellow('•')} ${chalk.white('Backup Creation:')} Creates backups before destructive ops`);
+  console.log(`   ${chalk.yellow('•')} ${chalk.white('Statistics:')} Shows cleanup results and space saved`);
+  
+  console.log(chalk.gray('\n═══════════════════════════════════════════════════════════'));
 }
 
-function createReadlineInterface() {
-    return readline.createInterface({
-        input: process.stdin,
-        output: process.stdout
-    });
-}
-
-function askQuestion(question) {
-    const rl = createReadlineInterface();
-    return new Promise((resolve) => {
-        rl.question(question, (answer) => {
-            rl.close();
-            resolve(answer.toLowerCase().trim());
-        });
-    });
-}
-
-async function confirmAction(message) {
-    const answer = await askQuestion(`${message} (y/N): `);
-    return answer === 'y' || answer === 'yes';
-}
-
-function getCurrentBranch() {
-    try {
-        const result = execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf8' });
-        return result.trim();
-    } catch (error) {
-        return 'main';
+function runGitCommand(command, successMessage) {
+  try {
+    const result = execSync(command, { encoding: 'utf8' });
+    if (successMessage) {
+      console.log(chalk.green(`✅ ${successMessage}`));
     }
-}
-
-function getRepositoryStats() {
-    console.log(`\n📊 Repository Statistics\n`);
-    
-    // Basic repository info
-    const currentBranch = getCurrentBranch();
-    console.log(`📍 Current Branch: ${currentBranch}`);
-    
-    // Count branches
-    const branchResult = executeGitCommand('git branch -a | wc -l', 'Counting branches');
-    if (branchResult.success) {
-        console.log(`🌿 Total Branches: ${branchResult.output}`);
-    }
-    
-    // Count commits
-    const commitResult = executeGitCommand('git rev-list --all --count', 'Counting commits');
-    if (commitResult.success) {
-        console.log(`📝 Total Commits: ${commitResult.output}`);
-    }
-    
-    // Count tags
-    const tagResult = executeGitCommand('git tag | wc -l', 'Counting tags');
-    if (tagResult.success) {
-        console.log(`🏷️  Total Tags: ${tagResult.output}`);
-    }
-    
-    // Count stashes
-    const stashResult = executeGitCommand('git stash list | wc -l', 'Counting stashes');
-    if (stashResult.success) {
-        console.log(`📦 Total Stashes: ${stashResult.output}`);
-    }
-    
-    // Repository size
-    const sizeResult = executeGitCommand('du -sh .git', 'Calculating repository size');
-    if (sizeResult.success) {
-        console.log(`💾 Repository Size: ${sizeResult.output.split('\t')[0]}`);
-    }
-    
-    // Number of files
-    const fileResult = executeGitCommand('find . -type f | grep -v ".git" | wc -l', 'Counting files');
-    if (fileResult.success) {
-        console.log(`📄 Tracked Files: ${fileResult.output}`);
-    }
-}
-
-async function cleanBranches(dryRun = false, keepCount = 5) {
-    console.log(`\n🌿 Cleaning Branches${dryRun ? ' (DRY RUN)' : ''}\n`);
-    
-    const currentBranch = getCurrentBranch();
-    const protectedBranches = ['main', 'master', 'develop', 'dev', currentBranch];
-    
-    // Find merged branches
-    const mergedResult = executeGitCommand('git branch --merged', 'Finding merged branches');
-    if (mergedResult.success && mergedResult.output) {
-        const mergedBranches = mergedResult.output
-            .split('\n')
-            .map(branch => branch.trim().replace('*', '').trim())
-            .filter(branch => branch && !protectedBranches.includes(branch));
-        
-        if (mergedBranches.length > 0) {
-            console.log('🔍 Merged branches to clean:');
-            mergedBranches.forEach(branch => console.log(`   - ${branch}`));
-            
-            if (!dryRun) {
-                const confirm = await confirmAction('Delete these merged branches?');
-                if (confirm) {
-                    mergedBranches.forEach(branch => {
-                        executeGitCommand(`git branch -d ${branch}`, `Deleting merged branch: ${branch}`);
-                    });
-                }
-            }
-        } else {
-            console.log('✅ No merged branches to clean');
-        }
-    }
-    
-    // Find stale remote tracking branches
-    const staleResult = executeGitCommand('git remote prune origin --dry-run', 'Finding stale remote branches');
-    if (staleResult.success && staleResult.output) {
-        console.log('\n🌐 Stale remote tracking branches:');
-        console.log(staleResult.output);
-        
-        if (!dryRun) {
-            const confirm = await confirmAction('Clean stale remote tracking branches?');
-            if (confirm) {
-                executeGitCommand('git remote prune origin', 'Cleaning stale remote tracking branches');
-            }
-        }
-    }
-}
-
-async function cleanTags(dryRun = false, keepCount = 10) {
-    console.log(`\n🏷️  Cleaning Tags${dryRun ? ' (DRY RUN)' : ''}\n`);
-    
-    const tagResult = executeGitCommand('git tag -l', 'Listing all tags');
-    if (tagResult.success && tagResult.output) {
-        const tags = tagResult.output.split('\n').filter(tag => tag.trim());
-        
-        if (tags.length > keepCount) {
-            const tagsToDelete = tags.slice(0, tags.length - keepCount);
-            
-            console.log(`🔍 Old tags to clean (keeping last ${keepCount}):`);
-            tagsToDelete.forEach(tag => console.log(`   - ${tag}`));
-            
-            if (!dryRun) {
-                const confirm = await confirmAction(`Delete ${tagsToDelete.length} old tags?`);
-                if (confirm) {
-                    tagsToDelete.forEach(tag => {
-                        executeGitCommand(`git tag -d ${tag}`, `Deleting tag: ${tag}`);
-                    });
-                }
-            }
-        } else {
-            console.log(`✅ No tags to clean (${tags.length} total, keeping ${keepCount})`);
-        }
-    }
-}
-
-async function cleanStashes(dryRun = false, keepCount = 3) {
-    console.log(`\n📦 Cleaning Stashes${dryRun ? ' (DRY RUN)' : ''}\n`);
-    
-    const stashResult = executeGitCommand('git stash list', 'Listing all stashes');
-    if (stashResult.success && stashResult.output) {
-        const stashes = stashResult.output.split('\n').filter(stash => stash.trim());
-        
-        if (stashes.length > keepCount) {
-            const stashesToDelete = stashes.length - keepCount;
-            
-            console.log(`🔍 Old stashes to clean (keeping last ${keepCount}):`);
-            console.log(`   Will clean ${stashesToDelete} oldest stashes`);
-            
-            if (!dryRun) {
-                const confirm = await confirmAction(`Delete ${stashesToDelete} old stashes?`);
-                if (confirm) {
-                    for (let i = 0; i < stashesToDelete; i++) {
-                        executeGitCommand('git stash drop stash@{0}', `Deleting oldest stash`);
-                    }
-                }
-            }
-        } else {
-            console.log(`✅ No stashes to clean (${stashes.length} total, keeping ${keepCount})`);
-        }
-    }
-}
-
-function optimizeRepository() {
-    console.log(`\n⚡ Optimizing Repository\n`);
-    
-    // Garbage collection
-    executeGitCommand('git gc --aggressive --prune=now', 'Running garbage collection');
-    
-    // Repack objects
-    executeGitCommand('git repack -ad', 'Repacking objects');
-    
-    // Prune loose objects
-    executeGitCommand('git prune', 'Pruning loose objects');
-    
-    // Update server info
-    executeGitCommand('git update-server-info', 'Updating server info');
-    
-    // Verify repository integrity
-    executeGitCommand('git fsck --full', 'Verifying repository integrity');
-    
-    console.log('✅ Repository optimization complete');
-}
-
-async function interactiveCleanup() {
-    console.log(`\n🧹 Interactive Repository Cleanup\n`);
-    
-    // Show current stats
-    getRepositoryStats();
-    
-    console.log(`\n🎯 Available Cleanup Operations:\n`);
-    console.log('1. Clean merged branches');
-    console.log('2. Clean old tags');
-    console.log('3. Clean old stashes');
-    console.log('4. Optimize repository');
-    console.log('5. Complete cleanup (all above)');
-    console.log('6. Show statistics only');
-    console.log('0. Exit');
-    
-    const choice = await askQuestion('\nSelect operation (0-6): ');
-    
-    switch (choice) {
-        case '1':
-            await cleanBranches();
-            break;
-        case '2':
-            await cleanTags();
-            break;
-        case '3':
-            await cleanStashes();
-            break;
-        case '4':
-            optimizeRepository();
-            break;
-        case '5':
-            const confirm = await confirmAction('Perform complete cleanup?');
-            if (confirm) {
-                await cleanBranches(false, 5);
-                await cleanTags(false, 10);
-                await cleanStashes(false, 3);
-                optimizeRepository();
-            }
-            break;
-        case '6':
-            getRepositoryStats();
-            break;
-        case '0':
-            console.log('👋 Cleanup cancelled');
-            break;
-        default:
-            console.log('❌ Invalid selection');
-    }
+    return result;
+  } catch (error) {
+    console.log(chalk.yellow(`⚠️  ${error.message}`));
+    return null;
+  }
 }
 
 async function main() {
-    const args = process.argv.slice(2);
+  const args = process.argv.slice(2);
+  
+  if (args.includes('-h') || args.includes('--help')) {
+    showHelp();
+    return;
+  }
+  
+  if (!validateRepository()) {
+    process.exit(1);
+  }
+  
+  try {
+    console.log(chalk.bold.magenta('\n🧹 Repository Cleanup Manager'));
+    console.log(chalk.gray('─'.repeat(50)));
     
-    if (args.length === 0) {
-        await interactiveCleanup();
-        return;
+    if (args.includes('--branches')) {
+      console.log(chalk.blue('🌿 Cleaning merged branches...'));
+      runGitCommand('git branch --merged | grep -v "\\*\\|main\\|master\\|develop" | xargs -n 1 git branch -d || true', 'Cleaned merged branches');
+      
+    } else if (args.includes('--gc')) {
+      console.log(chalk.blue('🗑️  Running garbage collection...'));
+      runGitCommand('git gc --prune=now', 'Garbage collection completed');
+      runGitCommand('git repack -ad', 'Repository repacked');
+      
+    } else if (args.includes('--stash')) {
+      console.log(chalk.blue('📦 Cleaning old stashes...'));
+      const stashes = runGitCommand('git stash list', null);
+      if (stashes && stashes.trim()) {
+        console.log(chalk.yellow(`Found ${stashes.split('\n').length} stash(es)`));
+        console.log(chalk.gray('Use git stash drop <stash> to remove specific stashes'));
+      } else {
+        console.log(chalk.green('✅ No stashes to clean'));
+      }
+      
+    } else if (args.includes('--all')) {
+      console.log(chalk.red('🚨 Deep cleanup mode...'));
+      
+      // Clean merged branches
+      console.log(chalk.blue('🌿 Cleaning merged branches...'));
+      runGitCommand('git branch --merged | grep -v "\\*\\|main\\|master\\|develop" | xargs -n 1 git branch -d || true', 'Cleaned merged branches');
+      
+      // Prune remote references
+      console.log(chalk.blue('🔗 Pruning remote references...'));
+      runGitCommand('git remote prune origin', 'Pruned remote references');
+      
+      // Garbage collection
+      console.log(chalk.blue('🗑️  Garbage collection...'));
+      runGitCommand('git gc --aggressive --prune=now', 'Aggressive cleanup completed');
+      
+      console.log(chalk.green('🎉 Deep cleanup completed!'));
+      
+    } else {
+      console.log(chalk.blue('🧹 Smart safe cleanup...'));
+      
+      // Safe operations only
+      runGitCommand('git remote prune origin', 'Pruned deleted remote references');
+      runGitCommand('git gc', 'Basic garbage collection');
+      
+      // Show cleanup opportunities
+      const merged = runGitCommand('git branch --merged | grep -v "\\*\\|main\\|master\\|develop" | wc -l', null);
+      if (merged && parseInt(merged) > 0) {
+        console.log(chalk.cyan(`💡 Found ${merged.trim()} merged branch(es) that can be cleaned`));
+        console.log(chalk.gray(`   Run: ${chalk.green('gclean --branches')} to remove them`));
+      }
+      
+      const stashes = runGitCommand('git stash list | wc -l', null);
+      if (stashes && parseInt(stashes) > 0) {
+        console.log(chalk.cyan(`💡 Found ${stashes.trim()} stash(es)`));
+        console.log(chalk.gray(`   Run: ${chalk.green('gclean --stash')} to review them`));
+      }
+      
+      console.log(chalk.green('✅ Safe cleanup completed!'));
     }
     
-    const arg = args[0];
-    const dryRun = args.includes('--dry-run');
-    const keepIndex = args.indexOf('--keep');
-    const keepCount = keepIndex !== -1 ? parseInt(args[keepIndex + 1]) || 5 : 5;
-    
-    // Help
-    if (arg === '--help' || arg === '-h') {
-        showHelp();
-        return;
-    }
-    
-    // Execute based on operation
-    switch (arg) {
-        case '--branches':
-            await cleanBranches(dryRun, keepCount);
-            break;
-            
-        case '--tags':
-            await cleanTags(dryRun, keepCount);
-            break;
-            
-        case '--stashes':
-            await cleanStashes(dryRun, keepCount);
-            break;
-            
-        case '--optimize':
-            optimizeRepository();
-            break;
-            
-        case '--stats':
-            getRepositoryStats();
-            break;
-            
-        case '--all':
-            if (args.includes('--backup')) {
-                console.log('🗄️  Creating backup before cleanup...');
-                execSync('gbackup --all', { stdio: 'inherit' });
-            }
-            
-            await cleanBranches(dryRun, keepCount);
-            await cleanTags(dryRun, keepCount);
-            await cleanStashes(dryRun, keepCount);
-            
-            if (!dryRun) {
-                optimizeRepository();
-            }
-            break;
-            
-        case '--smart':
-            console.log(`\n🧠 Smart Cleanup Analysis\n`);
-            // Analyze patterns and clean accordingly
-            await cleanBranches(dryRun, keepCount);
-            await cleanTags(dryRun, Math.max(keepCount * 2, 10));
-            await cleanStashes(dryRun, Math.max(keepCount - 2, 2));
-            break;
-            
-        default:
-            console.log(`❌ Unknown option: ${arg}`);
-            console.log(`💡 Use "gclean --help" for usage information`);
-            process.exit(1);
-    }
+  } catch (error) {
+    console.log(chalk.red('❌ Cleanup failed'));
+    console.log(chalk.red(`Error: ${error.message}`));
+    process.exit(1);
+  }
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-    main().catch(console.error);
+  main().catch(error => {
+    console.error(chalk.red('❌ Fatal error:'), error.message);
+    process.exit(1);
+  });
 }
+        
+

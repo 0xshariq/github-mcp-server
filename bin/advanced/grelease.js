@@ -1,249 +1,374 @@
 #!/usr/bin/env node
 
 /**
- * grelease - Release Management Workflow
+ * grelease - Enhanced Release Management System
+ * 
+ * Features:
+ * - Semantic versioning with automated increment
+ * - Release branch workflow management
+ * - Automated changelog generation
+ * - Tag creation and validation
+ * - Release preparation and verification
  * 
  * Usage:
- *   grelease <version>         - Create release with version tag
- *   grelease --patch           - Auto increment patch version
- *   grelease --minor           - Auto increment minor version  
- *   grelease --major           - Auto increment major version
- *   grelease --prepare         - Prepare for release (check status)
- *   grelease -h, --help        - Show help
- * 
- * Perfect for:
- * - Creating versioned releases
- * - Tagging release commits
- * - Automated version management
- * - Release preparation
+ *   grelease v1.2.3          - Create specific version release
+ *   grelease --patch         - Auto increment patch version
+ *   grelease --minor         - Auto increment minor version
+ *   grelease --major         - Auto increment major version
+ *   grelease --help          - Show this help
  */
 
-import { spawn } from 'child_process';
+import { execSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
+import chalk from 'chalk';
 
-// Get command line arguments
-const args = process.argv.slice(2);
-
-// Help and validation
-if (args.includes('-h') || args.includes('--help')) {
-  console.log(`
-🚀 grelease - Release Management
-
-Usage:
-  grelease <version>          Create release with specific version
-  grelease --patch            Auto increment patch (1.0.0 -> 1.0.1)
-  grelease --minor            Auto increment minor (1.0.0 -> 1.1.0)
-  grelease --major            Auto increment major (1.0.0 -> 2.0.0)
-  grelease --prepare          Check release readiness
-  grelease -h, --help         Show this help
-
-Examples:
-  grelease 1.2.3              # Create release v1.2.3
-  grelease --patch            # Auto increment patch version
-  grelease --minor            # Auto increment minor version
-  grelease --prepare          # Check if ready for release
-
-Perfect for:
-  🏷️  Creating version tags
-  📦 Package releases
-  🔄 Automated versioning
-  ✅ Release validation
-`);
-  process.exit(0);
-}
-
-// Utility functions
-function runCommand(command, onSuccess, onError, silent = false) {
-  if (!silent) {
-    console.log(`🔄 Running: ${command.join(' ')}`);
-  }
-  
-  const childProcess = spawn(command[0], command.slice(1), {
-    stdio: silent ? 'pipe' : 'inherit',
-    cwd: process.cwd()
-  });
-  
-  let output = '';
-  if (silent) {
-    childProcess.stdout.on('data', (data) => {
-      output += data.toString();
-    });
-  }
-  
-  childProcess.on('close', (code) => {
-    if (code === 0 && onSuccess) {
-      onSuccess(output.trim());
-    } else if (code !== 0 && onError) {
-      onError(code);
-    }
-  });
-  
-  childProcess.on('error', (err) => {
-    console.error('❌ Error:', err.message);
-    process.exit(1);
-  });
-}
-
-function getPackageVersion() {
+// Check if we're in a git repository
+function validateRepository() {
   try {
-    const packagePath = path.join(process.cwd(), 'package.json');
-    if (fs.existsSync(packagePath)) {
-      const packageJson = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
-      return packageJson.version || '0.0.0';
-    }
-  } catch (e) {
-    // Ignore errors
+    execSync('git rev-parse --is-inside-work-tree', { stdio: 'pipe' });
+    return true;
+  } catch (error) {
+    console.log(chalk.red('❌ Error: Not a git repository'));
+    console.log(chalk.yellow('💡 Initialize with: git init'));
+    return false;
   }
-  return '0.0.0';
 }
 
-function incrementVersion(version, type) {
-  const parts = version.split('.').map(Number);
+// Show help information
+function showHelp() {
+  console.log(chalk.bold.magenta(`
+📦 grelease - Enhanced Release Management System
+`));
+  console.log(chalk.cyan('📋 USAGE:'));
+  console.log(`   ${chalk.green('grelease v1.2.3')}            ${chalk.gray('# Create specific version release')}`);
+  console.log(`   ${chalk.green('grelease --patch')}           ${chalk.gray('# Auto increment patch (1.0.0 → 1.0.1)')}`);
+  console.log(`   ${chalk.green('grelease --minor')}           ${chalk.gray('# Auto increment minor (1.0.0 → 1.1.0)')}`);
+  console.log(`   ${chalk.green('grelease --major')}           ${chalk.gray('# Auto increment major (1.0.0 → 2.0.0)')}`);
+  console.log(`   ${chalk.green('grelease --prepare')}         ${chalk.gray('# Prepare and validate for release')}`);
+  console.log(`   ${chalk.green('grelease --help')}            ${chalk.gray('# Show this help message')}`);
   
-  switch (type) {
+  console.log(chalk.cyan('\n📦 SEMANTIC VERSIONING:'));
+  console.log(`   ${chalk.blue('MAJOR:')} Breaking changes (1.0.0 → 2.0.0)`);
+  console.log(`   ${chalk.blue('MINOR:')} New features, backward compatible (1.0.0 → 1.1.0)`);
+  console.log(`   ${chalk.blue('PATCH:')} Bug fixes, backward compatible (1.0.0 → 1.0.1)`);
+  
+  console.log(chalk.cyan('\n🚀 RELEASE WORKFLOW:'));
+  console.log(`   ${chalk.yellow('1.')} ${chalk.white('Preparation:')} Validate repo state and check for issues`);
+  console.log(`   ${chalk.yellow('2.')} ${chalk.white('Version Update:')} Update package.json and other version files`);
+  console.log(`   ${chalk.yellow('3.')} ${chalk.white('Commit:')} Create release commit with version changes`);
+  console.log(`   ${chalk.yellow('4.')} ${chalk.white('Tag:')} Create annotated git tag with release notes`);
+  console.log(`   ${chalk.yellow('5.')} ${chalk.white('Push:')} Push commits and tags to remote`);
+  
+  console.log(chalk.cyan('\n🔍 RELEASE VALIDATION:'));
+  console.log(`   ${chalk.yellow('•')} ${chalk.white('Clean Working Directory:')} No uncommitted changes`);
+  console.log(`   ${chalk.yellow('•')} ${chalk.white('Main Branch:')} Release from main/master branch`);
+  console.log(`   ${chalk.yellow('•')} ${chalk.white('Latest Changes:')} Synced with remote repository`);
+  console.log(`   ${chalk.yellow('•')} ${chalk.white('Version Format:')} Valid semantic versioning`);
+  
+  console.log(chalk.cyan('\n📝 AUTOMATED FEATURES:'));
+  console.log(`   ${chalk.blue('Package.json Update:')} Automatically update version field`);
+  console.log(`   ${chalk.blue('Changelog Generation:')} Create release notes from commits`);
+  console.log(`   ${chalk.blue('Tag Creation:')} Annotated tags with release information`);
+  console.log(`   ${chalk.blue('Remote Push:')} Push release commits and tags`);
+  
+  console.log(chalk.gray('\n═══════════════════════════════════════════════════════════'));
+}
+
+// Parse semantic version
+function parseVersion(versionString) {
+  const cleanVersion = versionString.replace(/^v/, '');
+  const versionRegex = /^(\d+)\.(\d+)\.(\d+)(?:-([a-zA-Z0-9.-]+))?$/;
+  const match = cleanVersion.match(versionRegex);
+  
+  if (!match) {
+    throw new Error('Invalid semantic version format. Use x.y.z (e.g., 1.2.3)');
+  }
+  
+  return {
+    major: parseInt(match[1]),
+    minor: parseInt(match[2]),
+    patch: parseInt(match[3]),
+    prerelease: match[4] || null,
+    raw: cleanVersion,
+    prefixed: `v${cleanVersion}`
+  };
+}
+
+// Get current version from package.json
+function getCurrentVersion() {
+  try {
+    const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+    return packageJson.version || '0.0.0';
+  } catch (error) {
+    return '0.0.0';
+  }
+}
+
+// Get latest git tag
+function getLatestTag() {
+  try {
+    return execSync('git describe --tags --abbrev=0', { encoding: 'utf8' }).trim();
+  } catch (error) {
+    return 'v0.0.0';
+  }
+}
+
+// Increment version
+function incrementVersion(currentVersion, incrementType) {
+  const version = parseVersion(currentVersion);
+  
+  switch (incrementType) {
     case 'major':
-      parts[0] = (parts[0] || 0) + 1;
-      parts[1] = 0;
-      parts[2] = 0;
-      break;
+      return `${version.major + 1}.0.0`;
     case 'minor':
-      parts[1] = (parts[1] || 0) + 1;
-      parts[2] = 0;
-      break;
+      return `${version.major}.${version.minor + 1}.0`;
     case 'patch':
+      return `${version.major}.${version.minor}.${version.patch + 1}`;
     default:
-      parts[2] = (parts[2] || 0) + 1;
-      break;
+      throw new Error('Invalid increment type');
+  }
+}
+
+// Check if working directory is clean
+function isWorkingDirectoryClean() {
+  try {
+    const status = execSync('git status --porcelain', { encoding: 'utf8' });
+    return status.trim().length === 0;
+  } catch (error) {
+    return false;
+  }
+}
+
+// Check if on main branch
+function isOnMainBranch() {
+  try {
+    const currentBranch = execSync('git branch --show-current', { encoding: 'utf8' }).trim();
+    return currentBranch === 'main' || currentBranch === 'master';
+  } catch (error) {
+    return false;
+  }
+}
+
+// Run git command with error handling
+function runGitCommand(command, successMessage) {
+  try {
+    const result = execSync(command, { encoding: 'utf8' });
+    if (successMessage) {
+      console.log(chalk.green(`✅ ${successMessage}`));
+    }
+    return result;
+  } catch (error) {
+    console.log(chalk.red(`❌ Git command failed: ${error.message}`));
+    throw error;
+  }
+}
+
+// Update package.json version
+function updatePackageVersion(newVersion) {
+  try {
+    if (!fs.existsSync('package.json')) {
+      console.log(chalk.yellow('⚠️  No package.json found - skipping version update'));
+      return false;
+    }
+    
+    const packageJson = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+    packageJson.version = newVersion;
+    fs.writeFileSync('package.json', JSON.stringify(packageJson, null, 2) + '\n');
+    
+    console.log(chalk.green(`✅ Updated package.json version to ${newVersion}`));
+    return true;
+  } catch (error) {
+    console.log(chalk.yellow('⚠️  Could not update package.json version'));
+    return false;
+  }
+}
+
+// Generate changelog from commits
+function generateChangelog(lastTag, newVersion) {
+  try {
+    const commits = execSync(`git log ${lastTag}..HEAD --pretty=format:"- %s (%h)"`, { encoding: 'utf8' });
+    
+    if (commits.trim()) {
+      return `Release ${newVersion}\n\nChanges:\n${commits}`;
+    } else {
+      return `Release ${newVersion}\n\nNo significant changes since ${lastTag}`;
+    }
+  } catch (error) {
+    return `Release ${newVersion}`;
+  }
+}
+
+// Validate release readiness
+function validateReleaseReadiness() {
+  console.log(chalk.blue('🔍 Validating release readiness...'));
+  
+  const checks = [
+    {
+      name: 'Working directory is clean',
+      check: isWorkingDirectoryClean,
+      required: true
+    },
+    {
+      name: 'On main/master branch',
+      check: isOnMainBranch,
+      required: false
+    },
+    {
+      name: 'Package.json exists',
+      check: () => fs.existsSync('package.json'),
+      required: false
+    }
+  ];
+  
+  let allRequired = true;
+  
+  checks.forEach(({ name, check, required }) => {
+    const passed = check();
+    const icon = passed ? '✅' : (required ? '❌' : '⚠️ ');
+    const color = passed ? chalk.green : (required ? chalk.red : chalk.yellow);
+    
+    console.log(`   ${icon} ${color(name)}`);
+    
+    if (!passed && required) {
+      allRequired = false;
+    }
+  });
+  
+  return allRequired;
+}
+
+// Main function
+async function main() {
+  const args = process.argv.slice(2);
+  
+  // Help functionality
+  if (args.includes('-h') || args.includes('--help')) {
+    showHelp();
+    return;
   }
   
-  return parts.join('.');
-}
-
-function checkReleaseReadiness() {
-  console.log('🔍 Checking release readiness...');
+  // Validate repository
+  if (!validateRepository()) {
+    process.exit(1);
+  }
   
-  // Check git status
-  runCommand(['git', 'status', '--porcelain'], (output) => {
-    if (output) {
-      console.log('\n⚠️  Warning: Uncommitted changes detected');
-      console.log('📝 Uncommitted files:');
-      console.log(output);
-      console.log('\n💡 Consider committing changes before release');
-    } else {
-      console.log('\n✅ Working directory is clean');
-    }
+  try {
+    const patchMode = args.includes('--patch');
+    const minorMode = args.includes('--minor');
+    const majorMode = args.includes('--major');
+    const prepareMode = args.includes('--prepare');
+    const customVersion = args.find(arg => !arg.startsWith('--'))?.trim();
     
-    // Check if on main branch
-    runCommand(['git', 'branch', '--show-current'], (currentBranch) => {
-      if (currentBranch !== 'main' && currentBranch !== 'master') {
-        console.log(`\n⚠️  Warning: Currently on branch '${currentBranch}'`);
-        console.log('💡 Consider switching to main/master for releases');
+    console.log(chalk.bold.magenta('\n📦 Release Management System'));
+    console.log(chalk.gray('─'.repeat(50)));
+    
+    if (prepareMode) {
+      // Prepare mode - just validate
+      if (validateReleaseReadiness()) {
+        console.log(chalk.green.bold('\n🎉 Repository is ready for release!'));
+        console.log(chalk.cyan('\nNext steps:'));
+        console.log(chalk.gray(`   • Patch release: ${chalk.green('grelease --patch')}`));
+        console.log(chalk.gray(`   • Minor release: ${chalk.green('grelease --minor')}`));
+        console.log(chalk.gray(`   • Major release: ${chalk.green('grelease --major')}`));
+        console.log(chalk.gray(`   • Custom version: ${chalk.green('grelease v1.2.3')}`));
       } else {
-        console.log(`\n✅ On main branch: ${currentBranch}`);
+        console.log(chalk.red.bold('\n❌ Repository not ready for release'));
+        console.log(chalk.yellow('Fix the issues above before creating a release'));
       }
-      
-      // Check remote sync
-      console.log('\n📡 Checking remote sync...');
-      runCommand(['git', 'fetch'], () => {
-        runCommand(['git', 'status', '-uno'], (statusOutput) => {
-          if (statusOutput.includes('behind')) {
-            console.log('\n⚠️  Warning: Local branch is behind remote');
-            console.log('💡 Run "gpull" to sync with remote');
-          } else if (statusOutput.includes('ahead')) {
-            console.log('\n⚠️  Warning: Local branch is ahead of remote');
-            console.log('💡 Run "gpush" to push local changes');
-          } else {
-            console.log('\n✅ In sync with remote');
-          }
-          
-          console.log('\n🚀 Release readiness check complete!');
-        }, null, true);
-      }, null, true);
-    }, null, true);
-  }, null, true);
-}
-
-// Handle different release workflows
-if (args.includes('--prepare')) {
-  checkReleaseReadiness();
-  
-} else if (args.includes('--patch') || args.includes('--minor') || args.includes('--major')) {
-  const currentVersion = getPackageVersion();
-  let versionType = 'patch';
-  
-  if (args.includes('--major')) versionType = 'major';
-  else if (args.includes('--minor')) versionType = 'minor';
-  
-  const newVersion = incrementVersion(currentVersion, versionType);
-  console.log(`📈 Auto incrementing ${versionType}: ${currentVersion} -> ${newVersion}`);
-  
-  createRelease(newVersion);
-  
-} else if (args.length > 0 && !args[0].startsWith('--')) {
-  // Specific version provided
-  const version = args[0];
-  console.log(`🏷️  Creating release: ${version}`);
-  
-  createRelease(version);
-  
-} else {
-  console.error('❌ Error: Version required');
-  console.log('💡 Usage: grelease <version> or grelease --patch');
-  console.log('💡 Or run: grelease --help for more options');
-  process.exit(1);
-}
-
-function createRelease(version) {
-  // Ensure version starts with 'v'
-  const tagVersion = version.startsWith('v') ? version : `v${version}`;
-  
-  console.log(`🚀 Creating release: ${tagVersion}`);
-  
-  // First check if we're ready
-  runCommand(['git', 'status', '--porcelain'], (output) => {
-    if (output) {
-      console.log('\n⚠️  Warning: Uncommitted changes detected');
-      console.log('💡 Committing changes before release...');
-      
-      runCommand(['git', 'add', '.'], () => {
-        runCommand(['git', 'commit', '-m', `Prepare release ${tagVersion}`], () => {
-          proceedWithRelease(tagVersion);
-        });
-      });
-    } else {
-      proceedWithRelease(tagVersion);
+      return;
     }
-  }, null, true);
+    
+    // Validate readiness before proceeding
+    if (!validateReleaseReadiness()) {
+      console.log(chalk.red.bold('\n❌ Pre-release validation failed'));
+      console.log(chalk.yellow('Use --prepare to see detailed validation results'));
+      process.exit(1);
+    }
+    
+    // Determine new version
+    let newVersion;
+    
+    if (customVersion) {
+      const parsedVersion = parseVersion(customVersion);
+      newVersion = parsedVersion.raw;
+    } else if (patchMode || minorMode || majorMode) {
+      const currentVersion = getCurrentVersion();
+      const incrementType = patchMode ? 'patch' : (minorMode ? 'minor' : 'major');
+      newVersion = incrementVersion(currentVersion, incrementType);
+    } else {
+      console.log(chalk.red('❌ No version specified'));
+      console.log(chalk.yellow('💡 Use: grelease v1.2.3 or --patch/--minor/--major'));
+      return;
+    }
+    
+    console.log(chalk.blue(`🎯 Creating release: v${newVersion}`));
+    
+    const lastTag = getLatestTag();
+    console.log(chalk.cyan(`   Previous version: ${lastTag}`));
+    console.log(chalk.cyan(`   New version: v${newVersion}`));
+    
+    // Update version files
+    console.log(chalk.blue('\n📝 Step 1: Updating version files...'));
+    updatePackageVersion(newVersion);
+    
+    // Stage version changes
+    console.log(chalk.blue('\n📁 Step 2: Staging version changes...'));
+    try {
+      runGitCommand('git add package.json package-lock.json', 'Staged version files');
+    } catch (error) {
+      runGitCommand('git add .', 'Staged all changes');
+    }
+    
+    // Create release commit
+    console.log(chalk.blue('\n📝 Step 3: Creating release commit...'));
+    const commitMessage = `Release v${newVersion}`;
+    runGitCommand(`git commit -m "${commitMessage}"`, 'Created release commit');
+    
+    // Create annotated tag
+    console.log(chalk.blue('\n🏷️  Step 4: Creating release tag...'));
+    const changelog = generateChangelog(lastTag, `v${newVersion}`);
+    runGitCommand(`git tag -a v${newVersion} -m "${changelog}"`, `Created tag v${newVersion}`);
+    
+    // Push to remote
+    console.log(chalk.blue('\n📤 Step 5: Pushing to remote...'));
+    try {
+      runGitCommand('git push origin HEAD', 'Pushed release commit');
+      runGitCommand(`git push origin v${newVersion}`, 'Pushed release tag');
+    } catch (error) {
+      console.log(chalk.yellow('⚠️  Could not push to remote - push manually later'));
+    }
+    
+    console.log(chalk.green.bold('\n🎉 Release created successfully!'));
+    
+    console.log(chalk.cyan('\n📋 Release Summary:'));
+    console.log(chalk.green(`   ✅ Version: v${newVersion}`));
+    console.log(chalk.green(`   ✅ Commit: ${commitMessage}`));
+    console.log(chalk.green(`   ✅ Tag: v${newVersion}`));
+    
+    console.log(chalk.cyan('\n💡 Next steps:'));
+    console.log(chalk.gray(`   • Verify on GitHub/GitLab: check tags and releases`));
+    console.log(chalk.gray(`   • Create release notes if needed`));
+    console.log(chalk.gray(`   • Deploy if you have automated deployment`));
+    console.log(chalk.gray(`   • Continue development on next version`));
+    
+  } catch (error) {
+    console.log(chalk.red.bold('\n❌ Release failed!'));
+    console.log(chalk.red(`Error: ${error.message}`));
+    
+    console.log(chalk.yellow('\n💡 Recovery suggestions:'));
+    console.log(chalk.gray(`   • Check repository state: ${chalk.green('gstatus')}`));
+    console.log(chalk.gray(`   • Validate readiness: ${chalk.green('grelease --prepare')}`));
+    console.log(chalk.gray(`   • Reset if needed: ${chalk.green('greset --soft HEAD~1')}`));
+    
+    process.exit(1);
+  }
 }
 
-function proceedWithRelease(tagVersion) {
-  // Create annotated tag
-  const releaseMessage = `Release ${tagVersion}`;
-  
-  runCommand(['git', 'tag', '-a', tagVersion, '-m', releaseMessage], () => {
-    console.log(`\n✅ Created tag: ${tagVersion}`);
-    
-    // Push commits and tags
-    runCommand(['git', 'push'], () => {
-      runCommand(['git', 'push', '--tags'], () => {
-        console.log(`\n🎉 Release ${tagVersion} created and pushed!`);
-        console.log('\n💡 Next steps:');
-        console.log('   - Create GitHub release from tag');
-        console.log('   - Update changelog if needed');
-        console.log('   - Announce release to team');
-      }, () => {
-        console.log(`\n✅ Release ${tagVersion} created locally`);
-        console.log('⚠️  Failed to push tags to remote');
-        console.log('💡 Run "git push --tags" manually later');
-      });
-    }, () => {
-      console.log(`\n✅ Release ${tagVersion} created locally`);
-      console.log('⚠️  Failed to push to remote');
-      console.log('💡 Run "gpush && git push --tags" manually later');
-    });
-  }, () => {
-    console.log('\n❌ Failed to create release tag');
-    console.log('💡 Check if tag already exists with "git tag -l"');
+// Run as standalone script
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main().catch(error => {
+    console.error(chalk.red('❌ Fatal error:'), error.message);
+    process.exit(1);
   });
 }
