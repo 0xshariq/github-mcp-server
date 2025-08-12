@@ -66,7 +66,7 @@ import {
   gitCherryPick,
   gitBlame,
   gitBisect
-} from "./github";
+} from "./github.js";
 
 // Initialize MCP server with enhanced metadata and capabilities
 const server = new Server({

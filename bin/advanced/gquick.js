@@ -12,95 +12,93 @@
 
 import { spawn } from 'child_process';
 import path from 'path';
+import chalk from 'chalk';
+import { validateRepository, showHelp } from './common.js';
 
-// Colors for better output
-const colors = {
-  reset: '\x1b[0m',
-  bright: '\x1b[1m',
-  red: '\x1b[31m',
-  green: '\x1b[32m',
-  yellow: '\x1b[33m',
-  blue: '\x1b[34m',
-  cyan: '\x1b[36m'
-};
+async function main() {
+  const args = process.argv.slice(2);
 
-function showHelp() {
-  console.log(`
-${colors.cyan}${colors.bright}⚡ gquick - Quick Commit Workflow${colors.reset}
-
-${colors.yellow}Usage:${colors.reset}
-  gquick "commit message"     Add all files and commit with message
-  gquick                      Add all files and commit with "Auto commit"
-  gquick --help, -h           Show this help
-
-${colors.yellow}What it does:${colors.reset}
-  ${colors.blue}1.${colors.reset} Adds all modified files (${colors.green}gadd${colors.reset})
-  ${colors.blue}2.${colors.reset} Commits with your message (${colors.green}gcommit${colors.reset})
-
-${colors.yellow}Examples:${colors.reset}
-  ${colors.green}gquick "Fix navigation bug"${colors.reset}   Add all and commit with message
-  ${colors.green}gquick${colors.reset}                        Add all and commit with "Auto commit"
-
-${colors.yellow}Equivalent to:${colors.reset}
-  ${colors.green}gadd && gcommit "your message"${colors.reset}
-`);
-}
-
-// Get the directory where this script is located
-const binDir = __dirname;
-
-// Get command line arguments (excluding node and script name)
-const args = process.argv.slice(2);
-
-// Check for help flags
-if (args.includes('-h') || args.includes('--help')) {
-  showHelp();
-  process.exit(0);
-}
-
-const commitMessage = args.join(' ') || 'Auto commit';
-
-console.log('🚀 Starting add all → commit workflow...');
-console.log('📁 Step 1/2: add...');
-
-// Step 1
-const step1Path = path.join(binDir, '..', 'basic', 'gadd.js');
-const step1Process = spawn('node', [step1Path], {
-  stdio: 'inherit',
-  cwd: process.cwd()
-});
-
-step1Process.on('close', (code) => {
-  if (code !== 0) {
-    console.error('❌ Failed at step 1');
-    process.exit(code);
+  // Help functionality
+  if (args.includes('-h') || args.includes('--help')) {
+    showHelp('gquick', 'Quick Commit Workflow', [
+      'gquick "commit message"     Add all files and commit with message',
+      'gquick                      Add all files and commit with "Auto commit"',
+      'gquick --help, -h           Show this help'
+    ], [
+      'gquick "Fix navigation bug"   # Add all and commit with message',
+      'gquick "Update documentation" # Another quick commit',
+      'gquick                       # Auto commit with default message'
+    ], [
+      '• Combines add and commit operations',
+      '• Repository validation',
+      '• Automatic file detection',
+      '• Quick workflow for small changes'
+    ], '⚡');
+    return;
   }
 
-  console.log('📄 Step 2/2: commit...');
-  
-  // Step 2
-  const step2Path = path.join(binDir, '..', 'basic', 'gcommit.js');
-  const step2Process = spawn('node', [step2Path, commitMessage], {
-    stdio: 'inherit',
-    cwd: process.cwd()
-  });
+  // Validate repository
+  if (!validateRepository('quick commit')) {
+    process.exit(1);
+  }
 
-  step2Process.on('close', (code) => {
-    if (code === 0) {
-      console.log('✅ add all → commit workflow completed!');
-    } else {
-      console.error('❌ Failed at step 2');
-    }
-    process.exit(code);
-  });
+  // Get commit message or use default
+  const commitMessage = args.length > 0 ? args.join(' ') : 'Auto commit';
 
-  step2Process.on('error', (err) => {
-    console.error('❌ Error executing step 2:', err.message);
+  console.log(chalk.blue.bold('⚡ Starting Quick Commit Workflow...'));
+  console.log(chalk.dim('═'.repeat(50)));
+  console.log(chalk.blue('📝 Commit message:'), chalk.white(`"${commitMessage}"`));
+  console.log();
+
+  try {
+    // Step 1: Add all changes
+    console.log(chalk.cyan.bold('📁 Step 1: Adding all changes...'));
+    await runCommand('node', [path.join(path.dirname(process.argv[1]), '..', '..', 'mcp-cli.js'), 'gadd']);
+    console.log(chalk.green('✅ All changes added to staging area'));
+    console.log();
+
+    // Step 2: Commit changes
+    console.log(chalk.cyan.bold('💾 Step 2: Committing changes...'));
+    await runCommand('node', [path.join(path.dirname(process.argv[1]), '..', '..', 'mcp-cli.js'), 'gcommit', commitMessage]);
+    console.log(chalk.green('✅ Changes committed successfully'));
+    console.log();
+
+    console.log(chalk.green.bold('🎉 Quick commit workflow completed!'));
+    console.log(chalk.cyan('💡 Your changes are staged and committed'));
+    console.log(chalk.gray('💡 Use "gpush" to push to remote repository'));
+
+  } catch (error) {
+    console.error(chalk.red.bold('❌ Quick commit failed:'), error.message);
+    process.exit(1);
+  }
+}
+
+// Helper function to run commands
+function runCommand(command, args) {
+  return new Promise((resolve, reject) => {
+    const process = spawn(command, args, {
+      stdio: 'inherit',
+      cwd: process.cwd()
+    });
+
+    process.on('close', (code) => {
+      if (code === 0) {
+        resolve();
+      } else {
+        reject(new Error(`Command failed with exit code ${code}`));
+      }
+    });
+
+    process.on('error', (err) => {
+      reject(err);
+    });
+  });
+}
+
+// ESM module detection
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main().catch((error) => {
+    console.error(chalk.red.bold('❌ Fatal error:'), error.message);
     process.exit(1);
   });
-});
-
-step1Process.on('error', (err) => {
-  console.error('❌ Error executing step 1:', err.message);
-  process.exit(1);
-});
+}

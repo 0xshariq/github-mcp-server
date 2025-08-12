@@ -68,16 +68,20 @@ function validateRepository(operation = 'operation') {
 }
 
 /**
- * Standard help header
+ * Standard help header - Updated to handle both string and array usage
  */
-function showHelp(command, description, usage, examples = []) {
+function showHelp(command, description, usage, examples = [], features = [], icon = '🚀') {
   console.log();
-  console.log(chalk.bold.cyan(`🚀 ${command}`) + chalk.gray(' - ') + chalk.bold.white(description));
+  console.log(chalk.bold.cyan(`${icon} ${command}`) + chalk.gray(' - ') + chalk.bold.white(description));
   console.log(chalk.dim('═'.repeat(50)));
   console.log();
   
   console.log(chalk.bold.yellow('Usage:'));
-  console.log(usage.split('\n').map(line => line.trim() ? chalk.green(line.trim()) : '').join('\n'));
+  if (Array.isArray(usage)) {
+    usage.forEach(line => console.log(chalk.green(`  ${line}`)));
+  } else {
+    console.log(usage.split('\n').map(line => line.trim() ? chalk.green(line.trim()) : '').join('\n'));
+  }
   console.log();
   
   if (examples.length > 0) {
@@ -86,11 +90,17 @@ function showHelp(command, description, usage, examples = []) {
     console.log();
   }
   
+  if (features.length > 0) {
+    console.log(chalk.bold.yellow('Features:'));
+    features.forEach(feature => console.log(chalk.cyan(`  ${feature}`)));
+    console.log();
+  }
+  
   console.log(chalk.bold.green('💡 This command respects your current working directory and repository.'));
   console.log();
 }
 
-export default {
+export {
   getRepoInfo,
   showRepoContext,
   validateRepository,

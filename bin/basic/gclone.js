@@ -10,71 +10,65 @@
 
 import { spawn } from 'child_process';
 import path from 'path';
+import chalk from 'chalk';
+import { showHelp, validateRepository } from '../advanced/common.js';
 
-// Colors for better output
-const colors = {
-  reset: '\x1b[0m',
-  bright: '\x1b[1m',
-  red: '\x1b[31m',
-  green: '\x1b[32m',
-  yellow: '\x1b[33m',
-  blue: '\x1b[34m',
-  cyan: '\x1b[36m'
-};
+async function main() {
+  // Get command line arguments (excluding node and script name)
+  const args = process.argv.slice(2);
 
-function showHelp() {
-  console.log(`
-${colors.cyan}${colors.bright}📥 gclone - Enhanced Git Clone${colors.reset}
+  // Check for help flags
+  if (args.includes('-h') || args.includes('--help')) {
+    showHelp('gclone', 'Enhanced Git Clone', [
+      'gclone <repository-url>              Clone repository to current directory',
+      'gclone <repository-url> <directory>  Clone repository to specific directory',
+      'gclone --help, -h                    Show this help'
+    ], [
+      'gclone https://github.com/user/repo.git',
+      'gclone https://github.com/user/repo.git my-project',
+      'gclone git@github.com:user/repo.git'
+    ], [
+      '• Downloads the complete repository from remote',
+      '• Sets up local working directory',
+      '• Configures remote origin automatically'
+    ], '📥');
+    return;
+  }
 
-${colors.yellow}Usage:${colors.reset}
-  gclone <repository-url>              Clone repository to current directory
-  gclone <repository-url> <directory>  Clone repository to specific directory
-  gclone --help, -h                    Show this help
+  // Validate arguments
+  if (args.length === 0) {
+    console.error(chalk.red.bold('❌ Error: Repository URL is required'));
+    console.log(chalk.yellow('💡 Usage: gclone <repository-url> [directory]'));
+    console.log(chalk.yellow('💡 Run: gclone --help for more information'));
+    process.exit(1);
+  }
 
-${colors.yellow}Examples:${colors.reset}
-  ${colors.green}gclone https://github.com/user/repo.git${colors.reset}
-  ${colors.green}gclone https://github.com/user/repo.git my-project${colors.reset}
-  ${colors.green}gclone git@github.com:user/repo.git${colors.reset}
+  console.log(chalk.blue.bold('🎯 Cloning repository...'));
 
-${colors.yellow}What it does:${colors.reset}
-  • Downloads the complete repository from remote
-  • Sets up local working directory
-  • Configures remote origin automatically
-`);
+  // Get the MCP CLI path
+  const mcpCliPath = path.join(path.dirname(process.argv[1]), '..', '..', 'mcp-cli.js');
+
+  const mcpProcess = spawn('node', [mcpCliPath, 'git-clone', ...args], {
+    stdio: 'inherit',
+    cwd: process.cwd()
+  });
+
+  mcpProcess.on('close', (code) => {
+    if (code === 0) {
+      console.log(chalk.green.bold('✅ Repository cloned successfully!'));
+    } else {
+      console.error(chalk.red.bold(`❌ Clone failed with code: ${code}`));
+    }
+    process.exit(code);
+  });
+
+  mcpProcess.on('error', (err) => {
+    console.error(chalk.red.bold('❌ Error:'), err.message);
+    process.exit(1);
+  });
 }
 
-// Get command line arguments (excluding node and script name)
-const args = process.argv.slice(2);
-
-// Check for help flags
-if (args.includes('-h') || args.includes('--help')) {
-  showHelp();
-  process.exit(0);
+// ESM module detection
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main().catch(console.error);
 }
-
-// Validate arguments
-if (args.length === 0) {
-  console.error(`${colors.red}❌ Error: Repository URL is required${colors.reset}`);
-  console.log(`${colors.yellow}💡 Usage: gclone <repository-url> [directory]${colors.reset}`);
-  console.log(`${colors.yellow}💡 Run: gclone --help for more information${colors.reset}`);
-  process.exit(1);
-}
-
-console.log(`${colors.blue}🎯 Cloning repository...${colors.reset}`);
-
-// Get the MCP CLI path
-const mcpCliPath = path.join(__dirname, '..', '..', 'mcp-cli.js');
-
-const mcpProcess = spawn('node', [mcpCliPath, 'git-clone', ...args], {
-  stdio: 'inherit',
-  cwd: process.cwd()
-});
-
-mcpProcess.on('close', (code) => {
-  process.exit(code);
-});
-
-mcpProcess.on('error', (err) => {
-  console.error('❌ Error:', err.message);
-  process.exit(1);
-});

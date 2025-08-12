@@ -17,7 +17,8 @@
 
 import { spawn } from 'child_process';
 import path from 'path';
-import { validateRepository, showHelp, showRepoContext } from '../advanced/common';
+import chalk from 'chalk';
+import { validateRepository, showHelp, showRepoContext } from '../advanced/common.js';
 
 // Get command line arguments
 const args = process.argv.slice(2);
@@ -54,7 +55,7 @@ if (!validateRepository('pull')) {
 console.log('⬇️  Pulling from remote repository...');
 
 // Get the MCP CLI path
-const mcpCliPath = path.join(__dirname, '..', '..', 'mcp-cli.js');
+const mcpCliPath = path.join(path.dirname(process.argv[1]), '..', '..', 'mcp-cli.js');
 
 const mcpProcess = spawn('node', [mcpCliPath, 'git-pull'], {
   stdio: 'inherit',

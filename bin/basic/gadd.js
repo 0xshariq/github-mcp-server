@@ -1,92 +1,94 @@
 #!/usr/bin/env node
 
+/**
+ * gadd - Enhanced Git Add Alias
+ * 
+ * Usage:
+ *   gadd                    - Add all modified files (smart mode)
+ *   gadd file1 file2...     - Add specific files
+ *   gadd --help, -h         - Show this help
+ */
+
 import { spawn } from 'child_process';
 import path from 'path';
 import chalk from 'chalk';
-
-function showHelp() {
-  console.log();
-  console.log(chalk.bold.cyan('📝 gadd') + chalk.gray(' - ') + chalk.bold.white('Enhanced Git Add Alias'));
-  console.log(chalk.dim('═'.repeat(50)));
-  console.log();
-  
-  console.log(chalk.bold.yellow('Usage:'));
-  console.log(chalk.green('  gadd') + chalk.gray('                    Add all modified files (smart mode)'));
-  console.log(chalk.green('  gadd file1 file2...') + chalk.gray('     Add specific files'));
-  console.log(chalk.green('  gadd --help, -h') + chalk.gray('         Show this help'));
-  console.log(chalk.green('  gadd --status, -s') + chalk.gray('       Show status before adding'));
-  console.log();
-  
-  console.log(chalk.bold.yellow('Examples:'));
-  console.log(chalk.blue('  gadd') + chalk.gray('                    Smart add all changes'));
-  console.log(chalk.blue('  gadd src/file.js') + chalk.gray('        Add specific file'));
-  console.log(chalk.blue('  gadd -s') + chalk.gray('                 Check status first'));
-  console.log();
-}
-
-async function runCommand(args) {
-  return new Promise((resolve, reject) => {
-    const child = spawn('git', args, {
-      stdio: 'inherit',
-      cwd: process.cwd()
-    });
-    
-    child.on('close', (code) => {
-      if (code === 0) {
-        resolve();
-      } else {
-        reject(new Error(`Git command failed with code ${code}`));
-      }
-    });
-    
-    child.on('error', (err) => {
-      reject(err);
-    });
-  });
-}
+import { validateRepository, showHelp } from '../advanced/common.js';
 
 async function main() {
   const args = process.argv.slice(2);
-  
-  if (args.includes('--help') || args.includes('-h')) {
-    showHelp();
+
+  // Help functionality
+  if (args.includes('-h') || args.includes('--help')) {
+    showHelp('gadd', 'Enhanced Git Add', [
+      'gadd                    Add all modified files (smart mode)',
+      'gadd file1 file2...     Add specific files',
+      'gadd --help, -h         Show this help'
+    ], [
+      'gadd                    # Add all changes',
+      'gadd src/file.js        # Add specific file',
+      'gadd *.js               # Add all JS files'
+    ], [
+      '• Repository context validation',
+      '• Smart file detection',
+      '• Selective file adding'
+    ], '📝');
     return;
   }
-  
-  if (args.includes('--status') || args.includes('-s')) {
-    console.log(`${colors.blue}📊 Current repository status:${colors.reset}`);
-    try {
-      await runCommand(['status', '--porcelain']);
-      return;
-    } catch (error) {
-      console.error(`${colors.red}Error:${colors.reset}`, error.message);
+
+  // Validate repository
+  if (!validateRepository('add')) {
+    process.exit(1);
+  }
+
+  // Handle different operations
+  if (args.length === 0) {
+    console.log(chalk.blue.bold('📝 Adding all changes...'));
+  } else {
+    const files = args.filter(arg => !arg.startsWith('-'));
+    if (files.length > 0) {
+      console.log(chalk.blue.bold(`📝 Adding files: ${files.join(', ')}`));
+    } else {
+      console.error(chalk.red.bold('❌ No files specified'));
+      console.log(chalk.yellow('💡 Run: gadd --help for usage information'));
       process.exit(1);
     }
   }
-  
-  try {
-    if (args.length === 0) {
-      console.log(`${colors.blue}🚀 Smart add mode: adding all changes...${colors.reset}`);
-      await runCommand(['add', '.']);
-    } else {
-      const files = args.filter(arg => !arg.startsWith('-'));
-      if (files.length > 0) {
-        console.log(`${colors.blue}📁 Adding files: ${files.join(', ')}${colors.reset}`);
-        await runCommand(['add', ...files]);
-      } else {
-        console.log(`${colors.red}❌ No files specified.${colors.reset}`);
-        process.exit(1);
-      }
-    }
-  } catch (error) {
-    console.error(`${colors.red}❌ Add failed:${colors.reset}`, error.message);
-    process.exit(1);
-  }
-}
 
-if (import.meta.url === `file://${process.argv[1]}`) {
-  main().catch(error => {
-    console.error(`${colors.red}❌ Error:${colors.reset}`, error.message);
+  // Get the MCP CLI path
+  const mcpCliPath = path.join(path.dirname(process.argv[1]), '..', '..', 'mcp-cli.js');
+  
+  // Map to MCP commands
+  let mcpCommand, mcpArgs;
+  if (args.length === 0) {
+    mcpCommand = 'git-add-all';
+    mcpArgs = [];
+  } else {
+    mcpCommand = 'git-add';
+    mcpArgs = args;
+  }
+
+  const mcpProcess = spawn('node', [mcpCliPath, mcpCommand, ...mcpArgs], {
+    stdio: 'inherit',
+    cwd: process.cwd()
+  });
+
+  mcpProcess.on('close', (code) => {
+    if (code === 0) {
+      console.log(chalk.green.bold('✅ Files added successfully!'));
+      console.log(chalk.cyan('💡 Tip: Use "gcommit" to commit your changes'));
+    } else {
+      console.error(chalk.red.bold(`❌ Add operation failed (code: ${code})`));
+    }
+    process.exit(code);
+  });
+
+  mcpProcess.on('error', (err) => {
+    console.error(chalk.red.bold('❌ Error:'), err.message);
     process.exit(1);
   });
+}
+
+// ESM module detection
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main().catch(console.error);
 }

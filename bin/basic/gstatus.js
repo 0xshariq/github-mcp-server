@@ -4,107 +4,216 @@
  * gstatus - Enhanced Git Status Alias
  * 
  * Usage:
- *   gstatus                 - Show repository status with context
- *   gstatus -h, --help      - Show help
- *   gstatus --branch        - Show branch information only
- *   gstatus --remote        - Show remote information only
- * 
- * Features:
- * - Repository context (directory, remote, branch)
- * - File change summary
- * - Helpful next-step suggestions
+ *   gstatus                 - Show repository status with styled output
+ *   gstatus --help, -h      - Show this help
  */
 
 import { spawn } from 'child_process';
+import { execSync } from 'child_process';
 import path from 'path';
 import chalk from 'chalk';
+import { validateRepository, showHelp } from '../advanced/common.js';
 
-// Get command line arguments
-const args = process.argv.slice(2);
+function parseGitStatus(output) {
+  const lines = output.split('\n').filter(line => line.trim());
+  const status = {
+    branch: '',
+    ahead: 0,
+    behind: 0,
+    staged: [],
+    modified: [],
+    untracked: [],
+    deleted: [],
+    renamed: []
+  };
 
-// Help functionality
-if (args.includes('-h') || args.includes('--help')) {
-  console.log();
-  console.log(chalk.bold.cyan('📊 gstatus') + chalk.gray(' - ') + chalk.bold.white('Enhanced Git Status'));
-  console.log(chalk.dim('═'.repeat(50)));
-  console.log();
+  for (const line of lines) {
+    if (line.startsWith('## ')) {
+      // Branch info line
+      const branchMatch = line.match(/## (.+?)(?:\.\.\.|$)/);
+      if (branchMatch) {
+        status.branch = branchMatch[1];
+      }
+      
+      const aheadMatch = line.match(/ahead (\d+)/);
+      const behindMatch = line.match(/behind (\d+)/);
+      
+      if (aheadMatch) status.ahead = parseInt(aheadMatch[1]);
+      if (behindMatch) status.behind = parseInt(behindMatch[1]);
+      
+    } else if (line.length >= 3) {
+      const statusCode = line.substring(0, 2);
+      const filename = line.substring(3);
+      
+      // Parse file status codes
+      if (statusCode[0] !== ' ' && statusCode[0] !== '?') {
+        // Staged changes
+        if (statusCode[0] === 'A') status.staged.push({file: filename, type: 'added'});
+        else if (statusCode[0] === 'M') status.staged.push({file: filename, type: 'modified'});
+        else if (statusCode[0] === 'D') status.staged.push({file: filename, type: 'deleted'});
+        else if (statusCode[0] === 'R') status.renamed.push(filename);
+        else status.staged.push({file: filename, type: 'staged'});
+      }
+      
+      if (statusCode[1] !== ' ') {
+        // Working directory changes
+        if (statusCode[1] === 'M') status.modified.push(filename);
+        else if (statusCode[1] === 'D') status.deleted.push(filename);
+      }
+      
+      if (statusCode === '??') {
+        status.untracked.push(filename);
+      }
+    }
+  }
   
-  console.log(chalk.bold.yellow('Usage:'));
-  console.log(chalk.green('  gstatus') + chalk.gray('                 Show complete repository status'));
-  console.log(chalk.green('  gstatus --branch') + chalk.gray('        Show current branch information'));
-  console.log(chalk.green('  gstatus --remote') + chalk.gray('        Show remote repository information'));
-  console.log(chalk.green('  gstatus -h, --help') + chalk.gray('      Show this help'));
-  console.log();
-  
-  console.log(chalk.bold.magenta('Features:'));
-  console.log(chalk.cyan('  •') + chalk.white(' Repository context (directory, remote URL, current branch)'));
-  console.log(chalk.cyan('  •') + chalk.white(' File change summary'));
-  console.log(chalk.cyan('  •') + chalk.white(' Helpful next-step suggestions'));
-  console.log();
-  
-  console.log(chalk.bold.blue('Examples:'));
-  console.log(chalk.yellow('  gstatus') + chalk.gray('                 Complete status overview'));
-  console.log(chalk.yellow('  gstatus --branch') + chalk.gray('        Just branch info'));
-  console.log();
-  
-  console.log(chalk.bold.green('💡 This shows what repository you\'re working in to prevent accidents!'));
-  console.log();
-  process.exit(0);
+  return status;
 }
 
-console.log(chalk.bold.cyan('📊 Checking repository status...'));
-
-// Execute git commands directly in current directory
-async function getGitStatus() {
+async function getStyledStatus() {
   try {
-    const { execSync } = require('child_process');
+    // Get git status in porcelain format
+    const statusOutput = execSync('git status --porcelain=v1 -b', { 
+      encoding: 'utf8',
+      cwd: process.cwd()
+    });
     
-    // Get repository context
-    let remote = '', branch = '', status = '';
+    const status = parseGitStatus(statusOutput);
     
-    try {
-      remote = execSync('git remote get-url origin', { cwd: process.cwd(), encoding: 'utf8' }).trim();
-    } catch (e) {
-      remote = 'No remote configured';
+    // Show repository context
+    console.log(chalk.bold.cyan('📊 Repository Status'));
+    console.log(chalk.dim('═'.repeat(50)));
+    console.log();
+    
+    // Branch information
+    console.log(chalk.bold.yellow('🌿 Branch:'), chalk.green.bold(status.branch || 'unknown'));
+    
+    if (status.ahead > 0 || status.behind > 0) {
+      let syncStatus = '';
+      if (status.ahead > 0) syncStatus += chalk.green(`↑${status.ahead} ahead`);
+      if (status.behind > 0) {
+        if (syncStatus) syncStatus += ', ';
+        syncStatus += chalk.red(`↓${status.behind} behind`);
+      }
+      console.log(chalk.bold.yellow('🔄 Sync:'), syncStatus);
+    }
+    console.log();
+    
+    // File changes
+    let hasChanges = false;
+    
+    // Staged changes
+    if (status.staged.length > 0) {
+      hasChanges = true;
+      console.log(chalk.bold.green('✅ Staged Changes:'));
+      status.staged.forEach(item => {
+        const icon = item.type === 'added' ? '📄' : item.type === 'modified' ? '📝' : item.type === 'deleted' ? '🗑️' : '📋';
+        console.log(`   ${icon} ${chalk.green(item.file)} ${chalk.gray(`(${item.type})`)}`);
+      });
+      console.log();
     }
     
-    try {
-      branch = execSync('git branch --show-current', { cwd: process.cwd(), encoding: 'utf8' }).trim();
-    } catch (e) {
-      branch = 'No branch';
+    // Modified files
+    if (status.modified.length > 0) {
+      hasChanges = true;
+      console.log(chalk.bold.yellow('📝 Modified Files:'));
+      status.modified.forEach(file => {
+        console.log(`   📝 ${chalk.yellow(file)}`);
+      });
+      console.log();
     }
     
-    try {
-      status = execSync('git status --porcelain', { cwd: process.cwd(), encoding: 'utf8' }).trim();
-    } catch (e) {
-      status = '';
+    // Deleted files
+    if (status.deleted.length > 0) {
+      hasChanges = true;
+      console.log(chalk.bold.red('🗑️  Deleted Files:'));
+      status.deleted.forEach(file => {
+        console.log(`   🗑️ ${chalk.red(file)}`);
+      });
+      console.log();
     }
     
-    // Display repository context
-    const repoName = process.cwd().split('/').pop();
-    console.log(`📁 Directory: ${repoName}`);
-    console.log(`🔗 Remote: ${remote}`);
-    console.log(`🌿 Branch: ${branch}`);
-    console.log('');
-    
-    // Display status
-    console.log('📊 Current repository status:');
-    if (status) {
-      console.log(status);
-    } else {
-      console.log('✅ Working tree clean');
+    // Untracked files
+    if (status.untracked.length > 0) {
+      hasChanges = true;
+      console.log(chalk.bold.gray('❓ Untracked Files:'));
+      status.untracked.forEach(file => {
+        console.log(`   ❓ ${chalk.gray(file)}`);
+      });
+      console.log();
     }
     
-    console.log('\n💡 Quick commands:');
-    console.log('   gadd         - Stage files for commit');
-    console.log('   gcommit "msg" - Commit staged files');
-    console.log('   gpush        - Push to remote');
-    console.log('   gflow "msg"  - Complete workflow (add→commit→push)');
+    // Renamed files
+    if (status.renamed.length > 0) {
+      hasChanges = true;
+      console.log(chalk.bold.blue('🔄 Renamed Files:'));
+      status.renamed.forEach(file => {
+        console.log(`   🔄 ${chalk.blue(file)}`);
+      });
+      console.log();
+    }
+    
+    // Clean status
+    if (!hasChanges) {
+      console.log(chalk.bold.green('✨ Working tree clean'));
+      console.log(chalk.gray('No changes to commit'));
+      console.log();
+    }
+    
+    // Next steps suggestions
+    console.log(chalk.bold.cyan('💡 Suggested Next Steps:'));
+    if (status.untracked.length > 0 || status.modified.length > 0 || status.deleted.length > 0) {
+      console.log(chalk.cyan('   • Add changes: ') + chalk.white('gadd .'));
+    }
+    if (status.staged.length > 0) {
+      console.log(chalk.cyan('   • Commit changes: ') + chalk.white('gcommit "your message"'));
+    }
+    if (status.ahead > 0) {
+      console.log(chalk.cyan('   • Push commits: ') + chalk.white('gpush'));
+    }
+    if (status.behind > 0) {
+      console.log(chalk.cyan('   • Pull changes: ') + chalk.white('gpull'));
+    }
+    if (!hasChanges && status.ahead === 0 && status.behind === 0) {
+      console.log(chalk.cyan('   • Start working: ') + chalk.gray('Edit files and make changes'));
+    }
     
   } catch (error) {
-    console.error('❌ Error:', error.message);
+    console.error(chalk.red.bold('❌ Error getting git status:'), error.message);
     process.exit(1);
   }
 }
 
-getGitStatus();
+async function main() {
+  const args = process.argv.slice(2);
+
+  // Help functionality
+  if (args.includes('-h') || args.includes('--help')) {
+    showHelp('gstatus', 'Enhanced Git Status', [
+      'gstatus                 Show repository status with styled output',
+      'gstatus --help, -h      Show this help'
+    ], [
+      'gstatus                 # Show complete styled status',
+      'gstatus                 # See branch, changes, and suggestions'
+    ], [
+      '• Repository context validation',
+      '• Styled file change display',
+      '• Branch and sync information',
+      '• Helpful next-step suggestions'
+    ], '📊');
+    return;
+  }
+
+  // Validate repository
+  if (!validateRepository('status')) {
+    process.exit(1);
+  }
+
+  // Get and display styled status
+  await getStyledStatus();
+}
+
+// ESM module detection
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main().catch(console.error);
+}

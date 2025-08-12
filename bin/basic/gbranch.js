@@ -18,9 +18,7 @@
 import { spawn } from 'child_process';
 import path from 'path';
 import chalk from 'chalk';
-import common from '../advanced/common.js';
-
-const { validateRepository, showHelp, showRepoContext } = common;
+import { validateRepository, showHelp, showRepoContext } from '../advanced/common.js';
 
 // Get command line arguments
 const args = process.argv.slice(2);
@@ -63,7 +61,7 @@ if (branchName) {
 }
 
 // Get the MCP CLI path
-const mcpCliPath = path.join(__dirname, '..', '..', 'mcp-cli.js');
+const mcpCliPath = path.join(path.dirname(process.argv[1]), '..', '..', 'mcp-cli.js');
 const mcpArgs = branchName ? ['git-branch', branchName] : ['git-branch'];
 
 const mcpProcess = spawn('node', [mcpCliPath, ...mcpArgs], {

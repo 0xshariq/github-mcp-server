@@ -10,69 +10,73 @@
 
 import { spawn } from 'child_process';
 import path from 'path';
+import chalk from 'chalk';
+import { validateRepository, showHelp } from '../advanced/common.js';
 
-// Colors for better output
-const colors = {
-  reset: '\x1b[0m',
-  bright: '\x1b[1m',
-  red: '\x1b[31m',
-  green: '\x1b[32m',
-  yellow: '\x1b[33m',
-  blue: '\x1b[34m',
-  cyan: '\x1b[36m'
-};
+async function main() {
+  // Get command line arguments (excluding node and script name)
+  const args = process.argv.slice(2);
 
-function showHelp() {
-  console.log(`
-${colors.cyan}${colors.bright}↩️  greset - Enhanced Git Reset${colors.reset}
+  // Check for help flags
+  if (args.includes('-h') || args.includes('--help')) {
+    showHelp('greset', 'Enhanced Git Reset', [
+      'greset                    Reset staging area (keep working directory)',
+      'greset --soft             Reset commit pointer only',
+      'greset --hard             Reset everything (DANGEROUS)',
+      'greset --help, -h         Show this help'
+    ], [
+      'greset                    # Reset staging area',
+      'greset --soft HEAD~1      # Undo last commit (keep changes)',
+      'greset --hard HEAD~1      # Undo last commit (lose changes)'
+    ], [
+      '• Repository context validation',
+      '• Safe reset operations',
+      '• Multiple reset modes'
+    ], '↩️ ');
+    return;
+  }
 
-${colors.yellow}Usage:${colors.reset}
-  greset                    Reset staging area (keep working directory)
-  greset --soft HEAD~1      Undo last commit (keep changes staged)
-  greset --hard HEAD~1      Undo last commit (discard all changes)
-  greset --mixed HEAD~1     Undo last commit (unstage changes)
-  greset <file>            Unstage specific file
-  greset --help, -h        Show this help
+  // Validate repository
+  if (!validateRepository('reset')) {
+    process.exit(1);
+  }
 
-${colors.yellow}Examples:${colors.reset}
-  ${colors.green}greset${colors.reset}                    Reset staging area
-  ${colors.green}greset --soft HEAD~1${colors.reset}      Undo last commit, keep changes staged
-  ${colors.green}greset src/file.js${colors.reset}       Unstage specific file
-  ${colors.green}greset --hard HEAD~1${colors.reset}      ${colors.red}⚠️  Dangerous: Discards changes!${colors.reset}
+  // Warn for dangerous operations
+  if (args.includes('--hard')) {
+    console.log(chalk.red.bold('⚠️  WARNING: --hard will permanently delete uncommitted changes!'));
+    console.log(chalk.blue.bold('🎯 Executing git reset --hard...'));
+  } else if (args.includes('--soft')) {
+    console.log(chalk.blue.bold('🎯 Executing git reset --soft...'));
+  } else {
+    console.log(chalk.blue.bold('🎯 Executing git reset...'));
+  }
 
-${colors.yellow}Reset Modes:${colors.reset}
-  ${colors.blue}--soft${colors.reset}   Keep changes staged
-  ${colors.blue}--mixed${colors.reset}  Keep changes in working directory (default)
-  ${colors.blue}--hard${colors.reset}   ${colors.red}⚠️  Discard all changes (destructive!)${colors.reset}
+  // Get the MCP CLI path
+  const mcpCliPath = path.join(path.dirname(process.argv[1]), '..', '..', 'mcp-cli.js');
 
-${colors.red}⚠️  WARNING: --hard will permanently delete uncommitted changes!${colors.reset}
-`);
+  const mcpProcess = spawn('node', [mcpCliPath, 'git-reset', ...args], {
+    stdio: 'inherit',
+    cwd: process.cwd()
+  });
+
+  mcpProcess.on('close', (code) => {
+    if (code === 0) {
+      console.log(chalk.green.bold('✅ Reset completed successfully!'));
+      console.log(chalk.cyan('💡 Tip: Use "gstatus" to see current repository state'));
+    } else {
+      console.error(chalk.red.bold(`❌ Reset failed (code: ${code})`));
+    }
+    process.exit(code);
+  });
+
+  mcpProcess.on('error', (err) => {
+    console.error(chalk.red.bold('❌ Error:'), err.message);
+    process.exit(1);
+  });
 }
 
-// Get command line arguments (excluding node and script name)
-const args = process.argv.slice(2);
-
-// Check for help flags
-if (args.includes('-h') || args.includes('--help')) {
-  showHelp();
-  process.exit(0);
+// ESM module detection
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main().catch(console.error);
 }
 
-console.log(`${colors.blue}🎯 Executing git reset...${colors.reset}`);
-
-// Get the MCP CLI path
-const mcpCliPath = path.join(__dirname, '..', '..', 'mcp-cli.js');
-
-const mcpProcess = spawn('node', [mcpCliPath, 'git-reset', ...args], {
-  stdio: 'inherit',
-  cwd: process.cwd()
-});
-
-mcpProcess.on('close', (code) => {
-  process.exit(code);
-});
-
-mcpProcess.on('error', (err) => {
-  console.error('❌ Error:', err.message);
-  process.exit(1);
-});

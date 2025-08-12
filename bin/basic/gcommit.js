@@ -4,104 +4,78 @@
  * gcommit - Enhanced Git Commit Alias
  * 
  * Usage:
- *   gcommit "commit message"           - Commit with message
- *   gcommit -h, --help                - Show help
- *   gcommit --status                   - Show repository status first
- * 
- * Features:
- * - Validates commit message
- * - Shows repository context
- * - Enhanced error handling
+ *   gcommit "commit message"    - Commit with message
+ *   gcommit --help, -h          - Show this help
  */
 
 import { spawn } from 'child_process';
 import path from 'path';
 import chalk from 'chalk';
-
-// Get command line arguments (excluding node and script name)
-const args = process.argv.slice(2);
-
-// Help and validation
-if (args.includes('-h') || args.includes('--help')) {
-  console.log();
-  console.log(chalk.bold.cyan('🚀 gcommit') + chalk.gray(' - ') + chalk.bold.white('Enhanced Git Commit'));
-  console.log(chalk.dim('═'.repeat(50)));
-  console.log();
-  
-  console.log(chalk.bold.yellow('Usage:'));
-  console.log(chalk.green('  gcommit "commit message"') + chalk.gray('    Commit staged files with message'));
-  console.log(chalk.green('  gcommit --status') + chalk.gray('           Show repository status first'));
-  console.log(chalk.green('  gcommit -h, --help') + chalk.gray('         Show this help'));
-  console.log();
-  
-  console.log(chalk.bold.yellow('Examples:'));
-  console.log(chalk.blue('  gcommit "Fix authentication bug"'));
-  console.log(chalk.blue('  gcommit "Add new feature for user management"'));
-  console.log();
-  
-  console.log(chalk.bold.magenta('Note:') + chalk.white(' Make sure to stage files with ') + chalk.green('gadd') + chalk.white(' before committing.'));
-  console.log();
-  process.exit(0);
-}
-
-
+import { validateRepository, showHelp } from '../advanced/common.js';
 
 async function main() {
-  // Show status first if requested
-  if (args.includes('--status')) {
-    console.log('📊 Repository Status:');
-    const statusProcess = spawn('git', ['status', '--porcelain'], {
-      stdio: 'inherit',
-      cwd: process.cwd()
-    });
-    
-    statusProcess.on('close', (code) => {
-      if (code === 0) {
-console.log('📝 Use: gcommit "your message" to commit staged files');
-      }
-      process.exit(code);
-    });
+  const args = process.argv.slice(2);
+
+  // Help functionality
+  if (args.includes('-h') || args.includes('--help')) {
+    showHelp('gcommit', 'Enhanced Git Commit', [
+      'gcommit "commit message"    Commit with message',
+      'gcommit --help, -h          Show this help'
+    ], [
+      'gcommit "Add new feature"   # Commit with descriptive message',
+      'gcommit "Fix bug in auth"   # Commit bug fix',
+      'gcommit "Update docs"       # Quick documentation update'
+    ], [
+      '• Repository context validation',
+      '• Enhanced error handling',
+      '• Commit message validation'
+    ], '🚀');
     return;
   }
 
-  // Validate commit message
+  // Validate repository
+  if (!validateRepository('commit')) {
+    process.exit(1);
+  }
+
+  // Check if commit message is provided
   if (args.length === 0) {
-    console.error('❌ Error: Commit message is required');
-    console.log('💡 Usage: gcommit "your commit message"');
-    console.log('💡 Or run: gcommit --help for more options');
+    console.error(chalk.red.bold('❌ Commit message required'));
+    console.log(chalk.yellow('💡 Usage: gcommit "your commit message"'));
+    console.log(chalk.gray('💡 Run: gcommit --help for more information'));
     process.exit(1);
   }
 
   const commitMessage = args.join(' ');
-  if (commitMessage.trim().length < 3) {
-    console.error('❌ Error: Commit message too short (minimum 3 characters)');
-    process.exit(1);
-  }
+  
+  console.log(chalk.blue.bold('🚀 Committing changes...'));
+  console.log(chalk.gray(`📝 Message: "${commitMessage}"`));
 
-  // Execute git commit
-  console.log(`📝 Committing changes: "${commitMessage}"`);
-  const gitProcess = spawn('git', ['commit', '-m', commitMessage], {
+  // Get the MCP CLI path
+  const mcpCliPath = path.join(path.dirname(process.argv[1]), '..', '..', 'mcp-cli.js');
+
+  const mcpProcess = spawn('node', [mcpCliPath, 'git-commit', commitMessage], {
     stdio: 'inherit',
     cwd: process.cwd()
   });
 
-  gitProcess.on('close', (code) => {
+  mcpProcess.on('close', (code) => {
     if (code === 0) {
-      console.log('💡 Tip: Use "gpush" to push to remote repository');
+      console.log(chalk.green.bold('✅ Commit successful!'));
+      console.log(chalk.cyan('💡 Tip: Use "gpush" to push your changes'));
+    } else {
+      console.error(chalk.red.bold(`❌ Commit failed (code: ${code})`));
     }
     process.exit(code);
   });
 
-  gitProcess.on('error', (err) => {
-    console.error('❌ Error:', err.message);
+  mcpProcess.on('error', (err) => {
+    console.error(chalk.red.bold('❌ Error:'), err.message);
     process.exit(1);
   });
 }
 
 // ESM module detection
 if (import.meta.url === `file://${process.argv[1]}`) {
-  main().catch(error => {
-    console.error('❌ Error:', error.message);
-    process.exit(1);
-  });
+  main().catch(console.error);
 }

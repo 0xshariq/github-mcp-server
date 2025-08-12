@@ -2,88 +2,74 @@
 
 /**
  * ginit - Enhanced Git Initialize Alias
- *
+ * 
  * Usage:
- *   ginit                   Initialize new Git repository
- *   ginit --help, -h        Show help
+ *   ginit                   - Initialize new Git repository
+ *   ginit --help, -h        - Show this help
  */
 
-import { spawn } from "child_process";
-import fs from "fs";
-import path from "path";
-import chalk from "chalk";
-  
-
-function showHelp() {
-  console.log();
-  console.log(chalk.bold.cyan('🎯 ginit') + chalk.gray(' - ') + chalk.bold.white('Enhanced Git Initialize'));
-  console.log(chalk.dim('═'.repeat(50)));
-  console.log();
-  
-  console.log(chalk.bold.yellow('Usage:'));
-  console.log(chalk.green('  ginit') + chalk.gray('              Initialize new Git repository in current directory'));
-  console.log(chalk.green('  ginit --help, -h') + chalk.gray('   Show this help'));
-  console.log();
-  
-  console.log(chalk.bold.yellow('Examples:'));
-  console.log(chalk.blue('  ginit') + chalk.gray('              Create new Git repository'));
-  console.log();
-  
-  console.log(chalk.bold.yellow('What it does:'));
-  console.log(chalk.cyan('  •') + chalk.white(' Checks if directory is already a Git repository'));
-  console.log(chalk.cyan('  •') + chalk.white(' Creates .git directory and initializes repository'));
-}
-
-function executeGitCommand(gitArgs) {
-  return new Promise((resolve, reject) => {
-    const gitProcess = spawn("git", gitArgs, { stdio: "inherit" });
-    gitProcess.on("close", (code) => {
-      if (code === 0) {
-        resolve();
-      } else {
-        reject(new Error(`Git command failed with code ${code}`));
-      }
-    });
-    gitProcess.on("error", (err) => {
-      reject(err);
-    });
-  });
-}
+import { spawn } from 'child_process';
+import fs from 'fs';
+import path from 'path';
+import chalk from 'chalk';
+import { showHelp } from '../advanced/common.js';
 
 async function main() {
   const args = process.argv.slice(2);
 
-  // Check for help flags
-  if (args.includes("-h") || args.includes("--help")) {
-    showHelp();
+  // Help functionality
+  if (args.includes('-h') || args.includes('--help')) {
+    showHelp('ginit', 'Enhanced Git Initialize', [
+      'ginit                   Initialize new Git repository',
+      'ginit --help, -h        Show this help'
+    ], [
+      'ginit                   # Initialize Git repository in current directory',
+      'cd my-project && ginit  # Initialize in project directory'
+    ], [
+      '• Creates .git directory',
+      '• Sets up initial repository structure',
+      '• Ready for first commit'
+    ], '🎯');
     return;
   }
 
-  const gitDir = path.join(process.cwd(), ".git");
-  if (fs.existsSync(gitDir)) {
-    console.log(
-      `${colors.green}✅ This directory is already a Git repository.${colors.reset}`
-    );
+  // Check if already a git repository
+  if (fs.existsSync(path.join(process.cwd(), '.git'))) {
+    console.log(chalk.yellow.bold('⚠️  Git repository already exists'));
+    console.log(chalk.gray('Current directory is already a Git repository'));
     return;
   }
 
-  console.log(
-    `${colors.blue}🚀 Initializing a new Git repository...${colors.reset}`
-  );
-  try {
-    await executeGitCommand(["init"]);
-    console.log(
-      `${colors.green}🎉 Successfully initialized empty Git repository.${colors.reset}`
-    );
-    console.log(
-      `${colors.yellow}💡 Next: Use 'gadd .' to add files and 'gcommit "message"' to commit${colors.reset}`
-    );
-  } catch (error) {
-    console.error(
-      `${colors.red}❌ Error initializing repository: ${error.message}${colors.reset}`
-    );
+  console.log(chalk.blue.bold('🎯 Initializing Git repository...'));
+  console.log(chalk.gray(`📁 Location: ${process.cwd()}`));
+
+  // Get the MCP CLI path
+  const mcpCliPath = path.join(path.dirname(process.argv[1]), '..', '..', 'mcp-cli.js');
+
+  const mcpProcess = spawn('node', [mcpCliPath, 'git-init'], {
+    stdio: 'inherit',
+    cwd: process.cwd()
+  });
+
+  mcpProcess.on('close', (code) => {
+    if (code === 0) {
+      console.log(chalk.green.bold('✅ Git repository initialized!'));
+      console.log(chalk.cyan('💡 Next steps:'));
+      console.log(chalk.gray('   • Add files: gadd .'));
+      console.log(chalk.gray('   • First commit: gcommit "Initial commit"'));
+    } else {
+      console.error(chalk.red.bold(`❌ Repository initialization failed (code: ${code})`));
+    }
+    process.exit(code);
+  });
+
+  mcpProcess.on('error', (err) => {
+    console.error(chalk.red.bold('❌ Error:'), err.message);
     process.exit(1);
-  }
+  });
 }
 
-main();
+// ESM module detection
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main().catch(console.error);
+}
