@@ -1,19 +1,38 @@
 #!/usr/bin/env node
 
 /**
- * gstatus - Enhanced Git Status Alias
+ * gstatus - Enhanced Git Status with Beautiful Styling
+ * 
+ * Features:
+ * - Beautiful colored status display
+ * - Branch information with ahead/behind counts
+ * - Categorized file changes (staged, modified, untracked)
+ * - Repository health indicators
+ * - Remote status information
  * 
  * Usage:
- *   gstatus                 - Show repository status with styled output
+ *   gstatus                 - Show enhanced repository status
+ *   gstatus --simple        - Show simple git status
  *   gstatus --help, -h      - Show this help
  */
 
-import { spawn } from 'child_process';
 import { execSync } from 'child_process';
 import path from 'path';
 import chalk from 'chalk';
-import { validateRepository, showHelp } from '../advanced/common.js';
 
+// Check if we're in a git repository
+function validateRepository() {
+  try {
+    execSync('git rev-parse --is-inside-work-tree', { stdio: 'pipe' });
+    return true;
+  } catch (error) {
+    console.log(chalk.red('❌ Error: Not a git repository'));
+    console.log(chalk.yellow('💡 Initialize with: git init'));
+    return false;
+  }
+}
+
+// Parse git status output into structured data
 function parseGitStatus(output) {
   const lines = output.split('\n').filter(line => line.trim());
   const status = {
@@ -46,174 +65,200 @@ function parseGitStatus(output) {
       const filename = line.substring(3);
       
       // Parse file status codes
-      if (statusCode[0] !== ' ' && statusCode[0] !== '?') {
-        // Staged changes
-        if (statusCode[0] === 'A') status.staged.push({file: filename, type: 'added'});
-        else if (statusCode[0] === 'M') status.staged.push({file: filename, type: 'modified'});
-        else if (statusCode[0] === 'D') status.staged.push({file: filename, type: 'deleted'});
-        else if (statusCode[0] === 'R') status.renamed.push(filename);
-        else status.staged.push({file: filename, type: 'staged'});
-      }
-      
-      if (statusCode[1] !== ' ') {
-        // Working directory changes
-        if (statusCode[1] === 'M') status.modified.push(filename);
-        else if (statusCode[1] === 'D') status.deleted.push(filename);
-      }
-      
       if (statusCode === '??') {
         status.untracked.push(filename);
+      } else {
+        if (statusCode[0] !== ' ') {
+          // Staged changes
+          if (statusCode[0] === 'A') status.staged.push({file: filename, type: 'added'});
+          else if (statusCode[0] === 'M') status.staged.push({file: filename, type: 'modified'});
+          else if (statusCode[0] === 'D') status.staged.push({file: filename, type: 'deleted'});
+          else if (statusCode[0] === 'R') status.renamed.push(filename);
+          else status.staged.push({file: filename, type: 'staged'});
+        }
+        
+        if (statusCode[1] === 'M') {
+          status.modified.push(filename);
+        } else if (statusCode[1] === 'D') {
+          status.deleted.push(filename);
+        }
       }
     }
   }
-  
+
   return status;
 }
 
-async function getStyledStatus() {
-  try {
-    // Get git status in porcelain format
-    const statusOutput = execSync('git status --porcelain=v1 -b', { 
-      encoding: 'utf8',
-      cwd: process.cwd()
-    });
-    
-    const status = parseGitStatus(statusOutput);
-    
-    // Show repository context
-    console.log(chalk.bold.cyan('📊 Repository Status'));
-    console.log(chalk.dim('═'.repeat(50)));
-    console.log();
-    
-    // Branch information
-    console.log(chalk.bold.yellow('🌿 Branch:'), chalk.green.bold(status.branch || 'unknown'));
-    
-    if (status.ahead > 0 || status.behind > 0) {
-      let syncStatus = '';
-      if (status.ahead > 0) syncStatus += chalk.green(`↑${status.ahead} ahead`);
-      if (status.behind > 0) {
-        if (syncStatus) syncStatus += ', ';
-        syncStatus += chalk.red(`↓${status.behind} behind`);
-      }
-      console.log(chalk.bold.yellow('🔄 Sync:'), syncStatus);
-    }
-    console.log();
-    
-    // File changes
-    let hasChanges = false;
-    
-    // Staged changes
-    if (status.staged.length > 0) {
-      hasChanges = true;
-      console.log(chalk.bold.green('✅ Staged Changes:'));
-      status.staged.forEach(item => {
-        const icon = item.type === 'added' ? '📄' : item.type === 'modified' ? '📝' : item.type === 'deleted' ? '🗑️' : '📋';
-        console.log(`   ${icon} ${chalk.green(item.file)} ${chalk.gray(`(${item.type})`)}`);
-      });
-      console.log();
-    }
-    
-    // Modified files
-    if (status.modified.length > 0) {
-      hasChanges = true;
-      console.log(chalk.bold.yellow('📝 Modified Files:'));
-      status.modified.forEach(file => {
-        console.log(`   📝 ${chalk.yellow(file)}`);
-      });
-      console.log();
-    }
-    
-    // Deleted files
-    if (status.deleted.length > 0) {
-      hasChanges = true;
-      console.log(chalk.bold.red('🗑️  Deleted Files:'));
-      status.deleted.forEach(file => {
-        console.log(`   🗑️ ${chalk.red(file)}`);
-      });
-      console.log();
-    }
-    
-    // Untracked files
-    if (status.untracked.length > 0) {
-      hasChanges = true;
-      console.log(chalk.bold.gray('❓ Untracked Files:'));
-      status.untracked.forEach(file => {
-        console.log(`   ❓ ${chalk.gray(file)}`);
-      });
-      console.log();
-    }
-    
-    // Renamed files
-    if (status.renamed.length > 0) {
-      hasChanges = true;
-      console.log(chalk.bold.blue('🔄 Renamed Files:'));
-      status.renamed.forEach(file => {
-        console.log(`   🔄 ${chalk.blue(file)}`);
-      });
-      console.log();
-    }
-    
-    // Clean status
-    if (!hasChanges) {
-      console.log(chalk.bold.green('✨ Working tree clean'));
-      console.log(chalk.gray('No changes to commit'));
-      console.log();
-    }
-    
-    // Next steps suggestions
-    console.log(chalk.bold.cyan('💡 Suggested Next Steps:'));
-    if (status.untracked.length > 0 || status.modified.length > 0 || status.deleted.length > 0) {
-      console.log(chalk.cyan('   • Add changes: ') + chalk.white('gadd .'));
-    }
-    if (status.staged.length > 0) {
-      console.log(chalk.cyan('   • Commit changes: ') + chalk.white('gcommit "your message"'));
-    }
+// Display enhanced status with beautiful styling
+function displayStatus(status) {
+  console.log(chalk.bold.cyan('\n📊 Repository Status'));
+  console.log(chalk.gray('═'.repeat(50)));
+  
+  // Branch information
+  console.log(chalk.blue('🌿 Branch:'), chalk.white.bold(status.branch));
+  
+  // Remote sync status
+  if (status.ahead > 0 || status.behind > 0) {
     if (status.ahead > 0) {
-      console.log(chalk.cyan('   • Push commits: ') + chalk.white('gpush'));
+      console.log(chalk.green(`⬆️  Ahead:  ${status.ahead} commit(s) ready to push`));
     }
     if (status.behind > 0) {
-      console.log(chalk.cyan('   • Pull changes: ') + chalk.white('gpull'));
+      console.log(chalk.yellow(`⬇️  Behind: ${status.behind} commit(s) need to pull`));
     }
-    if (!hasChanges && status.ahead === 0 && status.behind === 0) {
-      console.log(chalk.cyan('   • Start working: ') + chalk.gray('Edit files and make changes'));
+  } else {
+    console.log(chalk.green('✅ Up to date with remote'));
+  }
+  
+  console.log(); // Empty line
+  
+  // Working directory status
+  let hasChanges = false;
+  
+  // Staged changes
+  if (status.staged.length > 0) {
+    hasChanges = true;
+    console.log(chalk.green.bold('📦 Staged Changes (ready to commit):'));
+    status.staged.forEach(item => {
+      const typeIcon = item.type === 'added' ? '➕' : item.type === 'modified' ? '🔧' : item.type === 'deleted' ? '🗑️' : '📝';
+      console.log(chalk.green(`   ${typeIcon} ${item.file}`));
+    });
+    console.log();
+  }
+  
+  // Modified files
+  if (status.modified.length > 0) {
+    hasChanges = true;
+    console.log(chalk.yellow.bold('🔧 Modified Files (not staged):'));
+    status.modified.forEach(file => {
+      console.log(chalk.yellow(`   📝 ${file}`));
+    });
+    console.log();
+  }
+  
+  // Deleted files
+  if (status.deleted.length > 0) {
+    hasChanges = true;
+    console.log(chalk.red.bold('🗑️  Deleted Files:'));
+    status.deleted.forEach(file => {
+      console.log(chalk.red(`   ❌ ${file}`));
+    });
+    console.log();
+  }
+  
+  // Untracked files
+  if (status.untracked.length > 0) {
+    hasChanges = true;
+    console.log(chalk.blue.bold('📄 Untracked Files:'));
+    status.untracked.forEach(file => {
+      console.log(chalk.blue(`   ➕ ${file}`));
+    });
+    console.log();
+  }
+  
+  // Renamed files
+  if (status.renamed.length > 0) {
+    hasChanges = true;
+    console.log(chalk.magenta.bold('🔄 Renamed Files:'));
+    status.renamed.forEach(file => {
+      console.log(chalk.magenta(`   🔄 ${file}`));
+    });
+    console.log();
+  }
+  
+  // Clean status
+  if (!hasChanges) {
+    console.log(chalk.green.bold('✨ Working directory clean'));
+    console.log(chalk.gray('   No changes to commit'));
+    console.log();
+  }
+  
+  // Quick action suggestions
+  if (hasChanges) {
+    console.log(chalk.cyan.bold('💡 Quick Actions:'));
+    if (status.modified.length > 0 || status.untracked.length > 0) {
+      console.log(chalk.gray(`   ${chalk.green('gadd')} - Stage all changes`));
     }
-    
-  } catch (error) {
-    console.error(chalk.red.bold('❌ Error getting git status:'), error.message);
-    process.exit(1);
+    if (status.staged.length > 0) {
+      console.log(chalk.gray(`   ${chalk.green('gcommit "message"')} - Commit staged changes`));
+    }
+    if (status.behind > 0) {
+      console.log(chalk.gray(`   ${chalk.green('gpull')} - Pull latest changes`));
+    }
+    if (status.ahead > 0) {
+      console.log(chalk.gray(`   ${chalk.green('gpush')} - Push commits to remote`));
+    }
+    console.log(chalk.gray(`   ${chalk.green('gflow "message"')} - Complete workflow (add → commit → push)`));
+    console.log();
   }
 }
 
+// Show help information
+function showHelp() {
+  console.log(chalk.bold.cyan(`
+📊 gstatus - Enhanced Git Status Display
+`));
+  console.log(chalk.cyan('📋 USAGE:'));
+  console.log(`   ${chalk.green('gstatus')}                    ${chalk.gray('# Show enhanced repository status')}`);
+  console.log(`   ${chalk.green('gstatus --simple')}           ${chalk.gray('# Show basic git status output')}`);
+  console.log(`   ${chalk.green('gstatus --help')}             ${chalk.gray('# Show this help message')}`);
+  
+  console.log(chalk.cyan('\n🎯 FEATURES:'));
+  console.log(`   ${chalk.yellow('•')} ${chalk.white('Beautiful Color Coding:')} Different colors for different file states`);
+  console.log(`   ${chalk.yellow('•')} ${chalk.white('Branch Information:')} Current branch with remote sync status`);
+  console.log(`   ${chalk.yellow('•')} ${chalk.white('Categorized Changes:')} Staged, modified, untracked files`);
+  console.log(`   ${chalk.yellow('•')} ${chalk.white('Quick Actions:')} Suggested next commands based on status`);
+  console.log(`   ${chalk.yellow('•')} ${chalk.white('Clean Display:')} Easy to read repository health`);
+  
+  console.log(chalk.cyan('\n💡 STATUS ICONS:'));
+  console.log(`   ${chalk.green('📦')} ${chalk.white('Staged Changes')} - Ready to commit`);
+  console.log(`   ${chalk.yellow('🔧')} ${chalk.white('Modified Files')} - Changes not staged`);
+  console.log(`   ${chalk.blue('📄')} ${chalk.white('Untracked Files')} - New files not in Git`);
+  console.log(`   ${chalk.red('🗑️ ')} ${chalk.white('Deleted Files')} - Removed files`);
+  console.log(`   ${chalk.magenta('🔄')} ${chalk.white('Renamed Files')} - Files moved or renamed`);
+  
+  console.log(chalk.gray('\n═══════════════════════════════════════════════════════════'));
+}
+
+// Main function
 async function main() {
   const args = process.argv.slice(2);
-
+  
   // Help functionality
   if (args.includes('-h') || args.includes('--help')) {
-    showHelp('gstatus', 'Enhanced Git Status', [
-      'gstatus                 Show repository status with styled output',
-      'gstatus --help, -h      Show this help'
-    ], [
-      'gstatus                 # Show complete styled status',
-      'gstatus                 # See branch, changes, and suggestions'
-    ], [
-      '• Repository context validation',
-      '• Styled file change display',
-      '• Branch and sync information',
-      '• Helpful next-step suggestions'
-    ], '📊');
+    showHelp();
     return;
   }
-
+  
   // Validate repository
-  if (!validateRepository('status')) {
+  if (!validateRepository()) {
     process.exit(1);
   }
-
-  // Get and display styled status
-  await getStyledStatus();
+  
+  try {
+    // Simple mode - just show regular git status
+    if (args.includes('--simple')) {
+      console.log(chalk.cyan('📋 Simple Git Status:'));
+      console.log(chalk.gray('─'.repeat(30)));
+      const result = execSync('git status', { encoding: 'utf8' });
+      console.log(result);
+      return;
+    }
+    
+    // Enhanced mode - show beautiful styled status
+    const statusOutput = execSync('git status --porcelain -b', { encoding: 'utf8' });
+    const status = parseGitStatus(statusOutput);
+    displayStatus(status);
+    
+  } catch (error) {
+    console.log(chalk.red('❌ Error getting repository status:'), error.message);
+    process.exit(1);
+  }
 }
 
-// ESM module detection
+// Run as standalone script
 if (import.meta.url === `file://${process.argv[1]}`) {
-  main().catch(console.error);
+  main().catch(error => {
+    console.error(chalk.red('❌ Unexpected error:'), error.message);
+    process.exit(1);
+  });
 }
