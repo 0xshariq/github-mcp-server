@@ -1,12 +1,44 @@
 #!/usr/bin/env node
 
-import { spawn } from 'child_process';
+import { spawn, execSync } from 'child_process';
 import path from 'path';
 import chalk from 'chalk';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Get the command name from the actual command used to invoke this script
+// Handle both direct calls and npm symlinks
+const fullPath = process.argv[1];
+let commandName = path.basename(fullPath);
+
+// Special case: if we get gms as command name but have args, 
+// and the first arg looks like a g* command, use that instead
+if (commandName === 'gms' && process.argv.length > 2) {
+  const potentialCommand = process.argv[2];
+  if (potentialCommand && potentialCommand.startsWith('g')) {
+    // Check if this looks like a git command being forwarded incorrectly
+    // This happens when the system interprets gstatus as "gms git-status"
+    if (potentialCommand.includes('-')) {
+      // Convert "git-status" back to "gstatus", "add-all" to "gadd", etc.
+      const parts = potentialCommand.split('-');
+      if (parts[0] === 'git') {
+        commandName = 'g' + parts[1];
+      } else if (parts.length === 2) {
+        // Handle cases like "add-all" -> "gadd"
+        commandName = 'g' + parts[0];
+      } else {
+        commandName = potentialCommand.replace('-', '');
+      }
+      // Remove this argument from process.argv so it doesn't get passed to the script
+      process.argv.splice(2, 1);
+    } else {
+      commandName = potentialCommand;
+    }
+  }
+}
 
 // Alias mapping for routing commands to their respective scripts
 const aliasMap = {
@@ -39,358 +71,42 @@ const aliasMap = {
   'grelease': { script: 'bin/advanced/grelease.js', description: 'Release workflow' },
   'gsave': { script: 'bin/advanced/gsave.js', description: 'Save current state' },
   'gsync': { script: 'bin/advanced/gsync.js', description: 'Synchronize repository' },
-  'gworkflow': { script: 'bin/advanced/gworkflow.js', description: 'Complete workflow' },
-
-  // MCP server operations
-  'git-init': { handler: 'gitInit' },
-  'git-add': { handler: 'gitAdd' },
-  'git-add-all': { handler: 'gitAddAll' },
-  'git-commit': { handler: 'gitCommit' },
-  'git-status': { handler: 'gitStatus' },
-  'git-push': { handler: 'gitPush' },
-  'git-pull': { handler: 'gitPull' },
-  'git-branch': { handler: 'gitBranch' },
-  'git-checkout': { handler: 'gitCheckout' },
-  'git-clone': { handler: 'gitClone' },
-  'git-diff': { handler: 'gitDiff' },
-  'git-log': { handler: 'gitLog' },
-  'git-flow': { handler: 'gitFlow' },
-  'git-remote-list': { handler: 'gitRemoteList' },
-  'git-remote-add': { handler: 'gitRemoteAdd' },
-  'git-remote-remove': { handler: 'gitRemoteRemove' },
-  'git-remote-set-url': { handler: 'gitRemoteSetUrl' },
-  'git-reset': { handler: 'gitReset' },
-  'git-stash': { handler: 'gitStash' },
-  'git-stash-pop': { handler: 'gitStashPop' }
+  'gworkflow': { script: 'bin/advanced/gworkflow.js', description: 'Complete workflow' }
 };
-
-// MCP server handlers
-async function gitInit() {
-  console.log(chalk.blue.bold('🎯 Initializing Git repository...'));
-  return runGitCommand(['init']);
-}
-
-async function gitAdd(files = []) {
-  console.log(chalk.blue.bold(`📝 Adding ${files.length > 0 ? files.join(', ') : 'files'}...`));
-  return runGitCommand(['add', ...files]);
-}
-
-async function gitAddAll() {
-  console.log(chalk.blue.bold('📝 Adding all changes...'));
-  return runGitCommand(['add', '.']);
-}
-
-async function gitCommit(message) {
-  console.log(chalk.blue.bold('🚀 Committing changes...'));
-  console.log(chalk.gray(`📝 Message: "${message}"`));
-  return runGitCommand(['commit', '-m', message]);
-}
-
-async function gitStatus() {
-  console.log(chalk.blue.bold('📊 Repository Status'));
-  console.log(chalk.dim('═'.repeat(40)));
-  return runGitCommand(['status', '--porcelain', '-b'], true);
-}
-
-async function gitPush() {
-  console.log(chalk.blue.bold('⬆️ Pushing changes...'));
-  return runGitCommand(['push']);
-}
-
-async function gitPull() {
-  console.log(chalk.blue.bold('⬇️ Pulling changes...'));
-  return runGitCommand(['pull']);
-}
-
-async function gitBranch(branchName) {
-  if (branchName) {
-    console.log(chalk.blue.bold(`🌿 Creating branch: ${branchName}`));
-    return runGitCommand(['branch', branchName]);
-  } else {
-    console.log(chalk.blue.bold('🌿 Listing branches:'));
-    return runGitCommand(['branch', '-a'], true);
-  }
-}
-
-async function gitCheckout(branchName, createNew = false) {
-  const args = ['checkout'];
-  if (createNew) args.push('-b');
-  args.push(branchName);
-  
-  console.log(chalk.blue.bold(`🔄 ${createNew ? 'Creating and switching' : 'Switching'} to branch: ${branchName}`));
-  return runGitCommand(args);
-}
-
-async function gitClone(url, targetDir) {
-  const args = ['clone', url];
-  if (targetDir) args.push(targetDir);
-  
-  console.log(chalk.blue.bold(`📥 Cloning repository: ${url}`));
-  return runGitCommand(args);
-}
-
-async function gitDiff(target) {
-  console.log(chalk.blue.bold('🔍 Showing differences:'));
-  const args = ['diff'];
-  if (target) args.push(target);
-  return runGitCommand(args, true);
-}
-
-async function gitLog(maxCount = 10) {
-  console.log(chalk.blue.bold('📖 Commit History:'));
-  return runGitCommand(['log', '--oneline', `--max-count=${maxCount}`, '--graph'], true);
-}
-
-async function gitRemoteList() {
-  console.log(chalk.blue.bold('🔗 Remote repositories:'));
-  return runGitCommand(['remote', '-v'], true);
-}
-
-async function gitRemoteAdd(name, url) {
-  console.log(chalk.blue.bold(`🔗 Adding remote: ${name}`));
-  return runGitCommand(['remote', 'add', name, url]);
-}
-
-async function gitRemoteRemove(name) {
-  console.log(chalk.blue.bold(`🗑️ Removing remote: ${name}`));
-  return runGitCommand(['remote', 'remove', name]);
-}
-
-async function gitRemoteSetUrl(name, url) {
-  console.log(chalk.blue.bold(`🔗 Setting URL for remote: ${name}`));
-  return runGitCommand(['remote', 'set-url', name, url]);
-}
-
-async function gitReset(target = 'HEAD', mode = 'mixed') {
-  console.log(chalk.blue.bold(`↩️ Resetting to: ${target}`));
-  return runGitCommand(['reset', `--${mode}`, target]);
-}
-
-async function gitStash(message) {
-  const args = ['stash'];
-  if (message) {
-    args.push('save', message);
-    console.log(chalk.blue.bold(`💾 Stashing changes: "${message}"`));
-  } else {
-    console.log(chalk.blue.bold('💾 Stashing changes...'));
-  }
-  return runGitCommand(args);
-}
-
-async function gitStashPop() {
-  console.log(chalk.blue.bold('📤 Applying stashed changes...'));
-  return runGitCommand(['stash', 'pop']);
-}
-
-async function gitFlow(message) {
-  console.log(chalk.blue.bold('⚡ Starting Complete Git Workflow...'));
-  console.log(chalk.dim('═'.repeat(50)));
-  console.log(chalk.blue('📝 Commit message:'), chalk.white(`"${message}"`));
-  console.log();
-
-  try {
-    // Step 1: Add all changes
-    console.log(chalk.cyan.bold('📁 Step 1: Adding all changes...'));
-    await runGitCommand(['add', '.']);
-    console.log(chalk.green('✅ All changes added to staging area'));
-    console.log();
-
-    // Step 2: Commit changes
-    console.log(chalk.cyan.bold('💾 Step 2: Committing changes...'));
-    await runGitCommand(['commit', '-m', message]);
-    console.log(chalk.green('✅ Changes committed successfully'));
-    console.log();
-
-    // Step 3: Push to remote
-    console.log(chalk.cyan.bold('🚀 Step 3: Pushing to remote repository...'));
-    await runGitCommand(['push']);
-    console.log(chalk.green('✅ Changes pushed to remote'));
-    console.log();
-
-    console.log(chalk.green.bold('🎉 Complete workflow finished successfully!'));
-    console.log(chalk.cyan('💡 Your changes are now live on the remote repository'));
-
-  } catch (error) {
-    console.error(chalk.red.bold('❌ Workflow step failed:'), error.message);
-    throw error;
-  }
-}
-
-// Helper function to run git commands with styled output
-function runGitCommand(args, captureOutput = false, showProgress = true) {
-  return new Promise((resolve, reject) => {
-    if (showProgress) {
-      console.log(chalk.gray(`   🔧 Running: git ${args.join(' ')}`));
-    }
-
-    const gitProcess = spawn('git', args, {
-      stdio: captureOutput ? 'pipe' : 'inherit',
-      cwd: process.cwd()
-    });
-
-    if (captureOutput) {
-      let stdout = '';
-      let stderr = '';
-
-      gitProcess.stdout.on('data', (data) => {
-        stdout += data.toString();
-      });
-
-      gitProcess.stderr.on('data', (data) => {
-        stderr += data.toString();
-      });
-
-      gitProcess.on('close', (code) => {
-        if (code === 0) {
-          if (stdout.trim()) {
-            // Style the output based on command type
-            const styledOutput = styleGitOutput(stdout, args[0]);
-            console.log(styledOutput);
-          }
-          if (showProgress) {
-            console.log(chalk.gray(`   ✓ Command completed successfully`));
-          }
-          resolve();
-        } else {
-          console.error(chalk.red.bold('❌ Git command failed:'));
-          console.error(chalk.gray(`   Command: git ${args.join(' ')}`));
-          if (stderr) console.error(chalk.red(`   Error: ${stderr.trim()}`));
-          reject(new Error(`Git command failed with code ${code}`));
-        }
-      });
-    } else {
-      gitProcess.on('close', (code) => {
-        if (code === 0) {
-          if (showProgress) {
-            console.log(chalk.green('   ✓ Operation completed successfully!'));
-          }
-          resolve();
-        } else {
-          console.error(chalk.red.bold(`❌ Git command failed (code: ${code})`));
-          console.error(chalk.gray(`   Command: git ${args.join(' ')}`));
-          reject(new Error(`Git command failed with code ${code}`));
-        }
-      });
-    }
-
-    gitProcess.on('error', (err) => {
-      console.error(chalk.red.bold('❌ Process error:'), err.message);
-      console.error(chalk.gray(`   Command: git ${args.join(' ')}`));
-      reject(err);
-    });
-  });
-}
-
-// Style git output based on command type
-function styleGitOutput(output, command) {
-  const lines = output.trim().split('\n');
-  
-  switch (command) {
-    case 'status':
-      return styleStatusOutput(lines);
-    case 'branch':
-      return styleBranchOutput(lines);
-    case 'log':
-      return styleLogOutput(lines);
-    case 'diff':
-      return styleDiffOutput(lines);
-    case 'remote':
-      return styleRemoteOutput(lines);
-    default:
-      return lines.map(line => chalk.gray(line)).join('\n');
-  }
-}
-
-function styleStatusOutput(lines) {
-  return lines.map(line => {
-    if (line.startsWith('## ')) {
-      return chalk.cyan.bold(`🌿 ${line.slice(3)}`);
-    } else if (line.startsWith('M ')) {
-      return chalk.yellow(`📝 Modified: ${line.slice(3)}`);
-    } else if (line.startsWith('A ')) {
-      return chalk.green(`➕ Added: ${line.slice(3)}`);
-    } else if (line.startsWith('D ')) {
-      return chalk.red(`❌ Deleted: ${line.slice(3)}`);
-    } else if (line.startsWith('?? ')) {
-      return chalk.blue(`❓ Untracked: ${line.slice(3)}`);
-    } else if (line.startsWith(' M ')) {
-      return chalk.yellow(`📝 Modified (unstaged): ${line.slice(3)}`);
-    } else if (line.startsWith(' D ')) {
-      return chalk.red(`❌ Deleted (unstaged): ${line.slice(3)}`);
-    } else {
-      return chalk.gray(line);
-    }
-  }).join('\n');
-}
-
-function styleBranchOutput(lines) {
-  return lines.map(line => {
-    if (line.startsWith('* ')) {
-      return chalk.green.bold(`👉 ${line.slice(2)} (current)`);
-    } else if (line.includes('remotes/')) {
-      return chalk.blue(`🔗 ${line.trim()}`);
-    } else {
-      return chalk.white(`🌿 ${line.trim()}`);
-    }
-  }).join('\n');
-}
-
-function styleLogOutput(lines) {
-  return lines.map(line => {
-    if (line.includes('*')) {
-      return chalk.yellow(line);
-    } else {
-      return chalk.gray(line);
-    }
-  }).join('\n');
-}
-
-function styleDiffOutput(lines) {
-  return lines.map(line => {
-    if (line.startsWith('+')) {
-      return chalk.green(line);
-    } else if (line.startsWith('-')) {
-      return chalk.red(line);
-    } else if (line.startsWith('@@')) {
-      return chalk.cyan(line);
-    } else {
-      return chalk.gray(line);
-    }
-  }).join('\n');
-}
-
-function styleRemoteOutput(lines) {
-  return lines.map(line => {
-    const [name, url, type] = line.split('\t');
-    if (type && type.includes('fetch')) {
-      return chalk.blue(`📥 ${name}: ${url}`);
-    } else if (type && type.includes('push')) {
-      return chalk.green(`📤 ${name}: ${url}`);
-    } else {
-      return chalk.white(`🔗 ${line}`);
-    }
-  }).join('\n');
-}
 
 // Main execution function
 async function main() {
   const args = process.argv.slice(2);
   
-  if (args.length === 0) {
-    showUsage();
-    return;
+  // Detect if we're being called as an alias (e.g., gbranch, gadd, etc.)
+  let command;
+  let commandArgs = args;
+  
+  if (commandName === 'mcp-cli.js' || commandName === 'gms' || commandName === 'github-mcp-server') {
+    // Called as main CLI - command is first argument
+    if (args.length === 0) {
+      showUsage();
+      return;
+    }
+    command = args[0];
+    commandArgs = args.slice(1);
+  } else {
+    // Called as alias (e.g., gbranch, gadd, etc.)
+    command = commandName;
+    commandArgs = args;
   }
 
-  const command = args[0];
-  const commandArgs = args.slice(1);
-
-  // Check if it's an alias that should route to a script
+  // Check if it's a valid alias and route to script
   if (aliasMap[command] && aliasMap[command].script) {
-    console.log(chalk.blue.bold(`🚀 Executing: ${command}`));
-    console.log(chalk.gray(`📁 Using script: ${aliasMap[command].script}`));
-    
     const scriptPath = path.join(__dirname, aliasMap[command].script);
     
+    // Check if script exists
+    if (!fs.existsSync(scriptPath)) {
+      console.error(chalk.red.bold('❌ Script not found:'), scriptPath);
+      process.exit(1);
+    }
+    
+    // Execute the script with the provided arguments
     const childProcess = spawn('node', [scriptPath, ...commandArgs], {
       stdio: 'inherit',
       cwd: process.cwd()
@@ -404,93 +120,6 @@ async function main() {
       console.error(chalk.red.bold('❌ Error executing script:'), err.message);
       process.exit(1);
     });
-  }
-  // Check if it's a direct MCP handler
-  else if (aliasMap[command] && aliasMap[command].handler) {
-    try {
-      const handlerName = aliasMap[command].handler;
-      
-      switch (handlerName) {
-        case 'gitInit':
-          await gitInit();
-          break;
-        case 'gitAdd':
-          await gitAdd(commandArgs);
-          break;
-        case 'gitAddAll':
-          await gitAddAll();
-          break;
-        case 'gitCommit':
-          if (commandArgs.length === 0) {
-            console.error(chalk.red.bold('❌ Commit message required'));
-            process.exit(1);
-          }
-          await gitCommit(commandArgs.join(' '));
-          break;
-        case 'gitStatus':
-          await gitStatus();
-          break;
-        case 'gitPush':
-          await gitPush();
-          break;
-        case 'gitPull':
-          await gitPull();
-          break;
-        case 'gitFlow':
-          if (commandArgs.length === 0) {
-            console.error(chalk.red.bold('❌ Commit message required for workflow'));
-            process.exit(1);
-          }
-          await gitFlow(commandArgs.join(' '));
-          break;
-        case 'gitBranch':
-          await gitBranch(commandArgs[0]);
-          break;
-        case 'gitCheckout':
-          await gitCheckout(commandArgs[0], commandArgs.includes('-b'));
-          break;
-        case 'gitClone':
-          await gitClone(commandArgs[0], commandArgs[1]);
-          break;
-        case 'gitDiff':
-          await gitDiff(commandArgs[0]);
-          break;
-        case 'gitLog':
-          await gitLog(commandArgs[0] ? parseInt(commandArgs[0]) : 10);
-          break;
-        case 'gitRemoteList':
-          await gitRemoteList();
-          break;
-        case 'gitRemoteAdd':
-          if (commandArgs.length < 2) {
-            console.error(chalk.red.bold('❌ Remote name and URL required'));
-            process.exit(1);
-          }
-          await gitRemoteAdd(commandArgs[0], commandArgs[1]);
-          break;
-        case 'gitRemoteRemove':
-          await gitRemoteRemove(commandArgs[0]);
-          break;
-        case 'gitRemoteSetUrl':
-          await gitRemoteSetUrl(commandArgs[0], commandArgs[1]);
-          break;
-        case 'gitReset':
-          await gitReset(commandArgs[0], commandArgs[1]);
-          break;
-        case 'gitStash':
-          await gitStash(commandArgs.join(' '));
-          break;
-        case 'gitStashPop':
-          await gitStashPop();
-          break;
-        default:
-          console.error(chalk.red.bold(`❌ Unknown handler: ${handlerName}`));
-          process.exit(1);
-      }
-    } catch (error) {
-      console.error(chalk.red.bold('❌ Operation failed:'), error.message);
-      process.exit(1);
-    }
   } else {
     console.error(chalk.red.bold(`❌ Unknown command: ${command}`));
     showUsage();
