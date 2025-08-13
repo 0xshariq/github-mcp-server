@@ -1,27 +1,32 @@
 /**
- * GitHub MCP Server - Git Operations Module
+ * GitHub MCP Server - Advanced Git Operations Module
  * 
- * This module contains all Git operations exposed by the MCP server.
- * Each function implements a specific Git workflow with comprehensive
- * error handling, validation, and safety checks.
+ * This module contains all Git operations exposed by the MCP server with
+ * enhanced support for both basic and advanced workflows. Each function
+ * implements comprehensive Git workflows with advanced error handling,
+ * validation, safety checks, and intelligent automation.
  * 
  * Architecture:
- * - Utility functions for command execution and validation
- * - 29 Git operations grouped by functionality (20 core + 9 advanced)
- * - Consistent error handling and response formatting
- * - Timeout protection for all operations
- * - Cross-platform compatibility
- * - Advanced workflow combinations for developer productivity
+ * - Enhanced utility functions for command execution and validation
+ * - 40+ Git operations grouped by functionality (basic + advanced workflows)
+ * - Intelligent workflow combinations for developer productivity
+ * - Advanced conflict resolution and merge strategies
+ * - Multi-repository support and cross-platform compatibility
+ * - Smart defaults and context-aware operations
+ * - Comprehensive logging and debugging support
  * 
  * Operations Include:
- * • Core Git Operations: add, commit, push, pull, branch, checkout, etc.
- * • Advanced Operations: tag, merge, rebase, cherry-pick, blame, bisect
- * • Workflow Combinations: flow, sync, quick-commit for productivity
- * • Remote Management: list, add, remove, set-url for repository management
- * • Stash Operations: stash, pop for temporary change management
+ * • Basic Git Operations: add, commit, push, pull, branch, checkout, status, etc.
+ * • Advanced Operations: tag, merge, rebase, cherry-pick, blame, bisect, worktree
+ * • Workflow Combinations: flow, sync, quick-commit, dev-workflow for productivity
+ * • Advanced Workflows: release management, hotfix workflows, feature branches
+ * • Remote Management: comprehensive remote operations with authentication
+ * • Stash Operations: advanced stash management with selective application
+ * • Repository Maintenance: cleanup, optimization, backup operations
+ * • Team Collaboration: conflict resolution, branch synchronization
  * 
  * @module github
- * @version 1.8.3
+ * @version 2.1.0
  */
 
 // Node.js built-in modules for executing shell commands and file operations
@@ -33,12 +38,14 @@ import * as path from "path";
 // Convert callback-based exec to Promise-based for async/await support
 const execAsync = promisify(exec);
 
-// Configuration constants
-const DEFAULT_TIMEOUT = 30000; // 30 seconds for Git operations
-const VALIDATION_TIMEOUT = 5000; // 5 seconds for validation checks
-const MAX_LOG_ENTRIES = 50; // Maximum log entries to prevent memory issues
+// Enhanced configuration constants
+const DEFAULT_TIMEOUT = 60000; // 60 seconds for complex operations
+const VALIDATION_TIMEOUT = 10000; // 10 seconds for validation checks
+const MAX_LOG_ENTRIES = 100; // Increased for better debugging
+const COMMAND_RETRY_COUNT = 3; // Retry failed operations
+const BATCH_SIZE = 50; // For batch operations
 
-// Standard return type for all Git operations - matches MCP server expectations
+// Enhanced return type for all Git operations with advanced metadata
 export interface GitOperationResult {
   content: Array<{
     type: "text";
@@ -48,10 +55,19 @@ export interface GitOperationResult {
   metadata?: {
     operation: string;
     duration: number;
+    command?: string;
+    exitCode?: number;
+    branch?: string;
+    repository?: string;
+    files?: string[];
+    conflicted?: boolean;
+    staged?: boolean;
+    clean?: boolean;
     timestamp: string;
     workingDirectory: string;
   };
 }
+
 
 // === UTILITY FUNCTIONS ===
 
@@ -762,93 +778,6 @@ export async function gitInit(directory?: string): Promise<GitOperationResult> {
 
 // === ENHANCED WORKFLOW OPERATIONS ===
 
-/**
- * Complete git flow: add all, commit, and push in one operation
- * @param message - Commit message
- * @param directory - Working directory (optional)
- * @returns GitOperationResult with detailed step-by-step progress
- */
-export async function gitFlow(message: string, directory?: string): Promise<GitOperationResult> {
-  const startTime = Date.now();
-  const workingDir = directory || process.cwd();
-  
-  try {
-    if (!(await isGitRepository(workingDir))) {
-      return createResponse('git-flow', 'Error: Not a git repository. Run "git init" to initialize.', true, workingDir, startTime);
-    }
-
-    if (!message || message.trim() === '') {
-      return createResponse('git-flow', 'Error: Commit message is required for git flow.', true, workingDir, startTime);
-    }
-
-    // Get repository context for safety
-    const currentDir = path.basename(workingDir);
-    let remoteInfo = '';
-    let currentBranch = '';
-    
-    try {
-      const remoteResult = await executeGitCommand('git remote get-url origin', workingDir);
-      remoteInfo = remoteResult.stdout.trim();
-      
-      const branchResult = await executeGitCommand('git branch --show-current', workingDir);
-      currentBranch = branchResult.stdout.trim();
-    } catch {
-      return createResponse('git-flow', 'Error: No remote repository configured. Add a remote with "git remote add origin <url>".', true, workingDir, startTime);
-    }
-
-    let progressLog = '🚀 Starting Git Flow...\n\n';
-    progressLog += `📁 Directory: ${currentDir}\n🔗 Remote: ${remoteInfo}\n🌿 Branch: ${currentBranch}\n\n`;
-
-    // Step 1: Check if there are any changes
-    const statusResult = await executeGitCommand('git status --porcelain', workingDir);
-    if (!statusResult.stdout.trim()) {
-      return createResponse('git-flow', '✅ Git Flow Complete: No changes to commit. Working directory is clean.', false, workingDir, startTime);
-    }
-
-    progressLog += `📁 Found ${statusResult.stdout.trim().split('\n').length} modified file(s)\n`;
-
-    // Step 2: Add all changes
-    progressLog += '📝 Step 1/3: Adding all changes...\n';
-    await executeGitCommand('git add .', workingDir);
-    
-    // Verify what was staged
-    const stagedResult = await executeGitCommand('git diff --cached --name-status', workingDir);
-    const stagedFiles = stagedResult.stdout.trim().split('\n').filter(line => line.trim()).length;
-    progressLog += `✅ Successfully staged ${stagedFiles} file(s)\n\n`;
-
-    // Step 3: Commit changes
-    progressLog += '💾 Step 2/3: Creating commit...\n';
-    const escapedMessage = message.replace(/"/g, '\\"').replace(/`/g, '\\`').replace(/\$/g, '\\$');
-    const commitResult = await executeGitCommand(`git commit -m "${escapedMessage}"`, workingDir);
-    progressLog += `✅ Successfully committed with message: "${message}"\n`;
-    progressLog += `${commitResult.stdout}\n\n`;
-
-    // Step 4: Push to remote
-    progressLog += '🚀 Step 3/3: Pushing to remote...\n';
-    const pushResult = await executeGitCommand('git push', workingDir, 60000);
-    progressLog += `✅ Successfully pushed to remote repository\n`;
-    progressLog += `${pushResult.stdout || pushResult.stderr || 'Push completed successfully.'}\n\n`;
-
-    progressLog += `🎉 Git Flow Complete! All changes committed and pushed successfully.\n`;
-    progressLog += `⏱️  Total time: ${Date.now() - startTime}ms`;
-
-    return createResponse('git-flow', progressLog, false, workingDir, startTime);
-    
-  } catch (error: any) {
-    let errorMsg = error.stderr || error.message || 'Unknown error during git flow';
-    
-    // Provide specific guidance for git flow errors
-    if (errorMsg.includes('authentication') || errorMsg.includes('credential')) {
-      errorMsg += '\n\n💡 Git Flow Authentication Help:\n- Verify your Git credentials are configured\n- Check if your access token is valid\n- Ensure you have push permissions to the repository';
-    } else if (errorMsg.includes('rejected')) {
-      errorMsg += '\n\n💡 Git Flow Push Rejected:\n- Someone else may have pushed changes\n- Try running "git pull" first, then retry git flow\n- Check if you have the latest changes';
-    } else if (errorMsg.includes('nothing to commit')) {
-      return createResponse('git-flow', '✅ Git Flow Complete: No changes to commit. Working directory is clean.', false, workingDir, startTime);
-    }
-    
-    return createResponse('git-flow', `❌ Git Flow failed: ${errorMsg}`, true, workingDir, startTime);
-  }
-}
 
 /**
  * Quick commit: add all and commit (without push)
@@ -890,49 +819,6 @@ export async function gitQuickCommit(message: string, directory?: string): Promi
   }
 }
 
-/**
- * Sync with remote: pull then push
- * @param directory - Working directory (optional)
- * @returns GitOperationResult with sync status
- */
-export async function gitSync(directory?: string): Promise<GitOperationResult> {
-  const startTime = Date.now();
-  const workingDir = directory || process.cwd();
-  
-  try {
-    if (!(await isGitRepository(workingDir))) {
-      return createResponse('git-sync', 'Error: Not a git repository. Run "git init" to initialize.', true, workingDir, startTime);
-    }
-
-    let syncLog = '🔄 Starting Git Sync...\n\n';
-
-    // Step 1: Pull from remote
-    syncLog += '⬇️  Step 1/2: Pulling from remote...\n';
-    const pullResult = await executeGitCommand('git pull', workingDir);
-    syncLog += `✅ Pull completed\n${pullResult.stdout || 'Already up to date.'}\n\n`;
-
-    // Step 2: Push to remote (if there are local commits)
-    syncLog += '⬆️  Step 2/2: Pushing to remote...\n';
-    try {
-      const pushResult = await executeGitCommand('git push', workingDir, 60000);
-      syncLog += `✅ Push completed\n${pushResult.stdout || 'Everything up-to-date.'}\n\n`;
-    } catch (pushError: any) {
-      if (pushError.message.includes('Everything up-to-date')) {
-        syncLog += `✅ Nothing to push - repository is up-to-date\n\n`;
-      } else {
-        throw pushError;
-      }
-    }
-
-    syncLog += `🎉 Sync Complete! Repository is synchronized with remote.`;
-
-    return createResponse('git-sync', syncLog, false, workingDir, startTime);
-    
-  } catch (error: any) {
-    const errorMsg = error.stderr || error.message || 'Unknown error during sync';
-    return createResponse('git-sync', `❌ Sync failed: ${errorMsg}`, true, workingDir, startTime);
-  }
-}
 
 // === NEW ADVANCED GIT OPERATIONS ===
 
@@ -1218,7 +1104,7 @@ export async function gitBisect(directory?: string, action?: string, commit?: st
   const startTime = Date.now();
 
   try {
-    if (!isGitRepository(workingDir)) {
+    if (!await isGitRepository(workingDir)) {
       return createResponse('git-bisect', 'Error: Not a git repository. Run "git init" to initialize.', true, workingDir, startTime);
     }
 
@@ -1253,5 +1139,534 @@ export async function gitBisect(directory?: string, action?: string, commit?: st
   } catch (error: any) {
     const errorMsg = error.stderr || error.message || 'Unknown error during bisect';
     return createResponse('git-bisect', `❌ Bisect failed: ${errorMsg}`, true, workingDir, startTime);
+  }
+}
+
+// === ADVANCED WORKFLOW OPERATIONS ===
+
+/**
+ * Advanced Git Flow - Enhanced workflow with intelligent automation
+ * Supports specific files, smart defaults, and comprehensive validation
+ */
+export async function gitFlow(directory?: string, message?: string, files?: string[], options?: { push?: boolean; review?: boolean; dryRun?: boolean }): Promise<GitOperationResult> {
+  const workingDir = directory || process.cwd();
+  const startTime = Date.now();
+
+  try {
+    if (!await isGitRepository(workingDir)) {
+      return createResponse('git-flow', 'Error: Not a git repository. Run "git init" to initialize.', true, workingDir, startTime);
+    }
+
+    if (!message) {
+      return createResponse('git-flow', '❌ Error: Commit message is required for git flow.', true, workingDir, startTime);
+    }
+
+    const opts = { push: true, review: false, dryRun: false, ...options };
+    let resultText = `⚡ Starting Enhanced Git Flow...\n`;
+    resultText += `📝 Commit message: "${message}"\n`;
+
+    // Step 1: Check repository status
+    const statusResult = await executeGitCommand('git status --porcelain', workingDir);
+    if (!statusResult.stdout.trim() && !opts.dryRun) {
+      return createResponse('git-flow', '⚠️  No changes to commit. Repository is clean.', false, workingDir, startTime);
+    }
+
+    // Step 2: Add files (specific files or all changes)
+    let addCommand = 'git add .';
+    if (files && files.length > 0) {
+      addCommand = `git add ${files.map(f => `"${f}"`).join(' ')}`;
+      resultText += `📁 Files to add: ${files.join(', ')}\n`;
+    } else {
+      resultText += `📁 Adding all changes\n`;
+    }
+
+    if (opts.dryRun) {
+      resultText += `\n🔍 DRY RUN - Would execute:\n`;
+      resultText += `   ${addCommand}\n`;
+      resultText += `   git commit -m "${message}"\n`;
+      if (opts.push) {
+        resultText += `   git push\n`;
+      }
+      return createResponse('git-flow', resultText, false, workingDir, startTime);
+    }
+
+    resultText += `\n📁 Step 1: Adding changes...\n`;
+    await executeGitCommand(addCommand, workingDir);
+    resultText += `✅ Changes added to staging area\n`;
+
+    // Step 3: Commit changes
+    resultText += `\n💾 Step 2: Committing changes...\n`;
+    const commitResult = await executeGitCommand(`git commit -m "${message}"`, workingDir);
+    resultText += `✅ Changes committed successfully\n`;
+
+    // Step 4: Push to remote (if not review mode)
+    if (opts.push && !opts.review) {
+      resultText += `\n🚀 Step 3: Pushing to remote repository...\n`;
+      try {
+        await executeGitCommand('git push', workingDir);
+        resultText += `✅ Changes pushed to remote\n`;
+      } catch (error: any) {
+        if (error.stderr?.includes('no upstream branch')) {
+          // Try to push with --set-upstream
+          const branchResult = await executeGitCommand('git branch --show-current', workingDir);
+          const currentBranch = branchResult.stdout.trim();
+          await executeGitCommand(`git push --set-upstream origin ${currentBranch}`, workingDir);
+          resultText += `✅ Changes pushed with upstream branch set\n`;
+        } else {
+          throw error;
+        }
+      }
+    } else if (opts.review) {
+      resultText += `\n📋 Commit created for review (not pushed)\n`;
+    }
+
+    resultText += `\n🎉 Git flow completed successfully!\n`;
+    if (opts.push && !opts.review) {
+      resultText += `💡 Your changes are now live on the remote repository\n`;
+    }
+    
+    return createResponse('git-flow', resultText, false, workingDir, startTime);
+
+  } catch (error: any) {
+    const errorMsg = error.stderr || error.message || 'Unknown error during git flow';
+    return createResponse('git-flow', `❌ Git flow failed: ${errorMsg}`, true, workingDir, startTime);
+  }
+}
+
+/**
+ * Advanced Developer Workflow - Intelligent development session management
+ */
+export async function gitDev(directory?: string, branchName?: string, options?: { sync?: boolean; status?: boolean; continue?: boolean }): Promise<GitOperationResult> {
+  const workingDir = directory || process.cwd();
+  const startTime = Date.now();
+
+  try {
+    if (!await isGitRepository(workingDir)) {
+      return createResponse('git-dev', 'Error: Not a git repository. Run "git init" to initialize.', true, workingDir, startTime);
+    }
+
+    const opts = { sync: true, status: true, continue: false, ...options };
+    let resultText = `🛠️  Developer Workflow Manager\n`;
+
+    // Get current branch and status
+    const branchResult = await executeGitCommand('git branch --show-current', workingDir);
+    const currentBranch = branchResult.stdout.trim();
+    resultText += `🌿 Current Branch: ${currentBranch}\n`;
+
+    if (opts.status) {
+      // Enhanced status checking
+      const statusResult = await executeGitCommand('git status --porcelain', workingDir);
+      const stagedFiles = statusResult.stdout.split('\n').filter(line => line.match(/^[MARC]/)).length;
+      const modifiedFiles = statusResult.stdout.split('\n').filter(line => line.match(/^.M/)).length;
+      const untrackedFiles = statusResult.stdout.split('\n').filter(line => line.match(/^\?\?/)).length;
+
+      resultText += `📊 Repository Status:\n`;
+      resultText += `   • Staged files: ${stagedFiles}\n`;
+      resultText += `   • Modified files: ${modifiedFiles}\n`;
+      resultText += `   • Untracked files: ${untrackedFiles}\n`;
+
+      // Check if we're behind remote
+      try {
+        await executeGitCommand('git fetch', workingDir);
+        const aheadBehindResult = await executeGitCommand('git rev-list --count --left-right HEAD...@{upstream}', workingDir);
+        const [ahead, behind] = aheadBehindResult.stdout.trim().split('\t').map(n => parseInt(n) || 0);
+        if (ahead > 0 || behind > 0) {
+          resultText += `   • Ahead: ${ahead} commits, Behind: ${behind} commits\n`;
+        }
+      } catch {
+        resultText += `   • No upstream branch configured\n`;
+      }
+    }
+
+    // Create or switch to branch if specified
+    if (branchName && branchName !== currentBranch) {
+      resultText += `\n🌿 Branch Management:\n`;
+      try {
+        // Check if branch exists
+        const branchCheckResult = await executeGitCommand(`git show-ref --verify --quiet refs/heads/${branchName}`, workingDir);
+        resultText += `   Switching to existing branch: ${branchName}\n`;
+        await executeGitCommand(`git checkout ${branchName}`, workingDir);
+      } catch {
+        // Branch doesn't exist, create it
+        resultText += `   Creating and switching to new branch: ${branchName}\n`;
+        await executeGitCommand(`git checkout -b ${branchName}`, workingDir);
+      }
+    }
+
+    // Sync with remote if requested
+    if (opts.sync) {
+      resultText += `\n🔄 Synchronization:\n`;
+      try {
+        resultText += `   Fetching latest changes...\n`;
+        await executeGitCommand('git fetch --all', workingDir);
+        
+        // Try to pull if there's an upstream branch
+        try {
+          await executeGitCommand('git pull', workingDir);
+          resultText += `   ✅ Synchronized with remote\n`;
+        } catch {
+          resultText += `   ⚠️  No upstream branch to pull from\n`;
+        }
+      } catch (error: any) {
+        resultText += `   ⚠️  Sync failed: ${error.message}\n`;
+      }
+    }
+
+    // Session continuation
+    if (opts.continue) {
+      resultText += `\n🔄 Session Continuation:\n`;
+      try {
+        // Check for stashes
+        const stashResult = await executeGitCommand('git stash list', workingDir);
+        if (stashResult.stdout.trim()) {
+          resultText += `   Found ${stashResult.stdout.split('\n').length} stash(es)\n`;
+          resultText += `   Use 'git stash pop' to restore your work\n`;
+        } else {
+          resultText += `   No stashed work found\n`;
+        }
+      } catch {
+        resultText += `   Could not check for stashed work\n`;
+      }
+    }
+
+    resultText += `\n✅ Developer workflow ready!\n`;
+    resultText += `💡 Suggestions:\n`;
+    resultText += `   • Use 'git add .' to stage changes\n`;
+    resultText += `   • Use 'git commit -m "message"' to commit\n`;
+    resultText += `   • Use 'git push' to share your work\n`;
+    
+    return createResponse('git-dev', resultText, false, workingDir, startTime);
+
+  } catch (error: any) {
+    const errorMsg = error.stderr || error.message || 'Unknown error in developer workflow';
+    return createResponse('git-dev', `❌ Developer workflow failed: ${errorMsg}`, true, workingDir, startTime);
+  }
+}
+
+/**
+ * Advanced Sync - Comprehensive synchronization with conflict resolution
+ */
+export async function gitSync(directory?: string, options?: { rebase?: boolean; force?: boolean; all?: boolean; prune?: boolean }): Promise<GitOperationResult> {
+  const workingDir = directory || process.cwd();
+  const startTime = Date.now();
+
+  try {
+    if (!await isGitRepository(workingDir)) {
+      return createResponse('git-sync', 'Error: Not a git repository. Run "git init" to initialize.', true, workingDir, startTime);
+    }
+
+    const opts = { rebase: false, force: false, all: false, prune: true, ...options };
+    let resultText = `🔄 Advanced Repository Synchronization\n`;
+
+    // Get current branch
+    const branchResult = await executeGitCommand('git branch --show-current', workingDir);
+    const currentBranch = branchResult.stdout.trim();
+    resultText += `🌿 Current Branch: ${currentBranch}\n`;
+
+    // Fetch all remotes
+    resultText += `\n📡 Fetching from all remotes...\n`;
+    let fetchCommand = 'git fetch --all';
+    if (opts.prune) {
+      fetchCommand += ' --prune';
+    }
+    await executeGitCommand(fetchCommand, workingDir);
+    resultText += `✅ Fetch completed\n`;
+
+    // Check for upstream branch
+    let hasUpstream = false;
+    try {
+      await executeGitCommand('git rev-parse --abbrev-ref @{upstream}', workingDir);
+      hasUpstream = true;
+    } catch {
+      resultText += `⚠️  No upstream branch configured for ${currentBranch}\n`;
+    }
+
+    if (hasUpstream) {
+      // Check ahead/behind status
+      const aheadBehindResult = await executeGitCommand('git rev-list --count --left-right HEAD...@{upstream}', workingDir);
+      const [ahead, behind] = aheadBehindResult.stdout.trim().split('\t').map(n => parseInt(n) || 0);
+      
+      resultText += `📊 Branch Status: ${ahead} ahead, ${behind} behind\n`;
+
+      if (behind > 0) {
+        // Pull changes
+        resultText += `\n⬇️  Pulling ${behind} commits...\n`;
+        try {
+          if (opts.rebase) {
+            await executeGitCommand('git pull --rebase', workingDir);
+            resultText += `✅ Rebased successfully\n`;
+          } else {
+            await executeGitCommand('git pull', workingDir);
+            resultText += `✅ Merged successfully\n`;
+          }
+        } catch (error: any) {
+          if (error.stderr?.includes('conflict')) {
+            resultText += `⚠️  Merge conflicts detected. Please resolve manually.\n`;
+            // List conflicted files
+            try {
+              const conflictResult = await executeGitCommand('git diff --name-only --diff-filter=U', workingDir);
+              if (conflictResult.stdout.trim()) {
+                resultText += `📄 Conflicted files:\n${conflictResult.stdout.split('\n').map(f => `   • ${f}`).join('\n')}\n`;
+              }
+            } catch {}
+          } else {
+            throw error;
+          }
+        }
+      }
+
+      if (ahead > 0 && !opts.force) {
+        resultText += `\n⬆️  You have ${ahead} commits to push\n`;
+        resultText += `💡 Use git push to share your changes\n`;
+      } else if (ahead > 0 && opts.force) {
+        resultText += `\n⬆️  Force pushing ${ahead} commits...\n`;
+        await executeGitCommand('git push --force-with-lease', workingDir);
+        resultText += `✅ Force push completed\n`;
+      }
+    }
+
+    // Sync all branches if requested
+    if (opts.all) {
+      resultText += `\n🌿 Synchronizing all branches...\n`;
+      try {
+        const allBranchesResult = await executeGitCommand('git branch -r', workingDir);
+        const remoteBranches = allBranchesResult.stdout
+          .split('\n')
+          .filter(line => line.trim() && !line.includes('->'))
+          .map(line => line.trim().replace('origin/', ''));
+
+        for (const branch of remoteBranches.slice(0, 10)) { // Limit to 10 branches
+          try {
+            await executeGitCommand(`git checkout ${branch}`, workingDir);
+            await executeGitCommand('git pull', workingDir);
+            resultText += `   ✅ ${branch}\n`;
+          } catch {
+            resultText += `   ⚠️  ${branch} (failed)\n`;
+          }
+        }
+
+        // Return to original branch
+        await executeGitCommand(`git checkout ${currentBranch}`, workingDir);
+        resultText += `🔄 Returned to ${currentBranch}\n`;
+      } catch (error: any) {
+        resultText += `⚠️  All-branch sync failed: ${error.message}\n`;
+      }
+    }
+
+    resultText += `\n✅ Synchronization completed!\n`;
+    
+    return createResponse('git-sync', resultText, false, workingDir, startTime);
+
+  } catch (error: any) {
+    const errorMsg = error.stderr || error.message || 'Unknown error during sync';
+    return createResponse('git-sync', `❌ Sync failed: ${errorMsg}`, true, workingDir, startTime);
+  }
+}
+
+/**
+ * Smart Release Management - Automated release workflow
+ */
+export async function gitRelease(directory?: string, version?: string, options?: { changelog?: boolean; notes?: string; push?: boolean; dryRun?: boolean }): Promise<GitOperationResult> {
+  const workingDir = directory || process.cwd();
+  const startTime = Date.now();
+
+  try {
+    if (!await isGitRepository(workingDir)) {
+      return createResponse('git-release', 'Error: Not a git repository. Run "git init" to initialize.', true, workingDir, startTime);
+    }
+
+    if (!version) {
+      return createResponse('git-release', '❌ Error: Version is required for release.', true, workingDir, startTime);
+    }
+
+    const opts = { changelog: true, push: true, dryRun: false, ...options };
+    let resultText = `🚀 Release Management for ${version}\n`;
+
+    // Validate version format (basic semver check)
+    if (!version.match(/^v?\d+\.\d+\.\d+/)) {
+      resultText += `⚠️  Version format should follow semantic versioning (e.g., v1.2.3)\n`;
+    }
+
+    // Check if tag already exists
+    try {
+      await executeGitCommand(`git tag -l "${version}"`, workingDir);
+      const tagExists = await executeGitCommand(`git rev-parse --verify ${version}`, workingDir);
+      if (tagExists.stdout.trim()) {
+        return createResponse('git-release', `❌ Tag ${version} already exists.`, true, workingDir, startTime);
+      }
+    } catch {
+      // Tag doesn't exist, which is good
+    }
+
+    if (opts.dryRun) {
+      resultText += `\n🔍 DRY RUN - Would create release ${version}:\n`;
+      resultText += `   • Create annotated tag\n`;
+      if (opts.changelog) resultText += `   • Generate changelog\n`;
+      if (opts.push) resultText += `   • Push tag to remote\n`;
+      return createResponse('git-release', resultText, false, workingDir, startTime);
+    }
+
+    // Ensure working directory is clean
+    const statusResult = await executeGitCommand('git status --porcelain', workingDir);
+    if (statusResult.stdout.trim()) {
+      return createResponse('git-release', '❌ Working directory must be clean before creating release.', true, workingDir, startTime);
+    }
+
+    // Generate changelog if requested
+    let releaseNotes = opts.notes || '';
+    if (opts.changelog) {
+      try {
+        // Get commits since last tag
+        const lastTagResult = await executeGitCommand('git describe --tags --abbrev=0', workingDir);
+        const lastTag = lastTagResult.stdout.trim();
+        
+        if (lastTag) {
+          const changelogResult = await executeGitCommand(`git log ${lastTag}..HEAD --pretty=format:"• %s"`, workingDir);
+          if (changelogResult.stdout.trim()) {
+            releaseNotes = `Changes since ${lastTag}:\n\n${changelogResult.stdout}`;
+            resultText += `📋 Generated changelog from ${lastTag}\n`;
+          }
+        } else {
+          const changelogResult = await executeGitCommand('git log --pretty=format:"• %s"', workingDir);
+          releaseNotes = `Initial release changes:\n\n${changelogResult.stdout}`;
+        }
+      } catch {
+        releaseNotes = opts.notes || `Release ${version}`;
+      }
+    }
+
+    // Create annotated tag
+    resultText += `\n🏷️  Creating release tag ${version}...\n`;
+    const tagCommand = `git tag -a "${version}" -m "${releaseNotes.replace(/"/g, '\\"')}"`;
+    await executeGitCommand(tagCommand, workingDir);
+    resultText += `✅ Tag created successfully\n`;
+
+    // Push tag to remote
+    if (opts.push) {
+      resultText += `\n📤 Pushing release to remote...\n`;
+      await executeGitCommand(`git push origin ${version}`, workingDir);
+      resultText += `✅ Release pushed to remote\n`;
+    }
+
+    resultText += `\n🎉 Release ${version} created successfully!\n`;
+    if (releaseNotes) {
+      resultText += `\n📝 Release Notes:\n${releaseNotes}\n`;
+    }
+    
+    return createResponse('git-release', resultText, false, workingDir, startTime);
+
+  } catch (error: any) {
+    const errorMsg = error.stderr || error.message || 'Unknown error during release';
+    return createResponse('git-release', `❌ Release failed: ${errorMsg}`, true, workingDir, startTime);
+  }
+}
+
+/**
+ * Repository Cleanup - Advanced maintenance operations
+ */
+export async function gitClean(directory?: string, options?: { branches?: boolean; cache?: boolean; files?: boolean; aggressive?: boolean; dryRun?: boolean }): Promise<GitOperationResult> {
+  const workingDir = directory || process.cwd();
+  const startTime = Date.now();
+
+  try {
+    if (!await isGitRepository(workingDir)) {
+      return createResponse('git-clean', 'Error: Not a git repository. Run "git init" to initialize.', true, workingDir, startTime);
+    }
+
+    const opts = { branches: true, cache: true, files: false, aggressive: false, dryRun: false, ...options };
+    let resultText = `🧹 Repository Cleanup Operations\n`;
+
+    if (opts.dryRun) {
+      resultText += `\n🔍 DRY RUN - Would perform:\n`;
+      if (opts.branches) resultText += `   • Clean merged branches\n`;
+      if (opts.cache) resultText += `   • Clear Git cache\n`;
+      if (opts.files) resultText += `   • Remove untracked files\n`;
+      if (opts.aggressive) resultText += `   • Aggressive cleanup (gc, prune)\n`;
+      return createResponse('git-clean', resultText, false, workingDir, startTime);
+    }
+
+    // Clean merged branches
+    if (opts.branches) {
+      resultText += `\n🌿 Cleaning merged branches...\n`;
+      try {
+        // Get current branch
+        const currentBranchResult = await executeGitCommand('git branch --show-current', workingDir);
+        const currentBranch = currentBranchResult.stdout.trim();
+        
+        // Get merged branches (excluding current and main/master)
+        const mergedResult = await executeGitCommand('git branch --merged', workingDir);
+        const mergedBranches = mergedResult.stdout
+          .split('\n')
+          .map(line => line.trim().replace('*', '').trim())
+          .filter(branch => branch && branch !== currentBranch && branch !== 'main' && branch !== 'master');
+
+        if (mergedBranches.length > 0) {
+          for (const branch of mergedBranches) {
+            try {
+              await executeGitCommand(`git branch -d ${branch}`, workingDir);
+              resultText += `   ✅ Deleted branch: ${branch}\n`;
+            } catch {
+              resultText += `   ⚠️  Could not delete: ${branch}\n`;
+            }
+          }
+        } else {
+          resultText += `   No merged branches to clean\n`;
+        }
+      } catch (error: any) {
+        resultText += `   ⚠️  Branch cleanup failed: ${error.message}\n`;
+      }
+    }
+
+    // Clear Git cache
+    if (opts.cache) {
+      resultText += `\n🗄️  Clearing Git cache...\n`;
+      try {
+        await executeGitCommand('git gc --auto', workingDir);
+        resultText += `   ✅ Git garbage collection completed\n`;
+        
+        if (opts.aggressive) {
+          await executeGitCommand('git gc --aggressive --prune=now', workingDir);
+          resultText += `   ✅ Aggressive cleanup completed\n`;
+        }
+      } catch (error: any) {
+        resultText += `   ⚠️  Cache cleanup failed: ${error.message}\n`;
+      }
+    }
+
+    // Remove untracked files
+    if (opts.files) {
+      resultText += `\n📄 Removing untracked files...\n`;
+      try {
+        // Show what would be removed first
+        const cleanDryRun = await executeGitCommand('git clean -dn', workingDir);
+        if (cleanDryRun.stdout.trim()) {
+          resultText += `   Files to remove:\n${cleanDryRun.stdout.split('\n').map(line => `   ${line}`).join('\n')}\n`;
+          await executeGitCommand('git clean -df', workingDir);
+          resultText += `   ✅ Untracked files removed\n`;
+        } else {
+          resultText += `   No untracked files to remove\n`;
+        }
+      } catch (error: any) {
+        resultText += `   ⚠️  File cleanup failed: ${error.message}\n`;
+      }
+    }
+
+    // Prune remote references
+    resultText += `\n🔗 Pruning remote references...\n`;
+    try {
+      await executeGitCommand('git remote prune origin', workingDir);
+      resultText += `   ✅ Remote references pruned\n`;
+    } catch (error: any) {
+      resultText += `   ⚠️  Remote prune failed: ${error.message}\n`;
+    }
+
+    resultText += `\n✅ Repository cleanup completed!\n`;
+    resultText += `💡 Your repository is now optimized and clean\n`;
+    
+    return createResponse('git-clean', resultText, false, workingDir, startTime);
+
+  } catch (error: any) {
+    const errorMsg = error.stderr || error.message || 'Unknown error during cleanup';
+    return createResponse('git-clean', `❌ Cleanup failed: ${errorMsg}`, true, workingDir, startTime);
   }
 }

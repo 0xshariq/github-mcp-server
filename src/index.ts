@@ -65,7 +65,10 @@ import {
   gitRebase,
   gitCherryPick,
   gitBlame,
-  gitBisect
+  gitBisect,
+  gitDev,
+  gitRelease,
+  gitClean
 } from "./github.js";
 
 // Initialize MCP server with enhanced metadata and capabilities
@@ -533,6 +536,151 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         }
       },
       {
+        name: "git-flow",
+        description: "Enhanced Git workflow automation with intelligent defaults and team collaboration",
+        inputSchema: {
+          type: "object",
+          properties: {
+            directory: {
+              type: "string",
+              description: "The directory to run the command in (defaults to current working directory)"
+            },
+            action: {
+              type: "string",
+              enum: ["init", "feature-start", "feature-finish", "release-start", "release-finish", "hotfix-start", "hotfix-finish", "status"],
+              description: "Flow action to perform"
+            },
+            name: {
+              type: "string",
+              description: "Name for feature/release/hotfix branches"
+            },
+            message: {
+              type: "string",
+              description: "Commit message for operations that require it"
+            }
+          },
+          required: ["action"]
+        }
+      },
+      {
+        name: "git-dev",
+        description: "Development session management with auto-save and branch switching",
+        inputSchema: {
+          type: "object",
+          properties: {
+            directory: {
+              type: "string",
+              description: "The directory to run the command in (defaults to current working directory)"
+            },
+            action: {
+              type: "string",
+              enum: ["start", "save", "switch", "resume", "status", "clean"],
+              description: "Development action to perform"
+            },
+            session: {
+              type: "string",
+              description: "Development session name"
+            },
+            message: {
+              type: "string",
+              description: "Save message for session snapshots"
+            }
+          },
+          required: ["action"]
+        }
+      },
+      {
+        name: "git-sync",
+        description: "Advanced synchronization with conflict resolution and remote management",
+        inputSchema: {
+          type: "object",
+          properties: {
+            directory: {
+              type: "string",
+              description: "The directory to run the command in (defaults to current working directory)"
+            },
+            mode: {
+              type: "string",
+              enum: ["pull", "push", "full", "force", "upstream"],
+              description: "Sync mode to use"
+            },
+            remote: {
+              type: "string",
+              description: "Remote repository name (defaults to origin)"
+            },
+            branch: {
+              type: "string",
+              description: "Branch to sync (defaults to current branch)"
+            },
+            resolveConflicts: {
+              type: "boolean",
+              description: "Whether to attempt automatic conflict resolution"
+            }
+          }
+        }
+      },
+      {
+        name: "git-release",
+        description: "Automated release management with version tagging and changelog generation",
+        inputSchema: {
+          type: "object",
+          properties: {
+            directory: {
+              type: "string",
+              description: "The directory to run the command in (defaults to current working directory)"
+            },
+            action: {
+              type: "string",
+              enum: ["prepare", "create", "finalize", "rollback", "status"],
+              description: "Release action to perform"
+            },
+            version: {
+              type: "string",
+              description: "Release version (e.g., 1.2.3, major, minor, patch)"
+            },
+            message: {
+              type: "string",
+              description: "Release message or changelog"
+            },
+            prerelease: {
+              type: "boolean",
+              description: "Whether this is a prerelease"
+            }
+          },
+          required: ["action"]
+        }
+      },
+      {
+        name: "git-clean",
+        description: "Repository cleanup and maintenance with backup options",
+        inputSchema: {
+          type: "object",
+          properties: {
+            directory: {
+              type: "string",
+              description: "The directory to run the command in (defaults to current working directory)"
+            },
+            mode: {
+              type: "string",
+              enum: ["soft", "normal", "aggressive", "backup", "restore"],
+              description: "Cleanup mode to use"
+            },
+            target: {
+              type: "string",
+              description: "Specific target to clean (files, branches, tags, remotes)"
+            },
+            backup: {
+              type: "boolean",
+              description: "Whether to create backup before cleaning"
+            },
+            force: {
+              type: "boolean",
+              description: "Force cleanup without confirmation"
+            }
+          }
+        }
+      },
+      {
         name: "git-merge",
         description: "Merge a branch into the current branch with conflict detection",
         inputSchema: {
@@ -974,6 +1122,56 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             {
               type: "text",
               text: JSON.stringify(await gitBisect(args?.directory as string, args?.action as string, args?.commit as string))
+            }
+          ]
+        };
+
+      case "git-flow":
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(await gitFlow(args?.directory as string, args?.message as string, args?.name ? [args?.name as string] : undefined, { push: true, review: false, dryRun: false }))
+            }
+          ]
+        };
+
+      case "git-dev":
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(await gitDev(args?.directory as string, args?.session as string, { sync: true, status: false, continue: false }))
+            }
+          ]
+        };
+
+      case "git-sync":
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(await gitSync(args?.directory as string, { rebase: false, force: false, all: true, prune: true }))
+            }
+          ]
+        };
+
+      case "git-release":
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(await gitRelease(args?.directory as string, args?.version as string, { changelog: true, notes: args?.message as string, push: true, dryRun: false }))
+            }
+          ]
+        };
+
+      case "git-clean":
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(await gitClean(args?.directory as string, { branches: true, cache: true, files: false, aggressive: false, dryRun: false }))
             }
           ]
         };

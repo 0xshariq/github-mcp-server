@@ -20,7 +20,7 @@ set -euo pipefail
 
 # === CONFIGURATION ===
 PROJECT_DIR="/home/simplysabir/desktop/shariq-projects/github-mcp-server"
-NODE_VERSION="24.4.1"
+NODE_VERSION="20.0.0"
 SERVER_FILE="dist/index.js"
 SERVER_VERSION="2.0.1"
 SERVER_NAME="@0xshariq/github-mcp-server"

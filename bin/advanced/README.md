@@ -1,6 +1,721 @@
-# Advanced Git Operations & Workflows
+# Advanced Git Operations - CLI Aliases
 
-This directory contains **12 sophisticated Git workflows** that combine multiple operations into powerful automation tools. These commands are designed for experienced developers who want to streamline complex development processes and implement professional Git practices.
+This directory contains 11 advanced Git operation aliases that provide sophisticated workflow automation and power features. Each alias is a standalone executable script with comprehensive functionality for experienced developers and complex development processes.
+
+## Overview
+
+Advanced operations combine multiple Git commands into powerful automation tools designed for professional development workflows, team collaboration, and complex repository management scenarios.
+
+**All 11 Advanced Commands:**
+- `gbackup` - Create repository backups and snapshots
+- `gclean` - Clean and maintain repository health
+- `gdev` - Developer workflow automation
+- `gfix` - Smart fix and patch workflows
+- `gflow` - Complete add-commit-push workflow
+- `gfresh` - Fresh repository setup and reset
+- `glist` - Tool discovery and help system
+- `gquick` - Quick commit without push
+- `grelease` - Release management automation
+- `gsave` - Smart save with auto-messaging
+- `gsync` - Advanced synchronization
+- `gworkflow` - Professional workflow templates
+
+**💡 Pro Tip:** Every command supports `--help` or `-h` for detailed usage information!
+
+## Command Details
+
+### 🛡️ `gbackup` - Repository Backup
+
+**Purpose:** Create comprehensive repository backups with various strategies for data protection and disaster recovery.
+
+**Command:** `gbackup [strategy] [options]`
+
+**Parameters:**
+- `[strategy]` - Optional backup strategy (branch, tag, full, incremental)
+
+**Essential Options:**
+- `--branch <name>` - Backup specific branch
+- `--all-branches` - Backup all branches  
+- `--tags` - Include all tags in backup
+- `--full` - Complete repository backup
+- `--incremental` - Incremental backup since last backup
+- `--compress` - Compress backup archives
+- `--remote <url>` - Push backup to remote location
+- `--verify` - Verify backup integrity after creation
+- `-h, --help` - Show detailed help information
+
+**Common Use Cases:**
+```bash
+# Basic backup operations
+gbackup                               # Default backup strategy
+gbackup --help                       # Show help
+
+# Specific backup types
+gbackup --branch main                # Backup main branch only
+gbackup --all-branches               # Backup all branches
+gbackup --tags                       # Backup with all tags
+gbackup --full --compress            # Complete compressed backup
+
+# Advanced backup options
+gbackup --incremental                # Incremental since last backup
+gbackup --remote backup-server       # Push to backup server
+gbackup --verify --compress          # Compressed backup with verification
+```
+
+**Backup Strategies:**
+- **Branch backup** - Backs up specific branch with history
+- **Full backup** - Complete repository including all branches and tags
+- **Incremental backup** - Only changes since last backup
+- **Tag backup** - Backup specific tagged versions
+- **Remote backup** - Push backups to remote storage
+
+**Related Commands:** `gfresh` (restore), `gclean` (maintenance), `grelease` (versioning)
+**MCP Tool:** `git-backup`
+
+---
+
+### 🧹 `gclean` - Repository Cleanup
+
+**Purpose:** Clean and maintain repository health with comprehensive cleanup options for optimization and maintenance.
+
+**Command:** `gclean [target] [options]`
+
+**Parameters:**
+- `[target]` - Optional cleanup target (branches, cache, files, all)
+
+**Essential Options:**
+- `--branches` - Clean merged/stale branches
+- `--cache` - Clear Git cache and temporary files
+- `--files` - Remove untracked files and directories
+- `--all` - Comprehensive cleanup (all targets)
+- `--dry-run` - Preview cleanup operations
+- `--force` - Force cleanup without confirmation
+- `--keep <pattern>` - Keep files matching pattern
+- `--aggressive` - Aggressive cleanup including packed refs
+- `-h, --help` - Show detailed help information
+
+**Common Use Cases:**
+```bash
+# Basic cleanup operations
+gclean --help                        # Show help
+gclean                               # Interactive cleanup menu
+gclean --dry-run                     # Preview all cleanup operations
+
+# Specific cleanup targets
+gclean --branches                    # Clean merged branches
+gclean --cache                       # Clear Git cache
+gclean --files                       # Remove untracked files
+gclean --all                         # Complete cleanup
+
+# Advanced cleanup
+gclean --aggressive --force          # Aggressive cleanup without prompts
+gclean --branches --keep "main|develop"  # Keep specific branches
+```
+
+**Cleanup Targets:**
+- **Branches** - Remove merged, stale, or orphaned branches
+- **Cache** - Clear Git object cache and temporary files  
+- **Files** - Remove untracked files and build artifacts
+- **References** - Clean packed references and reflog
+- **All** - Comprehensive cleanup of all targets
+
+**Safety Features:**
+- Dry-run mode to preview operations
+- Confirmation prompts for destructive operations
+- Pattern-based exclusions to keep important items
+- Backup creation before major cleanups
+
+**Related Commands:** `gbackup` (before cleanup), `gstatus` (check state), `gfresh` (reset)
+**MCP Tool:** `git-clean`
+
+---
+
+### 🛠️ `gdev` - Developer Workflow
+
+**Purpose:** Comprehensive developer workflow automation with intelligent session management and team collaboration features.
+
+**Command:** `gdev [branch-name] [options]`
+
+**Parameters:**
+- `[branch-name]` - Optional branch name for feature development
+
+**Essential Options:**
+- `--status` - Show comprehensive development status
+- `--sync` - Synchronize with team's latest changes
+- `--continue` - Resume previous development session
+- `--start <feature>` - Start new feature development
+- `--finish` - Complete current feature development
+- `--review` - Prepare code for review
+- `--team-sync` - Advanced team synchronization
+- `--branch-info` - Detailed branch information
+- `-h, --help` - Show detailed help information
+
+**Common Use Cases:**
+```bash
+# Development session management
+gdev --help                          # Show help
+gdev                                 # Check status and sync
+gdev --status                        # Comprehensive development status
+
+# Feature development
+gdev feature/user-authentication     # Start feature development
+gdev --start shopping-cart           # Start new feature branch
+gdev --continue                      # Resume previous session
+gdev --finish                        # Complete feature development
+
+# Team collaboration
+gdev --sync                          # Sync with remote changes
+gdev --team-sync                     # Advanced team synchronization
+gdev --review                        # Prepare for code review
+```
+
+**Workflow Features:**
+- **Session Management** - Resume interrupted work sessions
+- **Branch Intelligence** - Smart branch creation and switching
+- **Team Sync** - Handle complex multi-developer scenarios
+- **Status Intelligence** - Comprehensive repository health checks
+- **Review Preparation** - Automated code review preparation
+
+**Related Commands:** `gflow` (quick workflow), `gsync` (sync), `gbackup` (safety)
+**MCP Tool:** `git-dev`
+
+---
+
+### 🔧 `gfix` - Smart Fix Workflows
+
+**Purpose:** Intelligent fix workflows for different scenarios including hotfixes, patches, and commit corrections.
+
+**Command:** `gfix [issue-type] [options]`
+
+**Parameters:**
+- `[issue-type]` - Type of fix (conflicts, commit, branch, history)
+
+**Essential Options:**
+- `--conflicts` - Resolve merge conflicts interactively
+- `--commit` - Fix/amend previous commit
+- `--branch` - Fix branch-related issues
+- `--history` - Fix commit history issues
+- `--interactive` - Interactive fix mode
+- `--force` - Force fixes (use with caution)
+- `--dry-run` - Preview fix operations
+- `--backup` - Create backup before fixes
+- `-h, --help` - Show detailed help information
+
+**Common Use Cases:**
+```bash
+# Fix operations
+gfix --help                          # Show help
+gfix                                 # Interactive fix menu
+gfix --conflicts                     # Resolve merge conflicts
+
+# Commit fixes
+gfix --commit                        # Fix last commit
+gfix --history                       # Interactive history cleanup
+gfix --branch                        # Fix branch issues
+
+# Advanced fixes
+gfix --interactive --backup          # Interactive fixes with backup
+gfix --dry-run --conflicts           # Preview conflict resolution
+```
+
+**Fix Types:**
+- **Conflicts** - Intelligent merge conflict resolution
+- **Commits** - Fix commit messages, authors, dates
+- **Branches** - Repair branch relationships and tracking
+- **History** - Clean up commit history interactively
+- **References** - Fix broken references and remotes
+
+**Related Commands:** `gdev` (development), `gbackup` (safety), `greset` (basic reset)
+**MCP Tool:** `git-fix`
+
+---
+
+### ⚡ `gflow` - Complete Workflow
+
+**Purpose:** Execute complete add-commit-push workflow with flexible file handling and intelligent automation.
+
+**Command:** `gflow "message" [files...] [options]`
+
+**Parameters:**
+- `"message"` - Required commit message
+- `[files...]` - Optional specific files to include
+
+**Essential Options:**
+- `--all` - Include all changes (default behavior)
+- `--interactive` - Interactive file selection
+- `--dry-run` - Preview workflow operations
+- `--no-push` - Skip push operation
+- `--force-push` - Force push to remote
+- `--review` - Create commit for review (no push)
+- `--amend` - Amend previous commit
+- `--continue` - Continue interrupted workflow
+- `-h, --help` - Show detailed help information
+
+**Common Use Cases:**
+```bash
+# Complete workflow operations
+gflow "feat: add user authentication"           # Full workflow all files
+gflow --help                                   # Show help
+
+# Specific file workflows
+gflow "fix: update login validation" src/auth.js   # Specific files
+gflow "docs: update README" README.md docs/        # Multiple files/dirs
+
+# Workflow variations
+gflow "feat: new feature" --review              # Create for review (no push)
+gflow "fix: critical bug" --force-push          # Force push after fix
+gflow "wip: work in progress" --no-push         # Local commit only
+
+# Interactive workflows
+gflow "refactor: component updates" --interactive   # Select files interactively
+gflow --continue                                    # Resume interrupted workflow
+```
+
+**Workflow Steps:**
+1. **Validate Repository** - Ensure clean git state
+2. **File Selection** - Add specified files or all changes
+3. **Commit Creation** - Create commit with validation
+4. **Push Operation** - Upload to remote (unless skipped)
+5. **Verification** - Confirm successful completion
+
+**Related Commands:** `gquick` (local commit), `gdev` (development), `gsave` (smart save)
+**MCP Tool:** `git-flow`
+
+---
+
+### 🆕 `gfresh` - Fresh Repository Setup
+
+**Purpose:** Reset repository to fresh state with various reset strategies and cleanup options.
+
+**Command:** `gfresh [strategy] [options]`
+
+**Parameters:**
+- `[strategy]` - Reset strategy (soft, hard, clean, pristine)
+
+**Essential Options:**
+- `--soft` - Keep working directory changes
+- `--hard` - Reset everything to clean state
+- `--clean` - Remove untracked files
+- `--pristine` - Complete fresh start (like new clone)
+- `--keep-branches` - Preserve local branches
+- `--backup` - Create backup before reset
+- `--from-remote` - Reset to match remote state
+- `--interactive` - Interactive reset options
+- `-h, --help` - Show detailed help information
+
+**Common Use Cases:**
+```bash
+# Fresh repository operations
+gfresh --help                        # Show help
+gfresh                               # Interactive fresh setup
+gfresh --clean                       # Remove untracked files
+
+# Reset strategies
+gfresh --soft                        # Soft reset keeping changes
+gfresh --hard                        # Hard reset to clean state
+gfresh --pristine                    # Complete fresh start
+
+# Advanced operations
+gfresh --from-remote --backup        # Reset to remote with backup
+gfresh --interactive                 # Interactive reset options
+```
+
+**Reset Strategies:**
+- **Soft** - Reset commits but keep working changes
+- **Hard** - Reset everything to clean state
+- **Clean** - Remove untracked files and directories
+- **Pristine** - Complete reset like fresh clone
+- **Remote** - Reset to match remote repository state
+
+**Related Commands:** `gbackup` (before reset), `gclean` (cleanup), `gdev` (development)
+**MCP Tool:** `git-fresh`
+
+---
+
+### 📚 `glist` - Tool Discovery
+
+**Purpose:** Comprehensive catalog and help system for all available Git tools with search and filtering capabilities.
+
+**Command:** `glist [options]`
+
+**Essential Options:**
+- `--basic` - Show basic aliases only
+- `--advanced` - Show advanced aliases only  
+- `--category <name>` - Filter by category
+- `--search <term>` - Search for specific tools
+- `--usage` - Show usage examples
+- `--verbose` - Detailed tool information
+- `-h, --help` - Show detailed help information
+
+**Common Use Cases:**
+```bash
+# Tool discovery
+glist                               # Show all available tools
+glist --help                       # Show help
+glist --basic                      # Basic tools only
+glist --advanced                   # Advanced tools only
+
+# Filtering and search
+glist --category workflow          # Workflow automation tools
+glist --search commit              # Find commit-related tools
+glist --usage                      # Show usage examples
+```
+
+**Categories:**
+- **File Staging & Status** - File management operations
+- **Commit Operations** - Commit creation and management
+- **Branch Management** - Branch operations
+- **Remote Operations** - Remote repository sync
+- **History & Recovery** - History and recovery tools
+- **Repository Setup** - Repository initialization
+- **Workflow Automation** - Advanced workflows
+- **Maintenance & Cleanup** - Repository maintenance
+
+**Related Commands:** All Git aliases (provides help for entire system)
+**MCP Tool:** `git-list`
+
+---
+
+### ⚡ `gquick` - Quick Commit
+
+**Purpose:** Fast local commit workflow without pushing to remote, perfect for save points and work-in-progress commits.
+
+**Command:** `gquick "message" [options]`
+
+**Parameters:**
+- `"message"` - Required commit message
+
+**Essential Options:**
+- `--all` - Include all changes (default)
+- `--patch` - Interactive patch mode
+- `--amend` - Amend previous commit
+- `--wip` - Mark as work-in-progress
+- `--save-point` - Create development save point
+- `--continue-later` - Mark for later completion
+- `--dry-run` - Preview commit operation
+- `-h, --help` - Show detailed help information
+
+**Common Use Cases:**
+```bash
+# Quick commit operations
+gquick "fix typo in header"              # Quick local commit
+gquick --help                           # Show help
+
+# Work-in-progress commits
+gquick "WIP: experimenting with layout" # Work in progress
+gquick --wip "testing new approach"     # Explicit WIP marking
+gquick --save-point "before refactor"   # Development save point
+
+# Commit variations
+gquick --patch "selective changes"      # Interactive staging
+gquick --amend "updated commit message" # Amend previous commit
+gquick --continue-later "partial work"  # Mark for later completion
+```
+
+**Use Cases:**
+- **Experimental changes** - Not ready for team sharing
+- **Save points** - Frequent saves during development  
+- **Work-in-progress** - Incomplete features or fixes
+- **Local testing** - Before creating proper commits
+
+**Related Commands:** `gflow` (full workflow), `gsave` (smart save), `gcommit` (basic commit)
+**MCP Tool:** `git-quick`
+
+---
+
+### 🚀 `grelease` - Release Management
+
+**Purpose:** Comprehensive release management with versioning, tagging, changelog generation, and deployment preparation.
+
+**Command:** `grelease <version> [options]`
+
+**Parameters:**
+- `<version>` - Required version number (semver format)
+
+**Essential Options:**
+- `--major` - Major version bump (breaking changes)
+- `--minor` - Minor version bump (new features)
+- `--patch` - Patch version bump (bug fixes)  
+- `--changelog` - Generate/update changelog
+- `--notes` - Add release notes
+- `--tag-only` - Create tag without release process
+- `--dry-run` - Preview release operations
+- `--push` - Push release to remote
+- `-h, --help` - Show detailed help information
+
+**Common Use Cases:**
+```bash
+# Release operations
+grelease v1.2.0                     # Create version 1.2.0 release
+grelease --help                     # Show help
+
+# Version bumping
+grelease --major                    # Major version bump
+grelease --minor                    # Minor version bump  
+grelease --patch                    # Patch version bump
+
+# Release documentation
+grelease v2.0.0 --changelog         # Generate changelog
+grelease v1.1.0 --notes "Bug fixes and improvements"  # Add release notes
+
+# Advanced release options
+grelease v1.0.0 --dry-run           # Preview release process
+grelease v1.3.0 --push              # Create and push release
+```
+
+**Release Process:**
+1. **Version Validation** - Check semver format and increment
+2. **Changelog Generation** - Automatic changelog from commits
+3. **Tag Creation** - Create annotated release tags
+4. **Release Notes** - Generate or accept custom notes
+5. **Remote Push** - Push tags and release info
+
+**Semantic Versioning:**
+- **Major (X.0.0)** - Breaking changes requiring updates
+- **Minor (1.X.0)** - New features, backwards compatible
+- **Patch (1.1.X)** - Bug fixes, no new features
+
+**Related Commands:** `gbackup` (before release), `gclean` (cleanup), `gtag` (tagging)
+**MCP Tool:** `git-release`
+
+---
+
+### 💾 `gsave` - Smart Save
+
+**Purpose:** Intelligent save operations with automatic message generation and context awareness for quick development saves.
+
+**Command:** `gsave [message] [options]`
+
+**Parameters:**
+- `[message]` - Optional custom save message
+
+**Essential Options:**
+- `--auto` - Automatic message generation
+- `--wip` - Mark as work-in-progress  
+- `--checkpoint` - Create development checkpoint
+- `--branch <name>` - Save to specific branch
+- `--stash` - Save to stash instead of commit
+- `--description <text>` - Add detailed description
+- `--continue` - Mark as continuation of previous work
+- `-h, --help` - Show detailed help information
+
+**Common Use Cases:**
+```bash
+# Smart save operations  
+gsave                               # Auto-generate save message
+gsave --help                       # Show help
+gsave "working on user interface"  # Custom save message
+
+# Save types
+gsave --wip                        # Work-in-progress save
+gsave --checkpoint                 # Development checkpoint
+gsave --auto                       # Automatic message generation
+
+# Advanced saves
+gsave --stash "temporary experiment" # Save to stash
+gsave --continue "continuing feature work"  # Continuation save
+gsave --description "Added login form validation and error handling"
+```
+
+**Auto-Message Generation:**
+Automatically creates meaningful messages based on:
+- **File changes** - Analyzes modified files and content
+- **Branch context** - Uses branch name for context
+- **Change patterns** - Recognizes common development patterns
+- **Previous commits** - Builds on commit history
+
+**Save Types:**
+- **Auto save** - Intelligent message generation
+- **WIP save** - Work-in-progress markers
+- **Checkpoint** - Development milestones  
+- **Stash save** - Temporary saves without commits
+- **Continuation** - Ongoing work sessions
+
+**Related Commands:** `gquick` (quick commit), `gstash` (basic stash), `gflow` (complete workflow)
+**MCP Tool:** `git-save`
+
+---
+
+### 🔄 `gsync` - Advanced Synchronization
+
+**Purpose:** Advanced repository synchronization with conflict resolution, team coordination, and intelligent merging strategies.
+
+**Command:** `gsync [options]`
+
+**Essential Options:**
+- `--all` - Sync all branches with remotes
+- `--rebase` - Use rebase instead of merge
+- `--force` - Force sync operations
+- `--conflicts` - Interactive conflict resolution
+- `--team` - Team synchronization mode
+- `--dry-run` - Preview sync operations
+- `--strategy <strategy>` - Merge strategy (ours, theirs, recursive)
+- `--prune` - Remove stale remote references
+- `-h, --help` - Show detailed help information
+
+**Common Use Cases:**
+```bash
+# Synchronization operations
+gsync                               # Sync current branch
+gsync --help                       # Show help
+gsync --all                        # Sync all branches
+
+# Sync strategies  
+gsync --rebase                     # Rebase local changes
+gsync --conflicts                  # Interactive conflict resolution
+gsync --team                       # Team coordination sync
+
+# Advanced sync
+gsync --force --prune              # Force sync with cleanup
+gsync --dry-run --all              # Preview all branch sync
+gsync --strategy recursive         # Use specific merge strategy
+```
+
+**Synchronization Features:**
+- **Multi-branch sync** - Synchronize multiple branches
+- **Conflict resolution** - Interactive conflict handling
+- **Team coordination** - Handle team development scenarios
+- **Strategy selection** - Choose appropriate merge strategies
+- **Remote cleanup** - Prune stale references
+
+**Sync Strategies:**
+- **Fast-forward** - Simple fast-forward when possible
+- **Merge** - Create merge commits for integration
+- **Rebase** - Replay commits on updated base
+- **Interactive** - Manual conflict resolution
+- **Team** - Coordinate with team workflows
+
+**Related Commands:** `gpull` (basic pull), `gpush` (basic push), `gdev` (development)
+**MCP Tool:** `git-sync`
+
+---
+
+### 🔄 `gworkflow` - Professional Workflows
+
+**Purpose:** Professional development workflow templates for enterprise and team environments with standardized processes.
+
+**Command:** `gworkflow <type> <name> [options]`
+
+**Parameters:**
+- `<type>` - Workflow type (feature, hotfix, release, bugfix)
+- `<name>` - Workflow name/identifier
+
+**Essential Options:**
+- `--start` - Start new workflow
+- `--finish` - Complete current workflow  
+- `--abort` - Abort current workflow
+- `--status` - Show workflow status
+- `--team` - Team workflow coordination
+- `--review` - Prepare for code review
+- `--template <name>` - Use specific workflow template
+- `--dry-run` - Preview workflow operations
+- `-h, --help` - Show detailed help information
+
+**Common Use Cases:**
+```bash
+# Workflow operations
+gworkflow feature user-authentication    # Start feature workflow
+gworkflow --help                        # Show help
+
+# Workflow types
+gworkflow hotfix critical-login-bug     # Start hotfix workflow
+gworkflow release v2.1.0               # Start release workflow
+gworkflow bugfix header-alignment       # Start bugfix workflow
+
+# Workflow management
+gworkflow --status                      # Check current workflow
+gworkflow --finish                      # Complete workflow
+gworkflow --abort                       # Abort current workflow
+
+# Advanced workflows
+gworkflow feature api-integration --team    # Team feature workflow
+gworkflow hotfix security-patch --review    # Hotfix with review
+```
+
+**Workflow Types:**
+- **Feature** - New feature development with branch management
+- **Hotfix** - Emergency fixes with fast-track process  
+- **Release** - Release preparation and versioning
+- **Bugfix** - Regular bug fixes with testing
+- **Maintenance** - Code maintenance and refactoring
+
+**Workflow Features:**
+- **Branch Management** - Automatic branch creation and cleanup
+- **Template System** - Standardized workflow templates
+- **Team Integration** - Multi-developer coordination
+- **Review Process** - Code review preparation
+- **Status Tracking** - Workflow progress monitoring
+
+**Related Commands:** `gdev` (development), `grelease` (releases), `gbackup` (safety)
+**MCP Tool:** `git-workflow`
+
+---
+
+## Usage Patterns
+
+### Professional Development Workflow
+```bash
+# Start feature development
+gworkflow feature user-dashboard        # Start professional feature workflow
+gdev --sync                            # Sync with team changes
+# ... development work ...
+gsave --checkpoint "UI components done" # Save development checkpoint
+gflow "feat: complete user dashboard"   # Complete feature with full workflow
+```
+
+### Release Management
+```bash
+# Prepare for release
+gbackup --full                         # Create full backup
+gclean --all                          # Clean repository
+grelease v1.2.0 --changelog           # Create release with changelog
+gsync --all                           # Sync all branches
+```
+
+### Emergency Hotfix
+```bash
+# Emergency fix workflow
+gworkflow hotfix critical-security     # Start hotfix workflow
+gfix --conflicts                      # Fix any conflicts
+gflow "hotfix: security patch"        # Complete hotfix
+grelease --patch                      # Create patch release
+```
+
+### Repository Maintenance
+```bash
+# Regular maintenance
+gbackup --incremental                 # Create incremental backup
+gclean --branches                     # Clean merged branches
+gfresh --clean                        # Clean working directory
+gsync --prune                         # Clean remote references
+```
+
+## Tips and Best Practices
+
+1. **Use workflows for structure**: `gworkflow` for standardized processes
+2. **Save frequently**: `gsave` and `gquick` for development checkpoints
+3. **Sync regularly**: `gsync` to stay current with team
+4. **Backup before major operations**: `gbackup` for safety
+5. **Clean regularly**: `gclean` for repository health
+6. **Use appropriate tools**: Match tools to specific scenarios
+
+## Error Handling
+
+All advanced aliases include:
+- Comprehensive error detection and recovery
+- Rollback mechanisms for failed operations  
+- Conflict resolution guidance
+- Team coordination conflict handling
+- Backup creation before destructive operations
+- Detailed logging and status reporting
+
+---
+
+## Related Documentation
+
+- [Basic Operations](../basic/README.md)
+- [Installation Guide](../../markdown/INSTALLATION.md)
+- [Quick Reference](../../markdown/QUICK_REFERENCES.md)
 
 ## 📋 Operations Overview
 
