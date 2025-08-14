@@ -1,193 +1,174 @@
 #!/usr/bin/env node
 
-/**
- * gadd - Enhanced Git Add with Smart File Handling
- * 
- * Features:
- * - Smart file detection and validation
- * - Supports patterns and multiple files
- * - Beautiful progress display
- * - Repository validation
- * - File existence checking
- * 
- * Usage:
- *   gadd                    - Add all modified files
- *   gadd file1.js file2.css - Add specific files  
- *   gadd src/               - Add entire directory
- *   gadd *.js               - Add files matching pattern
- *   gadd --help             - Show help
- */
-
 import { execSync } from 'child_process';
-import path from 'path';
+import { existsSync } from 'fs';
 import chalk from 'chalk';
-import fs from 'fs';
 
-// Check if we're in a git repository
 function validateRepository() {
-  try {
-    execSync('git rev-parse --is-inside-work-tree', { stdio: 'pipe' });
-    return true;
-  } catch (error) {
-    console.log(chalk.red('❌ Error: Not a git repository'));
-    console.log(chalk.yellow('💡 Initialize with: git init'));
-    return false;
-  }
-}
-
-// Execute git command with progress display
-function runGitCommand(command, description) {
-  try {
-    console.log(chalk.cyan(`🔧 ${description}...`));
-    const result = execSync(command, { 
-      encoding: 'utf8',
-      stdio: 'pipe'
-    });
-    console.log(chalk.green('✅ Operation completed successfully!'));
-    return { success: true, output: result };
-  } catch (error) {
-    console.log(chalk.red(`❌ Failed: ${error.message}`));
-    return { success: false, error: error.message };
-  }
-}
-
-// Show help information
-function showHelp() {
-  console.log(chalk.bold.green(`
-📝 gadd - Enhanced Git Add with Smart Handling
-`));
-  console.log(chalk.cyan('📋 USAGE:'));
-  console.log(`   ${chalk.green('gadd')}                      ${chalk.gray('# Add all modified and new files')}`);
-  console.log(`   ${chalk.green('gadd file1.js file2.css')}   ${chalk.gray('# Add specific files')}`);
-  console.log(`   ${chalk.green('gadd src/ docs/')}           ${chalk.gray('# Add entire directories')}`);
-  console.log(`   ${chalk.green('gadd *.js')}                ${chalk.gray('# Add files matching pattern')}`);
-  console.log(`   ${chalk.green('gadd --all')}               ${chalk.gray('# Add all files (including deleted)')}`);
-  console.log(`   ${chalk.green('gadd --help')}              ${chalk.gray('# Show this help message')}`);
-  
-  console.log(chalk.cyan('\n🎯 FEATURES:'));
-  console.log(`   ${chalk.yellow('•')} ${chalk.white('Smart Detection:')} Automatically validates files before adding`);
-  console.log(`   ${chalk.yellow('•')} ${chalk.white('Pattern Support:')} Supports wildcards and glob patterns`);
-  console.log(`   ${chalk.yellow('•')} ${chalk.white('Directory Support:')} Can add entire directories recursively`);
-  console.log(`   ${chalk.yellow('•')} ${chalk.white('Safety Checks:')} Warns about non-existent files`);
-  console.log(`   ${chalk.yellow('•')} ${chalk.white('Progress Display:')} Shows detailed operation progress`);
-  
-  console.log(chalk.cyan('\n� EXAMPLES:'));
-  console.log(`   ${chalk.green('gadd')}                      ${chalk.gray('# Add all changes in repository')}`);
-  console.log(`   ${chalk.green('gadd package.json')}         ${chalk.gray('# Add specific configuration file')}`);
-  console.log(`   ${chalk.green('gadd src/ README.md')}       ${chalk.gray('# Add directory and file')}`);
-  console.log(`   ${chalk.green('gadd *.js *.css')}           ${chalk.gray('# Add all JS and CSS files')}`);
-  console.log(`   ${chalk.green('gadd --all')}               ${chalk.gray('# Add everything including deletions')}`);
-  
-  console.log(chalk.cyan('\n⚡ QUICK WORKFLOW:'));
-  console.log(`   ${chalk.blue('1.')} Run ${chalk.green('gstatus')} to see what files have changed`);
-  console.log(`   ${chalk.blue('2.')} Use ${chalk.green('gadd')} to stage the files you want`);
-  console.log(`   ${chalk.blue('3.')} Run ${chalk.green('gcommit "message"')} to commit changes`);
-  console.log(`   ${chalk.blue('4.')} Use ${chalk.green('gpush')} to upload to remote`);
-  
-  console.log(chalk.gray('\n═══════════════════════════════════════════════════════════'));
-}
-
-// Check file existence (for non-pattern arguments)
-function checkFileExists(filePath) {
-  // Don't check patterns that contain wildcards
-  if (filePath.includes('*') || filePath.includes('?')) {
-    return true; // Let git handle pattern matching
-  }
-  
-  try {
-    return fs.existsSync(filePath) || fs.statSync(filePath).isDirectory();
-  } catch {
-    return false;
-  }
-}
-
-// Main function
-async function main() {
-  const args = process.argv.slice(2);
-  
-  // Help functionality
-  if (args.includes('-h') || args.includes('--help')) {
-    showHelp();
-    return;
-  }
-  
-  // Validate repository
-  if (!validateRepository()) {
-    process.exit(1);
-  }
-  
-  try {
-    let command;
-    let description;
-    
-    if (args.length === 0) {
-      // Add all changes
-      command = 'git add .';
-      description = 'Adding all modified and new files';
-      console.log(chalk.bold.cyan('\n📝 Smart Add: All Changes'));
-      console.log(chalk.gray('─'.repeat(40)));
-      
-    } else if (args.includes('--all')) {
-      // Add everything including deletions
-      command = 'git add -A';
-      description = 'Adding all changes including deletions';
-      console.log(chalk.bold.cyan('\n📝 Add All: Including Deletions'));
-      console.log(chalk.gray('─'.repeat(40)));
-      
-    } else {
-      // Add specific files
-      const files = args.filter(arg => !arg.startsWith('-'));
-      
-      if (files.length === 0) {
-        console.log(chalk.red('❌ No files specified'));
-        console.log(chalk.yellow('💡 Usage: gadd [files...] or gadd --help'));
+    if (!existsSync('.git')) {
+        console.error(chalk.red('❌ Error: Not a git repository (or any of the parent directories): .git'));
         process.exit(1);
-      }
-      
-      // Check file existence (skip for patterns)
-      const nonExistentFiles = files.filter(file => !checkFileExists(file));
-      
-      if (nonExistentFiles.length > 0) {
-        console.log(chalk.yellow('⚠️  Warning: These files/patterns may not exist:'));
-        nonExistentFiles.forEach(file => {
-          console.log(chalk.gray(`   • ${file}`));
-        });
-        console.log(chalk.blue('   Continuing with git add (patterns will be resolved by git)...\n'));
-      }
-      
-      command = `git add ${files.join(' ')}`;
-      description = `Adding ${files.length} file(s)`;
-      console.log(chalk.bold.cyan('\n📝 Add Specific Files'));
-      console.log(chalk.gray('─'.repeat(40)));
-      console.log(chalk.blue('Files:'), chalk.white(files.join(', ')));
     }
-    
-    // Execute the git add command
-    const result = runGitCommand(command, description);
-    
-    if (result.success) {
-      console.log(chalk.green.bold('\n✅ Files successfully staged!'));
-      console.log(chalk.blue('💡 Next steps:'));
-      console.log(chalk.gray(`   • ${chalk.green('gstatus')} - Check what was added`));
-      console.log(chalk.gray(`   • ${chalk.green('gcommit "message"')} - Commit the changes`));
-      console.log(chalk.gray(`   • ${chalk.green('gflow "message"')} - Complete workflow (commit + push)`));
-    } else {
-      console.log(chalk.red.bold('\n❌ Failed to add files!'));
-      console.log(chalk.yellow('💡 Check the error above and fix any issues'));
-      process.exit(1);
-    }
-    
-  } catch (error) {
-    console.log(chalk.red.bold('\n❌ Unexpected error:'), error.message);
-    console.log(chalk.yellow('💡 Make sure you\'re in a valid git repository'));
-    process.exit(1);
-  }
 }
 
-// Run as standalone script
+function showHelp() {
+    console.log(chalk.magenta.bold('\n📝 gadd - Stage Changes\n'));
+    console.log(chalk.cyan('Purpose:'), 'Stage changes for commit with pattern support, interactive mode, and comprehensive validation.\n');
+    
+    console.log(chalk.cyan('Command:'), chalk.white('gadd [files...] [options]\n'));
+    
+    console.log(chalk.cyan('Parameters:'));
+    console.log('  ' + chalk.white('[files...]') + ' - Optional list of files/directories to stage (defaults to all changes)\n');
+    
+    console.log(chalk.cyan('Essential Options:'));
+    console.log('  ' + chalk.green('-A, --all') + '              - Add all changes including new files and deletions');
+    console.log('  ' + chalk.green('-u, --update') + '           - Add only modified and deleted files (no new files)');
+    console.log('  ' + chalk.green('-p, --patch') + '            - Interactive patch mode for selective staging');
+    console.log('  ' + chalk.green('-n, --dry-run') + '          - Show what would be added without actually adding');
+    console.log('  ' + chalk.green('-v, --verbose') + '          - Show detailed output of what\'s being staged');
+    console.log('  ' + chalk.green('-f, --force') + '            - Force add ignored files');
+    console.log('  ' + chalk.green('--ignore-errors') + '        - Continue adding even if some files fail');
+    console.log('  ' + chalk.green('-h, --help') + '             - Show detailed help information\n');
+    
+    console.log(chalk.cyan('Common Use Cases:'));
+    console.log(chalk.white('  gadd') + '                      # Add all changes');
+    console.log(chalk.white('  gadd file.js src/') + '         # Add specific files/directories');
+    console.log(chalk.white('  gadd -A') + '                   # Add everything including deletions');
+    console.log(chalk.white('  gadd -p') + '                   # Interactive staging');
+    console.log(chalk.white('  gadd -n') + '                   # Preview what will be added\n');
+    
+    console.log(chalk.cyan('💡 Workflow Tips:'));
+    console.log('  • Use ' + chalk.yellow('gadd -n') + ' to preview changes before staging');
+    console.log('  • Use ' + chalk.yellow('gadd -p') + ' for selective staging');
+    console.log('  • Follow with ' + chalk.yellow('gcommit') + ' to create commits');
+    console.log('\n' + chalk.gray('═'.repeat(60)));
+}
+
+async function main() {
+    const args = process.argv.slice(2);
+    
+    if (args.includes('-h') || args.includes('--help')) {
+        showHelp();
+        return;
+    }
+    
+    validateRepository();
+    
+    console.log(chalk.magenta.bold('📝 Adding Changes'));
+    console.log(chalk.gray('━'.repeat(40)));
+    
+    // Build git add command
+    let addCmd = 'git add';
+    const files = [];
+    
+    // Parse options and files
+    let i = 0;
+    while (i < args.length) {
+        const arg = args[i];
+        
+        if (arg === '-A' || arg === '--all') {
+            addCmd += ' --all';
+        } else if (arg === '-u' || arg === '--update') {
+            addCmd += ' --update';
+        } else if (arg === '-p' || arg === '--patch') {
+            addCmd += ' --patch';
+        } else if (arg === '-n' || arg === '--dry-run') {
+            addCmd += ' --dry-run';
+        } else if (arg === '-v' || arg === '--verbose') {
+            addCmd += ' --verbose';
+        } else if (arg === '-f' || arg === '--force') {
+            addCmd += ' --force';
+        } else if (arg === '--ignore-errors') {
+            addCmd += ' --ignore-errors';
+        } else if (!arg.startsWith('-')) {
+            // Validate file exists
+            if (existsSync(arg)) {
+                files.push(arg);
+            } else {
+                console.warn(chalk.yellow(`⚠️  Warning: File not found: ${arg}`));
+            }
+        }
+        i++;
+    }
+    
+    // Add files to command
+    if (files.length > 0) {
+        addCmd += ' ' + files.map(f => `"${f}"`).join(' ');
+    } else if (!args.includes('-A') && !args.includes('--all') && !args.includes('-u') && !args.includes('--update')) {
+        // Default to adding all changes if no specific files or flags
+        addCmd += ' .';
+    }
+    
+    console.log(chalk.cyan(`🔍 Running: ${addCmd}`));
+    
+    // Show what will be added (if not dry-run)
+    if (!args.includes('-n') && !args.includes('--dry-run') && !args.includes('-p')) {
+        try {
+            const status = execSync('git status --porcelain', { encoding: 'utf-8' });
+            if (status.trim()) {
+                console.log(chalk.cyan('\n📋 Files to be staged:'));
+                const statusLines = status.trim().split('\n');
+                statusLines.forEach(line => {
+                    const status = line.substring(0, 2);
+                    const file = line.substring(3);
+                    let statusColor = chalk.white;
+                    let statusIcon = '📄';
+                    
+                    if (status.includes('M')) {
+                        statusColor = chalk.yellow;
+                        statusIcon = '✏️';
+                    } else if (status.includes('A')) {
+                        statusColor = chalk.green;
+                        statusIcon = '➕';
+                    } else if (status.includes('D')) {
+                        statusColor = chalk.red;
+                        statusIcon = '➖';
+                    } else if (status.includes('R')) {
+                        statusColor = chalk.blue;
+                        statusIcon = '🔄';
+                    } else if (status.includes('?')) {
+                        statusColor = chalk.magenta;
+                        statusIcon = '❓';
+                    }
+                    
+                    console.log(`  ${statusIcon} ${statusColor(file)} ${chalk.gray(`(${status.trim()})`)}`);
+                });
+                console.log();
+            }
+        } catch (e) {
+            // Ignore status errors
+        }
+    }
+    
+    try {
+        const result = execSync(addCmd, { encoding: 'utf-8' });
+        
+        if (args.includes('-n') || args.includes('--dry-run')) {
+            console.log(result);
+        } else if (args.includes('-v') || args.includes('--verbose')) {
+            console.log(result);
+        }
+        
+        // Show success message
+        if (!args.includes('-n') && !args.includes('--dry-run')) {
+            console.log(chalk.green('✅ Changes staged successfully'));
+            
+            // Show next steps
+            console.log(chalk.gray('━'.repeat(40)));
+            console.log(chalk.cyan('💡 Next Steps:'));
+            console.log(chalk.white('  gstatus') + '               # Check current status');
+            console.log(chalk.white('  gcommit "message"') + '      # Commit staged changes');
+            console.log(chalk.white('  gflow "message"') + '        # Complete workflow (commit + push)');
+        }
+        
+        console.log(chalk.green('\n✅ Command completed successfully'));
+        
+    } catch (error) {
+        console.error(chalk.red(`❌ Error: ${error.message}`));
+        process.exit(1);
+    }
+}
+
 if (import.meta.url === `file://${process.argv[1]}`) {
-  main().catch(error => {
-    console.error(chalk.red('❌ Fatal error:'), error.message);
-    process.exit(1);
-  });
+    main().catch(console.error);
 }

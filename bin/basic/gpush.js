@@ -1,236 +1,241 @@
 #!/usr/bin/env node
 
-/**
- * gpush - Enhanced Git Push with Safety Checks
- * 
- * Features:
- * - Repository validation and safety checks
- * - Branch tracking and upstream setup
- * - Beautiful progress display with details
- * - Force push safety warnings
- * - Automatic upstream branch setup
- * 
- * Usage:
- *   gpush                   - Push to remote repository
- *   gpush --force           - Force push (use with caution)
- *   gpush --upstream        - Set upstream and push
- *   gpush --help            - Show this help
- */
-
 import { execSync } from 'child_process';
-import path from 'path';
+import { existsSync } from 'fs';
 import chalk from 'chalk';
 
-// Check if we're in a git repository
 function validateRepository() {
-  try {
-    execSync('git rev-parse --is-inside-work-tree', { stdio: 'pipe' });
-    return true;
-  } catch (error) {
-    console.log(chalk.red('❌ Error: Not a git repository'));
-    console.log(chalk.yellow('💡 Initialize with: git init'));
-    return false;
-  }
+    if (!existsSync('.git')) {
+        console.error(chalk.red('❌ Error: Not a git repository (or any of the parent directories): .git'));
+        process.exit(1);
+    }
 }
 
-// Execute git command with progress display
-function runGitCommand(command, description, showOutput = true) {
-  try {
-    console.log(chalk.cyan(`🔧 ${description}...`));
-    const result = execSync(command, { 
-      encoding: 'utf8',
-      stdio: showOutput ? 'inherit' : 'pipe'
-    });
-    console.log(chalk.green('✅ Operation completed successfully!'));
-    return { success: true, output: result };
-  } catch (error) {
-    console.log(chalk.red(`❌ Failed: ${error.message}`));
-    return { success: false, error: error.message };
-  }
-}
-
-// Get repository information
-function getRepositoryInfo() {
-  try {
-    const branch = execSync('git branch --show-current', { encoding: 'utf8', stdio: 'pipe' }).trim();
-    const remote = execSync(`git config --get branch.${branch}.remote`, { encoding: 'utf8', stdio: 'pipe' }).trim() || 'origin';
-    const remoteUrl = execSync(`git config --get remote.${remote}.url`, { encoding: 'utf8', stdio: 'pipe' }).trim();
-    
-    return { branch, remote, remoteUrl };
-  } catch (error) {
-    return { branch: 'unknown', remote: 'origin', remoteUrl: 'unknown' };
-  }
-}
-
-// Check push status
-function checkPushStatus() {
-  try {
-    const status = execSync('git status --porcelain=v1 -b', { encoding: 'utf8', stdio: 'pipe' });
-    const lines = status.split('\n');
-    const branchLine = lines[0];
-    
-    let ahead = 0;
-    let behind = 0;
-    
-    const aheadMatch = branchLine.match(/ahead (\d+)/);
-    const behindMatch = branchLine.match(/behind (\d+)/);
-    
-    if (aheadMatch) ahead = parseInt(aheadMatch[1]);
-    if (behindMatch) behind = parseInt(behindMatch[1]);
-    
-    return { ahead, behind };
-  } catch (error) {
-    return { ahead: 0, behind: 0 };
-  }
-}
-
-// Show help information
 function showHelp() {
-  console.log(chalk.bold.green(`
-🚀 gpush - Enhanced Git Push with Safety Checks
-`));
-  console.log(chalk.cyan('📋 USAGE:'));
-  console.log(`   ${chalk.green('gpush')}                     ${chalk.gray('# Push commits to remote repository')}`);
-  console.log(`   ${chalk.green('gpush --force')}             ${chalk.gray('# Force push (overwrites remote)')}`);
-  console.log(`   ${chalk.green('gpush --upstream')}          ${chalk.gray('# Set upstream branch and push')}`);
-  console.log(`   ${chalk.green('gpush --help')}              ${chalk.gray('# Show this help message')}`);
-  
-  console.log(chalk.cyan('\n🎯 FEATURES:'));
-  console.log(`   ${chalk.yellow('•')} ${chalk.white('Safety Checks:')} Validates repository state before pushing`);
-  console.log(`   ${chalk.yellow('•')} ${chalk.white('Branch Tracking:')} Sets up upstream branches automatically`);
-  console.log(`   ${chalk.yellow('•')} ${chalk.white('Progress Display:')} Shows detailed push operation progress`);
-  console.log(`   ${chalk.yellow('•')} ${chalk.white('Force Push Safety:')} Warns about dangerous operations`);
-  console.log(`   ${chalk.yellow('•')} ${chalk.white('Conflict Detection:')} Identifies push conflicts early`);
-  
-  console.log(chalk.cyan('\n⚠️  FORCE PUSH WARNING:'));
-  console.log(`   ${chalk.red('•')} Force push can overwrite commits on remote`);
-  console.log(`   ${chalk.red('•')} This can cause data loss for other developers`);
-  console.log(`   ${chalk.red('•')} Only use when you\'re certain it\'s safe`);
-  console.log(`   ${chalk.red('•')} Consider using --force-with-lease instead`);
-  
-  console.log(chalk.cyan('\n💡 COMMON SCENARIOS:'));
-  console.log(`   ${chalk.blue('•')} ${chalk.white('First push:')} Use ${chalk.green('gpush --upstream')} for new branches`);
-  console.log(`   ${chalk.blue('•')} ${chalk.white('Regular push:')} Just use ${chalk.green('gpush')} after commits`);
-  console.log(`   ${chalk.blue('•')} ${chalk.white('Push conflicts:')} Use ${chalk.green('gpull')} first to sync`);
-  console.log(`   ${chalk.blue('•')} ${chalk.white('Amended commits:')} May need ${chalk.green('gpush --force')}`);
-  
-  console.log(chalk.gray('\n═══════════════════════════════════════════════════════════'));
+    console.log(chalk.magenta.bold('\n🚀 gpush - Push Changes to Remote\n'));
+    console.log(chalk.cyan('Purpose:'), 'Push local commits to remote repository with comprehensive options for branches, tags, and safety.\n');
+    
+    console.log(chalk.cyan('Command:'), chalk.white('gpush [remote] [branch] [options]\n'));
+    
+    console.log(chalk.cyan('Parameters:'));
+    console.log('  ' + chalk.white('[remote]') + '  - Remote repository name (default: origin)');
+    console.log('  ' + chalk.white('[branch]') + '  - Branch name (default: current branch)\n');
+    
+    console.log(chalk.cyan('Essential Options:'));
+    console.log('  ' + chalk.green('-u, --set-upstream') + '     - Set upstream for branch');
+    console.log('  ' + chalk.green('--force') + '               - Force push (destructive, use with caution)');
+    console.log('  ' + chalk.green('--force-with-lease') + '     - Force push with safety checks');
+    console.log('  ' + chalk.green('--dry-run') + '             - Show what would be pushed');
+    console.log('  ' + chalk.green('--tags') + '               - Push all tags');
+    console.log('  ' + chalk.green('--follow-tags') + '         - Push annotated tags reachable from pushed commits');
+    console.log('  ' + chalk.green('--all') + '                - Push all branches');
+    console.log('  ' + chalk.green('--delete') + '             - Delete remote branch');
+    console.log('  ' + chalk.green('-v, --verbose') + '         - Show verbose output');
+    console.log('  ' + chalk.green('-q, --quiet') + '           - Suppress output');
+    console.log('  ' + chalk.green('--progress') + '            - Show progress information');
+    console.log('  ' + chalk.green('-h, --help') + '            - Show detailed help information\n');
+    
+    console.log(chalk.cyan('Common Use Cases:'));
+    console.log(chalk.white('  gpush') + '                      # Push current branch to origin');
+    console.log(chalk.white('  gpush -u') + '                   # Set upstream and push');
+    console.log(chalk.white('  gpush --force-with-lease') + '   # Safe force push');
+    console.log(chalk.white('  gpush --dry-run') + '            # Preview push');
+    console.log(chalk.white('  gpush --tags') + '               # Push all tags');
+    console.log(chalk.white('  gpush origin main') + '          # Push main branch to origin\n');
+    
+    console.log(chalk.cyan('⚠️  Safety Notes:'));
+    console.log('  • ' + chalk.yellow('--force') + ' can overwrite remote history - use with extreme caution');
+    console.log('  • ' + chalk.yellow('--force-with-lease') + ' is safer - checks for remote changes');
+    console.log('  • Use ' + chalk.yellow('--dry-run') + ' to preview changes before pushing');
+    console.log('\n' + chalk.gray('═'.repeat(60)));
 }
 
-// Main function
+function getCurrentBranch() {
+    try {
+        return execSync('git branch --show-current', { encoding: 'utf-8' }).trim();
+    } catch (error) {
+        return 'HEAD';
+    }
+}
+
+function getRemoteUrl(remote) {
+    try {
+        return execSync(`git remote get-url ${remote}`, { encoding: 'utf-8' }).trim();
+    } catch (error) {
+        return null;
+    }
+}
+
+function hasUpstream(branch) {
+    try {
+        execSync(`git rev-parse --abbrev-ref ${branch}@{upstream}`, { stdio: 'pipe' });
+        return true;
+    } catch (error) {
+        return false;
+    }
+}
+
 async function main() {
-  const args = process.argv.slice(2);
-  
-  // Help functionality
-  if (args.includes('-h') || args.includes('--help')) {
-    showHelp();
-    return;
-  }
-  
-  // Validate repository
-  if (!validateRepository()) {
-    process.exit(1);
-  }
-  
-  try {
-    const forceMode = args.includes('--force');
-    const upstreamMode = args.includes('--upstream');
+    const args = process.argv.slice(2);
     
-    const repoInfo = getRepositoryInfo();
-    const pushStatus = checkPushStatus();
-    
-    console.log(chalk.bold.green('\n🚀 Preparing to Push'));
-    console.log(chalk.gray('─'.repeat(40)));
-    console.log(chalk.blue('Branch:'), chalk.white(repoInfo.branch));
-    console.log(chalk.blue('Remote:'), chalk.white(repoInfo.remote));
-    
-    // Check if there are commits to push
-    if (pushStatus.ahead === 0 && pushStatus.behind === 0) {
-      console.log(chalk.yellow('\n� Repository Status: Up to date'));
-      console.log(chalk.gray('   No commits to push'));
-      console.log(chalk.blue('\n💡 Next steps:'));
-      console.log(chalk.gray('   • Make some changes and commit them'));
-      console.log(chalk.gray('   • Or check status with: gstatus'));
-      return;
+    if (args.includes('-h') || args.includes('--help')) {
+        showHelp();
+        return;
     }
     
-    if (pushStatus.ahead > 0) {
-      console.log(chalk.green(`📤 Commits to push: ${pushStatus.ahead}`));
+    validateRepository();
+    
+    console.log(chalk.magenta.bold('🚀 Pushing Changes to Remote'));
+    console.log(chalk.gray('━'.repeat(40)));
+    
+    // Build git push command
+    let pushCmd = 'git push';
+    let remote = '';
+    let branch = '';
+    
+    // Parse arguments
+    let i = 0;
+    while (i < args.length) {
+        const arg = args[i];
+        
+        if (arg === '-u' || arg === '--set-upstream') {
+            pushCmd += ' --set-upstream';
+        } else if (arg === '--force') {
+            pushCmd += ' --force';
+        } else if (arg === '--force-with-lease') {
+            pushCmd += ' --force-with-lease';
+        } else if (arg === '--dry-run') {
+            pushCmd += ' --dry-run';
+        } else if (arg === '--tags') {
+            pushCmd += ' --tags';
+        } else if (arg === '--follow-tags') {
+            pushCmd += ' --follow-tags';
+        } else if (arg === '--all') {
+            pushCmd += ' --all';
+        } else if (arg === '--delete') {
+            pushCmd += ' --delete';
+        } else if (arg === '-v' || arg === '--verbose') {
+            pushCmd += ' --verbose';
+        } else if (arg === '-q' || arg === '--quiet') {
+            pushCmd += ' --quiet';
+        } else if (arg === '--progress') {
+            pushCmd += ' --progress';
+        } else if (!arg.startsWith('-')) {
+            // First non-option argument is remote, second is branch
+            if (!remote) {
+                remote = arg;
+            } else if (!branch) {
+                branch = arg;
+            }
+        }
+        i++;
     }
     
-    if (pushStatus.behind > 0 && !forceMode) {
-      console.log(chalk.red(`⚠️  Behind remote by: ${pushStatus.behind} commits`));
-      console.log(chalk.yellow('\n💡 Recommendation:'));
-      console.log(chalk.gray('   • Run gpull first to sync with remote'));
-      console.log(chalk.gray('   • Then try gpush again'));
-      console.log(chalk.gray('   • Or use gpush --force (⚠️  dangerous!)'));
-      process.exit(1);
+    // Set defaults
+    if (!remote && !args.includes('--all')) {
+        remote = 'origin';
+    }
+    if (!branch && !args.includes('--all') && !args.includes('--tags')) {
+        branch = getCurrentBranch();
     }
     
-    // Execute push
-    let pushCommand;
-    let description;
-    
-    if (forceMode) {
-      console.log(chalk.red.bold('\n⚠️  FORCE PUSH MODE'));
-      console.log(chalk.yellow('This will overwrite remote commits!'));
-      pushCommand = 'git push --force-with-lease';
-      description = 'Force pushing to remote (safer than --force)';
-    } else if (upstreamMode) {
-      pushCommand = `git push -u ${repoInfo.remote} ${repoInfo.branch}`;
-      description = 'Setting upstream and pushing';
-    } else {
-      pushCommand = 'git push';
-      description = 'Pushing to remote repository';
+    // Add remote and branch to command
+    if (remote && branch) {
+        pushCmd += ` ${remote} ${branch}`;
+    } else if (remote && args.includes('--all')) {
+        pushCmd += ` ${remote}`;
     }
     
-    console.log(chalk.cyan.bold('\n📤 Pushing Changes'));
-    console.log(chalk.gray('─'.repeat(40)));
-    
-    const result = runGitCommand(pushCommand, description);
-    
-    if (result.success) {
-      console.log(chalk.green.bold('\n✅ Push completed successfully!'));
-      console.log(chalk.blue('💡 Your changes are now available on the remote repository'));
-      
-      if (upstreamMode) {
-        console.log(chalk.green('� Upstream branch set - future pushes can use just: gpush'));
-      }
-      
-      console.log(chalk.blue('\n💡 Next steps:'));
-      console.log(chalk.gray('   • Continue development work'));
-      console.log(chalk.gray('   • Check remote repository to verify changes'));
-      console.log(chalk.gray('   • Collaborate with team members'));
-      
-    } else {
-      if (result.error.includes('has no upstream branch')) {
-        console.log(chalk.yellow('\n💡 No upstream branch set'));
-        console.log(chalk.blue('Try: gpush --upstream to set upstream and push'));
-      } else if (result.error.includes('rejected')) {
-        console.log(chalk.yellow('\n💡 Push was rejected'));
-        console.log(chalk.blue('Try: gpull first to sync with remote'));
-        console.log(chalk.gray('Or: gpush --force if you\'re sure (⚠️  dangerous)'));
-      } else {
-        console.log(chalk.red.bold('\n❌ Push failed!'));
-        console.log(chalk.yellow('💡 Common solutions:'));
-        console.log(chalk.gray('   • Check network connection'));
-        console.log(chalk.gray('   • Verify repository access permissions'));
-        console.log(chalk.gray('   • Try gpull to sync with remote first'));
-      }
-      process.exit(1);
+    // Show repository info
+    console.log(chalk.cyan('📂 Repository Information:'));
+    if (remote) {
+        const remoteUrl = getRemoteUrl(remote);
+        if (remoteUrl) {
+            console.log(`  Remote (${remote}): ${chalk.white(remoteUrl)}`);
+        } else {
+            console.error(chalk.red(`❌ Error: Remote '${remote}' not found`));
+            process.exit(1);
+        }
     }
     
-  } catch (error) {
-    console.log(chalk.red.bold('\n❌ Push operation failed!'));
-    console.log(chalk.red(`Error: ${error.message}`));
-    process.exit(1);
-  }
+    if (branch) {
+        console.log(`  Branch: ${chalk.white(branch)}`);
+        
+        // Check if branch has upstream
+        if (!hasUpstream(branch) && !args.includes('-u') && !args.includes('--set-upstream')) {
+            console.log(chalk.yellow('⚠️  Branch has no upstream. Consider using -u to set upstream.'));
+        }
+    }
+    
+    // Show what will be pushed (unless quiet or dry-run)
+    if (!args.includes('-q') && !args.includes('--quiet') && !args.includes('--dry-run')) {
+        try {
+            if (branch) {
+                const commits = execSync(`git rev-list --oneline ${remote}/${branch}..${branch} 2>/dev/null || git log --oneline -n 5`, { encoding: 'utf-8' });
+                if (commits.trim()) {
+                    console.log(chalk.cyan('\n📋 Commits to be pushed:'));
+                    const commitLines = commits.trim().split('\n').slice(0, 5);
+                    commitLines.forEach(line => {
+                        const [hash, ...messageParts] = line.split(' ');
+                        console.log(`  ${chalk.yellow(hash)} ${messageParts.join(' ')}`);
+                    });
+                    if (commits.split('\n').length > 5) {
+                        console.log(`  ${chalk.gray('... and more')}`);
+                    }
+                }
+            }
+        } catch (e) {
+            // Ignore error, might be first push
+        }
+    }
+    
+    // Force push warning
+    if (args.includes('--force')) {
+        console.log(chalk.red('\n⚠️  WARNING: Force push can overwrite remote history!'));
+        console.log(chalk.yellow('💡 Consider using --force-with-lease for safer force pushing'));
+    }
+    
+    console.log(chalk.cyan(`\n🔍 Running: ${pushCmd}`));
+    
+    try {
+        const result = execSync(pushCmd, { encoding: 'utf-8' });
+        console.log(result);
+        
+        if (args.includes('--dry-run')) {
+            console.log(chalk.blue('ℹ️  This was a dry run - no changes were pushed'));
+        } else {
+            console.log(chalk.green('✅ Push completed successfully'));
+        }
+        
+        // Show next steps
+        if (!args.includes('--dry-run')) {
+            console.log(chalk.gray('━'.repeat(40)));
+            console.log(chalk.cyan('💡 Next Steps:'));
+            console.log(chalk.white('  gstatus') + '                 # Check current status');
+            console.log(chalk.white('  glog -n 3') + '               # View recent commits');
+            if (remote && branch) {
+                console.log(chalk.white(`  git log ${remote}/${branch}..${branch}`) + ' # Check unpushed commits');
+            }
+            console.log(chalk.white('  gflow "next message"') + '     # Continue workflow');
+        }
+        
+        console.log(chalk.green('\n✅ Command completed successfully'));
+        
+    } catch (error) {
+        console.error(chalk.red(`❌ Error: ${error.message}`));
+        
+        // Common error suggestions
+        if (error.message.includes('rejected')) {
+            console.log(chalk.yellow('💡 Try: gpull first to fetch remote changes'));
+            console.log(chalk.yellow('💡 Or: gpush --force-with-lease (safer than --force)'));
+        } else if (error.message.includes('upstream')) {
+            console.log(chalk.yellow('💡 Try: gpush -u to set upstream branch'));
+        }
+        
+        process.exit(1);
+    }
 }
 
-// Run as standalone script
 if (import.meta.url === `file://${process.argv[1]}`) {
-  main().catch(error => {
-    console.error(chalk.red('❌ Fatal error:'), error.message);
-    process.exit(1);
-  });
+    main().catch(console.error);
 }
