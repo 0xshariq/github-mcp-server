@@ -216,39 +216,40 @@ gclone --jobs 4 --recursive https://github.com/user/repo.git # Parallel submodul
 
 ### 💾 `gcommit` - Create Commits
 
-**Purpose:** Create commits with comprehensive message validation, hooks support, and various commit strategies.
+**Purpose:** Create commits with comprehensive options for message handling, staging, and commit modifications.
 
-**Command:** `gcommit <message> [options]`
+**Command:** `gcommit [message] [options]`
 
 **Parameters:**
-- `<message>` - Required commit message
+- `[message]` - Commit message (required unless using -m or --amend)
 
 **Essential Options:**
+- `-m, --message <msg>` - Use given message as commit message
 - `-a, --all` - Stage all modified files and commit
-- `--amend` - Amend the previous commit
-- `--no-verify` - Skip pre-commit and commit-msg hooks
-- `--allow-empty` - Create commit even if no changes
-- `--signoff` - Add Signed-off-by line
-- `-v, --verbose` - Show diff in commit message editor
-- `--gpg-sign` - Sign commit with GPG
+- `--amend` - Amend the last commit
+- `--no-edit` - Use previous commit message (with --amend)
+- `-s, --signoff` - Add Signed-off-by line
+- `--author <author>` - Override commit author
+- `--date <date>` - Override commit date
+- `-n, --no-verify` - Skip pre-commit and commit-msg hooks
+- `--allow-empty` - Allow empty commits
+- `--allow-empty-message` - Allow commits with empty messages
+- `-v, --verbose` - Show unified diff in commit message editor
 - `-h, --help` - Show detailed help information
 
 **Common Use Cases:**
 ```bash
 # Basic commits
-gcommit "Fix login bug"                    # Simple commit message
+gcommit "fix: resolve login bug"          # Standard commit
+gcommit -a "feat: add new feature"        # Stage all and commit
 gcommit --help                            # Show help
 
 # Advanced commits
-gcommit "Add user profile feature" --amend # Amend previous commit
-gcommit "Emergency fix" --no-verify       # Skip hooks
-gcommit "Update docs" --signoff           # Add sign-off
-
-# Comprehensive commits
-gcommit -a "Update all modified files"    # Stage all and commit
-gcommit --allow-empty "Trigger deployment" # Empty commit
-gcommit "Release v1.2.0" --gpg-sign      # Signed commit
-gcommit -v "Complex change"               # Verbose mode with diff
+gcommit --amend                           # Amend last commit
+gcommit -s "docs: update README"          # Add signoff
+gcommit --allow-empty "trigger CI"        # Empty commit
+gcommit --author "John Doe <john@example.com>" "fix: bug" # Override author
+gcommit --date "2024-01-01" "feat: new feature" # Set specific date
 ```
 
 **Related Commands:** `gadd` (stage files), `gpush` (upload commits), `glog` (view history)
@@ -471,49 +472,56 @@ gpull --verify-signatures              # Verify commit signatures
 
 ---
 
-### ⬆️ `gpush` - Push Changes
+### 🚀 `gpush` - Push Changes to Remote
 
-**Purpose:** Upload local commits to remote repositories with various options and safety checks.
+**Purpose:** Push local commits to remote repository with comprehensive options for branches, tags, and safety.
 
 **Command:** `gpush [remote] [branch] [options]`
 
 **Parameters:**
-- `[remote]` - Optional remote name (defaults to origin)
-- `[branch]` - Optional branch name (defaults to current branch)
+- `[remote]` - Remote repository name (default: origin)
+- `[branch]` - Branch name (default: current branch)
 
 **Essential Options:**
-- `-u, --set-upstream` - Set upstream tracking for branch
+- `-u, --set-upstream` - Set upstream for branch
+- `--force` - Force push (destructive, use with caution)
 - `--force-with-lease` - Force push with safety checks
-- `--force` - Force push (dangerous)
-- `--dry-run` - Show what would be pushed without pushing
+- `--dry-run` - Show what would be pushed
 - `--tags` - Push all tags
-- `--follow-tags` - Push tags that are reachable from pushed commits
-- `--signed` - Sign push certificate
+- `--follow-tags` - Push annotated tags reachable from pushed commits
+- `--all` - Push all branches
+- `--delete` - Delete remote branch
+- `-v, --verbose` - Show verbose output
+- `-q, --quiet` - Suppress output
+- `--progress` - Show progress information
 - `-h, --help` - Show detailed help information
 
 **Common Use Cases:**
 ```bash
 # Basic pushing
-gpush                                   # Push to origin/current-branch
+gpush                                   # Push current branch to origin
+gpush -u                                # Set upstream and push
 gpush --help                           # Show help
 
 # Specific targets
-gpush origin main                      # Push specific branch
-gpush upstream feature-x               # Push to upstream remote
-
-# Branch setup
-gpush -u origin new-feature            # Set upstream and push
-gpush --set-upstream origin develop    # Set upstream tracking
+gpush origin main                      # Push main branch to origin
+gpush upstream feature                 # Push to upstream remote
 
 # Safety options
 gpush --dry-run                        # Preview push
 gpush --force-with-lease               # Safe force push
-gpush --force                          # Dangerous force push
+gpush --force                          # Force push (use with caution)
 
-# Tags
+# Tags and branches
 gpush --tags                           # Push all tags
-gpush --follow-tags                    # Push reachable tags
+gpush --all                            # Push all branches
+gpush --delete origin feature          # Delete remote branch
 ```
+
+**⚠️ Safety Notes:**
+- `--force` can overwrite remote history - use with extreme caution
+- `--force-with-lease` is safer - checks for remote changes
+- Use `--dry-run` to preview changes before pushing
 
 **Related Commands:** `gpull` (download changes), `gbranch` (manage branches), `gstatus` (check state)
 **MCP Tool:** `git-push`
