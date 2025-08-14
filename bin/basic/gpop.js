@@ -36,37 +36,54 @@ function validateRepository() {
 
 // Show help information
 function showHelp() {
-  console.log(chalk.bold.magenta(`
-📦 gpop - Enhanced Git Stash Pop & Management
-`));
-  console.log(chalk.cyan('📋 USAGE:'));
-  console.log(`   ${chalk.green('gpop')}                      ${chalk.gray('# Apply most recent stash')}`);
-  console.log(`   ${chalk.green('gpop --list')}               ${chalk.gray('# List all available stashes')}`);
-  console.log(`   ${chalk.green('gpop stash@{0}')}            ${chalk.gray('# Apply specific stash by index')}`);
-  console.log(`   ${chalk.green('gpop --preview')}            ${chalk.gray('# Preview stash contents before applying')}`);
-  console.log(`   ${chalk.green('gpop --keep')}               ${chalk.gray('# Apply stash but keep it in stash list')}`);
-  console.log(`   ${chalk.green('gpop --help')}               ${chalk.gray('# Show this help message')}`);
+  console.log(chalk.magenta.bold('\n📦 gpop - Apply Stashed Changes\n'));
+  console.log(chalk.cyan('Purpose:'), 'Apply most recent stashed changes and remove from stash stack, or manage stash operations with various options.\n');
   
-  console.log(chalk.cyan('\n🎯 FEATURES:'));
-  console.log(`   ${chalk.yellow('•')} ${chalk.white('Smart Application:')} Detects conflicts and provides guidance`);
-  console.log(`   ${chalk.yellow('•')} ${chalk.white('Safety Checks:')} Warns about uncommitted changes`);
-  console.log(`   ${chalk.yellow('•')} ${chalk.white('Stash Selection:')} Apply specific stashes by index`);
-  console.log(`   ${chalk.yellow('•')} ${chalk.white('Preview Mode:')} See stash contents before applying`);
-  console.log(`   ${chalk.yellow('•')} ${chalk.white('Keep Option:')} Apply without removing from stash list`);
+  console.log(chalk.cyan('Command:'), chalk.white('gpop [options] [stash]\n'));
   
-  console.log(chalk.cyan('\n💡 STASH WORKFLOW:'));
-  console.log(`   ${chalk.blue('Save Work:')} ${chalk.green('gstash "work in progress"')} - Save current changes`);
-  console.log(`   ${chalk.blue('Switch Context:')} ${chalk.green('gcheckout "other-branch"')} - Work on something else`);
-  console.log(`   ${chalk.blue('Return:')} ${chalk.green('gcheckout "original-branch"')} - Back to original work`);
-  console.log(`   ${chalk.blue('Restore:')} ${chalk.green('gpop')} - Apply saved changes`);
+  console.log(chalk.cyan('Parameters:'));
+  console.log('  ' + chalk.white('[stash]') + '   - Specific stash reference (e.g., stash@{1}, default: stash@{0})\n');
   
-  console.log(chalk.cyan('\n⚡ COMMON OPERATIONS:'));
-  console.log(`   ${chalk.blue('1.')} ${chalk.green('gpop --list')} - See all stashes`);
-  console.log(`   ${chalk.blue('2.')} ${chalk.green('gpop --preview')} - Preview latest stash`);
-  console.log(`   ${chalk.blue('3.')} ${chalk.green('gpop')} - Apply latest stash`);
-  console.log(`   ${chalk.blue('4.')} ${chalk.green('gpop stash@{1}')} - Apply specific stash`);
+  console.log(chalk.cyan('Essential Options:'));
+  console.log('  ' + chalk.green('--list') + '                  - List all available stashes with details');
+  console.log('  ' + chalk.green('--index') + '                 - Try to reinstate index changes as well');
+  console.log('  ' + chalk.green('--keep') + '                  - Apply stash but keep it in stash stack');
+  console.log('  ' + chalk.green('--preview') + '               - Preview stash contents without applying');
+  console.log('  ' + chalk.green('-q, --quiet') + '             - Operate quietly, suppress output');
+  console.log('  ' + chalk.green('-h, --help') + '              - Show detailed help information\n');
   
-  console.log(chalk.gray('\n═══════════════════════════════════════════════════════════'));
+  console.log(chalk.cyan('Advanced Options:'));
+  console.log('  ' + chalk.green('--conflict-style=<style>') + '  - Set conflict marker style (merge, diff3)');
+  console.log('  ' + chalk.green('--no-rerere-autoupdate') + '   - Disable automatic rerere cache updates\n');
+  
+  console.log(chalk.cyan('Stash Operations:'));
+  console.log('  ' + chalk.green('apply') + '                   - Apply stash without removing from stack');
+  console.log('  ' + chalk.green('drop') + '                    - Delete a specific stash');
+  console.log('  ' + chalk.green('show') + '                    - Show stash contents');
+  console.log('  ' + chalk.green('clear') + '                   - Delete all stashes\n');
+  
+  console.log(chalk.cyan('Common Use Cases:'));
+  console.log(chalk.white('  gpop') + '                       # Apply latest stash and remove it');
+  console.log(chalk.white('  gpop --list') + '               # Show all stashes');
+  console.log(chalk.white('  gpop --preview') + '            # Preview latest stash contents');
+  console.log(chalk.white('  gpop stash@{1}') + '            # Apply specific stash by index');
+  console.log(chalk.white('  gpop --keep') + '               # Apply but keep stash in stack');
+  console.log(chalk.white('  gpop --index') + '              # Apply and try to restore index');
+  console.log(chalk.white('  git stash drop stash@{1}') + '  # Delete specific stash\n');
+  
+  console.log(chalk.cyan('💡 Stash Workflow Tips:'));
+  console.log('  • Use ' + chalk.yellow('gpop --list') + ' to see all stashes before applying');
+  console.log('  • ' + chalk.yellow('gpop --preview') + ' lets you see changes before applying');
+  console.log('  • Use ' + chalk.yellow('--keep') + ' to test stash without losing it');
+  console.log('  • ' + chalk.yellow('--index') + ' restores both working tree and staged changes');
+  console.log('  • Stashes are referenced as stash@{0}, stash@{1}, etc.\n');
+  
+  console.log(chalk.cyan('⚠️  Safety Notes:'));
+  console.log('  • ' + chalk.yellow('gpop') + ' removes stash after applying - use ' + chalk.yellow('--keep') + ' to preserve');
+  console.log('  • Check for conflicts after applying stash');
+  console.log('  • Use ' + chalk.yellow('gstatus') + ' to verify results after popping');
+  console.log('  • Conflicts may require manual resolution');
+  console.log('\n' + chalk.gray('═'.repeat(60)));
 }
 
 // Check for uncommitted changes

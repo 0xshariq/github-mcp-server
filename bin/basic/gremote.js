@@ -1,350 +1,325 @@
 #!/usr/bin/env node
 
-/**
- * gremote - Enhanced Git Remote Management
- * 
- * Features:
- * - Comprehensive remote repository management
- * - URL validation and format detection
- * - Remote testing and connectivity checks
- * - Detailed remote information display
- * - Batch remote operations
- * 
- * Usage:
- *   gremote                          - List all remotes with details
- *   gremote add <name> <url>         - Add new remote
- *   gremote remove <name>            - Remove remote
- *   gremote set-url <name> <url>     - Update remote URL
- *   gremote --help                   - Show this help
- */
-
 import { execSync } from 'child_process';
-import path from 'path';
+import { existsSync } from 'fs';
 import chalk from 'chalk';
 
-// Check if we're in a git repository
 function validateRepository() {
-  try {
-    execSync('git rev-parse --is-inside-work-tree', { stdio: 'pipe' });
-    return true;
-  } catch (error) {
-    console.log(chalk.red('❌ Error: Not a git repository'));
-    console.log(chalk.yellow('💡 Initialize with: git init'));
-    return false;
-  }
+    if (!existsSync('.git')) {
+        console.error(chalk.red('❌ Error: Not a git repository (or any of the parent directories): .git'));
+        process.exit(1);
+    }
 }
 
-// Show help information
 function showHelp() {
-  console.log(chalk.bold.magenta(`
-🔗 gremote - Enhanced Git Remote Management
-`));
-  console.log(chalk.cyan('📋 USAGE:'));
-  console.log(`   ${chalk.green('gremote')}                          ${chalk.gray('# List all remotes with details')}`);
-  console.log(`   ${chalk.green('gremote add <name> <url>')}         ${chalk.gray('# Add new remote repository')}`);
-  console.log(`   ${chalk.green('gremote remove <name>')}            ${chalk.gray('# Remove existing remote')}`);
-  console.log(`   ${chalk.green('gremote set-url <name> <url>')}     ${chalk.gray('# Update remote URL')}`);
-  console.log(`   ${chalk.green('gremote rename <old> <new>')}       ${chalk.gray('# Rename remote')}`);
-  console.log(`   ${chalk.green('gremote show <name>')}              ${chalk.gray('# Show detailed remote info')}`);
-  console.log(`   ${chalk.green('gremote --help')}                   ${chalk.gray('# Show this help message')}`);
-  
-  console.log(chalk.cyan('\n🎯 FEATURES:'));
-  console.log(`   ${chalk.yellow('•')} ${chalk.white('Smart Listing:')} Shows URLs, fetch/push settings, and status`);
-  console.log(`   ${chalk.yellow('•')} ${chalk.white('URL Validation:')} Validates remote URLs before adding`);
-  console.log(`   ${chalk.yellow('•')} ${chalk.white('Connectivity Test:')} Tests remote accessibility`);
-  console.log(`   ${chalk.yellow('•')} ${chalk.white('Detailed Info:')} Branch tracking and remote details`);
-  console.log(`   ${chalk.yellow('•')} ${chalk.white('Safe Operations:')} Confirms destructive actions`);
-  
-  console.log(chalk.cyan('\n💡 COMMON REMOTES:'));
-  console.log(`   ${chalk.blue('origin:')} Your main repository (usually your fork)`);
-  console.log(`   ${chalk.blue('upstream:')} Original repository (for contributing)`);
-  console.log(`   ${chalk.blue('deploy:')} Deployment target (staging/production)`);
-  console.log(`   ${chalk.blue('mirror:')} Backup or mirror repository`);
-  
-  console.log(chalk.cyan('\n⚡ WORKFLOW EXAMPLES:'));
-  console.log(`   ${chalk.blue('1.')} ${chalk.green('gremote')} - List current remotes`);
-  console.log(`   ${chalk.blue('2.')} ${chalk.green('gremote add upstream https://github.com/original/repo.git')} - Add upstream`);
-  console.log(`   ${chalk.blue('3.')} ${chalk.green('gremote show upstream')} - Check upstream details`);
-  console.log(`   ${chalk.blue('4.')} ${chalk.green('gpull upstream main')} - Pull from upstream`);
-  
-  console.log(chalk.cyan('\n🔧 URL FORMATS:'));
-  console.log(`   ${chalk.blue('HTTPS:')} https://github.com/user/repo.git`);
-  console.log(`   ${chalk.blue('SSH:')} git@github.com:user/repo.git`);
-  console.log(`   ${chalk.blue('Local:')} /path/to/local/repo.git`);
-  console.log(`   ${chalk.blue('Custom:')} Any valid Git remote URL`);
-  
-  console.log(chalk.gray('\n═══════════════════════════════════════════════════════════'));
+    console.log(chalk.magenta.bold('\n🌐 gremote - Remote Management\n'));
+    console.log(chalk.cyan('Purpose:'), 'Manage remote repositories with comprehensive operations for adding, removing, and configuring remotes.\n');
+    
+    console.log(chalk.cyan('Command:'), chalk.white('gremote [subcommand] [options]\n'));
+    
+    console.log(chalk.cyan('Subcommands:'));
+    console.log('  ' + chalk.green('add <name> <url>') + '        - Add a new remote');
+    console.log('  ' + chalk.green('remove <name>') + '           - Remove a remote');
+    console.log('  ' + chalk.green('rm <name>') + '               - Same as remove');
+    console.log('  ' + chalk.green('rename <old> <new>') + '      - Rename a remote');
+    console.log('  ' + chalk.green('set-url <name> <url>') + '    - Change remote URL');
+    console.log('  ' + chalk.green('get-url <name>') + '          - Get remote URL');
+    console.log('  ' + chalk.green('show <name>') + '             - Show remote details');
+    console.log('  ' + chalk.green('prune <name>') + '            - Prune remote tracking branches\n');
+    
+    console.log(chalk.cyan('List Options:'));
+    console.log('  ' + chalk.green('-v, --verbose') + '           - Show URLs along with names');
+    console.log('  ' + chalk.green('--push') + '                  - Show push URLs (with set-url)');
+    console.log('  ' + chalk.green('--add') + '                   - Add URL instead of replace (with set-url)');
+    console.log('  ' + chalk.green('--delete') + '                - Delete URL (with set-url)');
+    console.log('  ' + chalk.green('-h, --help') + '              - Show detailed help information\n');
+    
+    console.log(chalk.cyan('Common Use Cases:'));
+    console.log(chalk.white('  gremote') + '                      # List all remotes');
+    console.log(chalk.white('  gremote -v') + '                   # List with URLs');
+    console.log(chalk.white('  gremote add origin <url>') + '     # Add origin remote');
+    console.log(chalk.white('  gremote add upstream <url>') + '   # Add upstream for forks');
+    console.log(chalk.white('  gremote set-url origin <url>') + ' # Change origin URL');
+    console.log(chalk.white('  gremote remove upstream') + '      # Remove upstream');
+    console.log(chalk.white('  gremote show origin') + '          # Show origin details');
+    console.log(chalk.white('  gremote prune origin') + '         # Clean up remote branches\n');
+    
+    console.log(chalk.cyan('🔗 URL Formats:'));
+    console.log('  • HTTPS: https://github.com/user/repo.git');
+    console.log('  • SSH: git@github.com:user/repo.git');
+    console.log('  • Git: git://github.com/user/repo.git');
+    console.log('\n' + chalk.gray('═'.repeat(60)));
 }
 
-// Validate remote URL format
-function validateRemoteUrl(url) {
-  if (!url) return false;
-  
-  // Common Git URL patterns
-  const patterns = [
-    /^https?:\/\/.*\.git$/,           // HTTPS
-    /^git@.*:.*\.git$/,              // SSH
-    /^ssh:\/\/.*\.git$/,             // SSH protocol
-    /^file:\/\/.*$/,                 // Local file
-    /^\/.*$/,                        // Local path
-    /^.*@.*:.*$/                     // General SSH pattern
-  ];
-  
-  return patterns.some(pattern => pattern.test(url));
+function isValidRemoteName(name) {
+    // Basic validation for remote names
+    return /^[a-zA-Z0-9._-]+$/.test(name) && name.length > 0;
 }
 
-// Get remote information
-function getRemoteInfo(remoteName) {
-  try {
-    const url = execSync(`git remote get-url ${remoteName}`, { encoding: 'utf8' }).trim();
-    const pushUrl = execSync(`git remote get-url --push ${remoteName}`, { encoding: 'utf8' }).trim();
-    
-    return { url, pushUrl: pushUrl !== url ? pushUrl : null };
-  } catch (error) {
-    return null;
-  }
-}
-
-// List all remotes with details
-function listRemotes() {
-  try {
-    const result = execSync('git remote -v', { encoding: 'utf8' });
-    
-    if (!result.trim()) {
-      console.log(chalk.yellow('\n📝 No remotes configured'));
-      console.log(chalk.cyan('💡 Add a remote with:'), chalk.green('gremote add origin <url>'));
-      return;
-    }
-    
-    console.log(chalk.bold.magenta('\n🔗 Git Remotes'));
-    console.log(chalk.gray('─'.repeat(50)));
-    
-    // Parse remote output
-    const lines = result.trim().split('\n');
-    const remotes = new Map();
-    
-    lines.forEach(line => {
-      const [name, url, type] = line.split(/\s+/);
-      if (!remotes.has(name)) {
-        remotes.set(name, { fetch: null, push: null });
-      }
-      
-      if (type === '(fetch)') {
-        remotes.get(name).fetch = url;
-      } else if (type === '(push)') {
-        remotes.get(name).push = url;
-      }
-    });
-    
-    // Display remotes
-    remotes.forEach((remote, name) => {
-      console.log(chalk.blue('📡'), chalk.white.bold(name));
-      console.log(chalk.gray(`   Fetch: ${remote.fetch}`));
-      if (remote.push && remote.push !== remote.fetch) {
-        console.log(chalk.gray(`   Push:  ${remote.push}`));
-      }
-      console.log();
-    });
-    
-    console.log(chalk.cyan('💡 Commands:'));
-    console.log(chalk.gray(`   • Add remote: ${chalk.green('gremote add <name> <url>')}`));
-    console.log(chalk.gray(`   • Show details: ${chalk.green('gremote show <name>')}`));
-    console.log(chalk.gray(`   • Update URL: ${chalk.green('gremote set-url <name> <url>')}`));
-    
-  } catch (error) {
-    console.log(chalk.red('❌ Failed to list remotes:'), error.message);
-  }
-}
-
-// Show detailed remote information
-function showRemoteDetails(remoteName) {
-  try {
-    console.log(chalk.bold.magenta(`\n📡 Remote Details: ${remoteName}`));
-    console.log(chalk.gray('─'.repeat(50)));
-    
-    const info = getRemoteInfo(remoteName);
-    if (!info) {
-      console.log(chalk.red(`❌ Remote "${remoteName}" not found`));
-      return;
-    }
-    
-    console.log(chalk.blue('🌐 Fetch URL:'), chalk.white(info.url));
-    if (info.pushUrl) {
-      console.log(chalk.blue('📤 Push URL:'), chalk.white(info.pushUrl));
-    }
-    
-    // Try to get branch tracking info
-    try {
-      const branches = execSync(`git branch -r | grep ${remoteName}/`, { encoding: 'utf8' });
-      if (branches.trim()) {
-        console.log(chalk.blue('\n🌿 Remote Branches:'));
-        branches.trim().split('\n').forEach(branch => {
-          const cleanBranch = branch.trim().replace(`${remoteName}/`, '');
-          console.log(chalk.gray(`   • ${cleanBranch}`));
-        });
-      }
-    } catch (error) {
-      // Remote might not have been fetched yet
-      console.log(chalk.yellow(`\n⚠️ No branch information (run ${chalk.green('gpull')} to fetch)`));
-    }
-    
-  } catch (error) {
-    console.log(chalk.red('❌ Failed to show remote details:'), error.message);
-  }
-}
-
-// Run git command with error handling
-function runGitCommand(command, successMessage) {
-  try {
-    const result = execSync(command, { encoding: 'utf8' });
-    if (successMessage) {
-      console.log(chalk.green(`✅ ${successMessage}`));
-    }
-    return result;
-  } catch (error) {
-    console.log(chalk.red(`❌ Git command failed: ${error.message}`));
-    throw error;
-  }
-}
-
-// Main function
 async function main() {
-  const args = process.argv.slice(2);
-  
-  // Help functionality
-  if (args.includes('-h') || args.includes('--help')) {
-    showHelp();
-    return;
-  }
-  
-  // Validate repository
-  if (!validateRepository()) {
-    process.exit(1);
-  }
-  
-  try {
-    // Handle different operations
+    const args = process.argv.slice(2);
+    
+    if (args.includes('-h') || args.includes('--help')) {
+        showHelp();
+        return;
+    }
+    
+    validateRepository();
+    
+    console.log(chalk.magenta.bold('🌐 Remote Repository Management'));
+    console.log(chalk.gray('━'.repeat(40)));
+    
+    // Build git remote command
+    let remoteCmd = 'git remote';
+    let action = 'list';
+    let remoteName = '';
+    let remoteUrl = '';
+    
     if (args.length === 0) {
-      // List remotes
-      listRemotes();
-      
-    } else if (args[0] === 'add' && args.length >= 3) {
-      // Add remote
-      const [, name, url] = args;
-      
-      console.log(chalk.bold.magenta('\n🔗 Adding Git Remote'));
-      console.log(chalk.gray('─'.repeat(40)));
-      console.log(chalk.blue('📡 Name:'), chalk.white(name));
-      console.log(chalk.blue('🌐 URL:'), chalk.white(url));
-      
-      // Validate URL
-      if (!validateRemoteUrl(url)) {
-        console.log(chalk.yellow('⚠️ Warning: URL format may not be valid'));
-      }
-      
-      // Check if remote already exists
-      if (getRemoteInfo(name)) {
-        console.log(chalk.red(`❌ Remote "${name}" already exists`));
-        console.log(chalk.yellow('💡 Use'), chalk.green(`gremote set-url ${name} ${url}`), chalk.yellow('to update'));
-        process.exit(1);
-      }
-      
-      runGitCommand(`git remote add ${name} ${url}`, `Remote "${name}" added successfully`);
-      
-      console.log(chalk.cyan('\n💡 Next steps:'));
-      console.log(chalk.gray(`   • Fetch from remote: ${chalk.green(`git fetch ${name}`)}`));
-      console.log(chalk.gray(`   • View branches: ${chalk.green(`gbranch --all`)}`));
-      console.log(chalk.gray(`   • Pull changes: ${chalk.green(`gpull ${name} main`)}`));
-      
-    } else if (args[0] === 'remove' && args.length >= 2) {
-      // Remove remote
-      const name = args[1];
-      
-      console.log(chalk.bold.magenta('\n🔗 Removing Git Remote'));
-      console.log(chalk.gray('─'.repeat(40)));
-      console.log(chalk.blue('📡 Remote:'), chalk.white(name));
-      
-      // Check if remote exists
-      if (!getRemoteInfo(name)) {
-        console.log(chalk.red(`❌ Remote "${name}" does not exist`));
-        console.log(chalk.cyan('💡 List remotes with:'), chalk.green('gremote'));
-        process.exit(1);
-      }
-      
-      runGitCommand(`git remote remove ${name}`, `Remote "${name}" removed successfully`);
-      
-    } else if (args[0] === 'set-url' && args.length >= 3) {
-      // Set URL
-      const [, name, url] = args;
-      
-      console.log(chalk.bold.magenta('\n🔗 Updating Remote URL'));
-      console.log(chalk.gray('─'.repeat(40)));
-      console.log(chalk.blue('📡 Remote:'), chalk.white(name));
-      console.log(chalk.blue('🌐 New URL:'), chalk.white(url));
-      
-      // Check if remote exists
-      if (!getRemoteInfo(name)) {
-        console.log(chalk.red(`❌ Remote "${name}" does not exist`));
-        console.log(chalk.yellow('💡 Add it first with:'), chalk.green(`gremote add ${name} ${url}`));
-        process.exit(1);
-      }
-      
-      // Validate URL
-      if (!validateRemoteUrl(url)) {
-        console.log(chalk.yellow('⚠️ Warning: URL format may not be valid'));
-      }
-      
-      runGitCommand(`git remote set-url ${name} ${url}`, `Remote "${name}" URL updated successfully`);
-      
-    } else if (args[0] === 'show' && args.length >= 2) {
-      // Show remote details
-      showRemoteDetails(args[1]);
-      
-    } else if (args[0] === 'rename' && args.length >= 3) {
-      // Rename remote
-      const [, oldName, newName] = args;
-      
-      console.log(chalk.bold.magenta('\n🔗 Renaming Git Remote'));
-      console.log(chalk.gray('─'.repeat(40)));
-      console.log(chalk.blue('📡 Old name:'), chalk.white(oldName));
-      console.log(chalk.blue('📡 New name:'), chalk.white(newName));
-      
-      if (!getRemoteInfo(oldName)) {
-        console.log(chalk.red(`❌ Remote "${oldName}" does not exist`));
-        process.exit(1);
-      }
-      
-      if (getRemoteInfo(newName)) {
-        console.log(chalk.red(`❌ Remote "${newName}" already exists`));
-        process.exit(1);
-      }
-      
-      runGitCommand(`git remote rename ${oldName} ${newName}`, `Remote renamed from "${oldName}" to "${newName}"`);
-      
+        action = 'list';
     } else {
-      console.log(chalk.red('❌ Invalid remote operation'));
-      console.log(chalk.yellow('💡 Usage: gremote [add|remove|set-url|show|rename] <args>'));
-      console.log(chalk.yellow('💡 Run'), chalk.green('gremote --help'), chalk.yellow('for detailed usage'));
-      process.exit(1);
+        const subcommand = args[0];
+        
+        if (subcommand === 'add') {
+            action = 'add';
+            remoteName = args[1];
+            remoteUrl = args[2];
+            remoteCmd = `git remote add`;
+            
+            if (!remoteName || !remoteUrl) {
+                console.error(chalk.red('❌ Error: Both remote name and URL are required'));
+                console.log(chalk.yellow('💡 Usage: gremote add <name> <url>'));
+                process.exit(1);
+            }
+            
+            if (!isValidRemoteName(remoteName)) {
+                console.error(chalk.red('❌ Error: Invalid remote name'));
+                console.log(chalk.yellow('💡 Remote names should contain only letters, numbers, dots, hyphens, and underscores'));
+                process.exit(1);
+            }
+            
+            remoteCmd += ` ${remoteName} "${remoteUrl}"`;
+            
+        } else if (subcommand === 'remove' || subcommand === 'rm') {
+            action = 'remove';
+            remoteName = args[1];
+            remoteCmd = `git remote remove`;
+            
+            if (!remoteName) {
+                console.error(chalk.red('❌ Error: Remote name is required'));
+                console.log(chalk.yellow('💡 Usage: gremote remove <name>'));
+                process.exit(1);
+            }
+            
+            remoteCmd += ` ${remoteName}`;
+            
+        } else if (subcommand === 'rename') {
+            action = 'rename';
+            const oldName = args[1];
+            const newName = args[2];
+            remoteCmd = `git remote rename`;
+            
+            if (!oldName || !newName) {
+                console.error(chalk.red('❌ Error: Both old and new names are required'));
+                console.log(chalk.yellow('💡 Usage: gremote rename <old-name> <new-name>'));
+                process.exit(1);
+            }
+            
+            if (!isValidRemoteName(newName)) {
+                console.error(chalk.red('❌ Error: Invalid new remote name'));
+                process.exit(1);
+            }
+            
+            remoteCmd += ` ${oldName} ${newName}`;
+            
+        } else if (subcommand === 'set-url') {
+            action = 'set-url';
+            remoteName = args[1];
+            remoteUrl = args[2];
+            remoteCmd = `git remote set-url`;
+            
+            // Handle options
+            if (args.includes('--push')) {
+                remoteCmd += ' --push';
+            }
+            if (args.includes('--add')) {
+                remoteCmd += ' --add';
+            }
+            if (args.includes('--delete')) {
+                remoteCmd += ' --delete';
+            }
+            
+            if (!remoteName || (!remoteUrl && !args.includes('--delete'))) {
+                console.error(chalk.red('❌ Error: Remote name and URL are required'));
+                console.log(chalk.yellow('💡 Usage: gremote set-url <name> <url>'));
+                process.exit(1);
+            }
+            
+            remoteCmd += ` ${remoteName}`;
+            if (remoteUrl) {
+                remoteCmd += ` "${remoteUrl}"`;
+            }
+            
+        } else if (subcommand === 'get-url') {
+            action = 'get-url';
+            remoteName = args[1];
+            remoteCmd = `git remote get-url`;
+            
+            if (!remoteName) {
+                console.error(chalk.red('❌ Error: Remote name is required'));
+                console.log(chalk.yellow('💡 Usage: gremote get-url <name>'));
+                process.exit(1);
+            }
+            
+            if (args.includes('--push')) {
+                remoteCmd += ' --push';
+            }
+            if (args.includes('--all')) {
+                remoteCmd += ' --all';
+            }
+            
+            remoteCmd += ` ${remoteName}`;
+            
+        } else if (subcommand === 'show') {
+            action = 'show';
+            remoteName = args[1];
+            remoteCmd = `git remote show`;
+            
+            if (!remoteName) {
+                console.error(chalk.red('❌ Error: Remote name is required'));
+                console.log(chalk.yellow('💡 Usage: gremote show <name>'));
+                process.exit(1);
+            }
+            
+            remoteCmd += ` ${remoteName}`;
+            
+        } else if (subcommand === 'prune') {
+            action = 'prune';
+            remoteName = args[1];
+            remoteCmd = `git remote prune`;
+            
+            if (!remoteName) {
+                console.error(chalk.red('❌ Error: Remote name is required'));
+                console.log(chalk.yellow('💡 Usage: gremote prune <name>'));
+                process.exit(1);
+            }
+            
+            if (args.includes('--dry-run')) {
+                remoteCmd += ' --dry-run';
+            }
+            
+            remoteCmd += ` ${remoteName}`;
+            
+        } else if (subcommand === '-v' || subcommand === '--verbose') {
+            action = 'list';
+            remoteCmd = 'git remote -v';
+        } else {
+            // Treat as listing with options
+            action = 'list';
+            if (args.includes('-v') || args.includes('--verbose')) {
+                remoteCmd = 'git remote -v';
+            }
+        }
     }
     
-  } catch (error) {
-    console.log(chalk.red.bold('\n❌ Remote operation failed!'));
-    console.log(chalk.red(`Error: ${error.message}`));
+    console.log(chalk.cyan(`🔍 Running: ${remoteCmd}`));
     
-    if (error.message.includes('not a git repository')) {
-      console.log(chalk.yellow('💡 Initialize repository with: git init'));
+    try {
+        const result = execSync(remoteCmd, { encoding: 'utf-8' });
+        
+        if (action === 'list') {
+            if (result.trim()) {
+                console.log(chalk.cyan('🌐 Configured Remotes:'));
+                const remotes = result.trim().split('\n');
+                
+                if (remoteCmd.includes('-v')) {
+                    // Verbose listing with URLs
+                    const remoteMap = new Map();
+                    remotes.forEach(line => {
+                        const [name, url, type] = line.split(/\s+/);
+                        if (!remoteMap.has(name)) {
+                            remoteMap.set(name, { fetch: '', push: '' });
+                        }
+                        if (type === '(fetch)') {
+                            remoteMap.get(name).fetch = url;
+                        } else if (type === '(push)') {
+                            remoteMap.get(name).push = url;
+                        }
+                    });
+                    
+                    for (const [name, urls] of remoteMap) {
+                        console.log(`  ${chalk.green('📡')} ${chalk.white.bold(name)}`);
+                        console.log(`    ${chalk.gray('Fetch:')} ${chalk.white(urls.fetch)}`);
+                        if (urls.push !== urls.fetch) {
+                            console.log(`    ${chalk.gray('Push:')} ${chalk.white(urls.push)}`);
+                        }
+                    }
+                } else {
+                    // Simple listing
+                    remotes.forEach(remote => {
+                        console.log(`  ${chalk.green('📡')} ${chalk.white(remote)}`);
+                    });
+                }
+            } else {
+                console.log(chalk.yellow('ℹ️  No remotes configured'));
+                console.log(chalk.gray('💡 Add a remote with: gremote add origin <url>'));
+            }
+        } else {
+            // Other actions
+            if (result.trim()) {
+                console.log(result);
+            }
+            
+            const actionMessages = {
+                'add': `✅ Remote '${remoteName}' added successfully`,
+                'remove': `✅ Remote '${remoteName}' removed successfully`,
+                'rename': `✅ Remote renamed successfully`,
+                'set-url': `✅ Remote URL updated successfully`,
+                'get-url': `📋 Remote URL for '${remoteName}':`,
+                'show': `📊 Remote details for '${remoteName}':`,
+                'prune': `✅ Remote branches pruned successfully`
+            };
+            
+            if (actionMessages[action]) {
+                console.log(chalk.green(actionMessages[action]));
+            }
+        }
+        
+        // Show next steps based on action
+        console.log(chalk.gray('━'.repeat(40)));
+        console.log(chalk.cyan('💡 Remote Operations:'));
+        
+        if (action === 'add') {
+            console.log(chalk.white('  gpush -u ' + remoteName + ' main') + '    # Push and set upstream');
+            console.log(chalk.white('  gpull') + '                       # Pull from remote');
+        } else if (action === 'list') {
+            console.log(chalk.white('  gremote add <name> <url>') + '    # Add new remote');
+            console.log(chalk.white('  gremote show <name>') + '         # Show remote details');
+        }
+        
+        console.log(chalk.white('  gremote -v') + '                  # List remotes with URLs');
+        console.log(chalk.white('  gstatus') + '                     # Check current status');
+        
+        console.log(chalk.green('\n✅ Command completed successfully'));
+        
+    } catch (error) {
+        console.error(chalk.red(`❌ Error: ${error.message}`));
+        
+        // Common error suggestions
+        if (error.message.includes('already exists')) {
+            console.log(chalk.yellow(`💡 Remote '${remoteName}' already exists. Use set-url to change it.`));
+        } else if (error.message.includes('No such remote')) {
+            console.log(chalk.yellow(`💡 Remote '${remoteName}' not found. Use 'gremote' to list existing remotes.`));
+        } else if (error.message.includes('Invalid URL')) {
+            console.log(chalk.yellow('💡 Check URL format. Examples:'));
+            console.log(chalk.yellow('  • https://github.com/user/repo.git'));
+            console.log(chalk.yellow('  • git@github.com:user/repo.git'));
+        }
+        
+        process.exit(1);
     }
-    
-    process.exit(1);
-  }
 }
 
-// Run as standalone script
 if (import.meta.url === `file://${process.argv[1]}`) {
-  main().catch(error => {
-    console.error(chalk.red('❌ Fatal error:'), error.message);
-    process.exit(1);
-  });
+    main().catch(console.error);
 }
-    

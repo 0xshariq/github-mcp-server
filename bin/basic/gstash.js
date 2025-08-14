@@ -36,46 +36,52 @@ function validateRepository() {
 
 // Show help information
 function showHelp() {
-  console.log(chalk.bold.magenta(`
-💾 gstash - Enhanced Git Stash Management
-`));
-  console.log(chalk.cyan('📋 USAGE:'));
-  console.log(`   ${chalk.green('gstash')}                      ${chalk.gray('# Stash all changes with auto message')}`);
-  console.log(`   ${chalk.green('gstash "work in progress"')}   ${chalk.gray('# Stash with custom message')}`);
-  console.log(`   ${chalk.green('gstash --list')}               ${chalk.gray('# List all stashes with details')}`);
-  console.log(`   ${chalk.green('gstash --include-untracked')}  ${chalk.gray('# Include untracked files')}`);
-  console.log(`   ${chalk.green('gstash --partial')}            ${chalk.gray('# Interactive partial stashing')}`);
-  console.log(`   ${chalk.green('gstash --keep-index')}         ${chalk.gray('# Keep staged changes')}`);
-  console.log(`   ${chalk.green('gstash --help')}               ${chalk.gray('# Show this help message')}`);
+  console.log(chalk.magenta.bold('\n💾 gstash - Stash Uncommitted Changes\n'));
+  console.log(chalk.cyan('Purpose:'), 'Temporarily store uncommitted changes in a stack, allowing clean working directory while preserving work.\n');
   
-  console.log(chalk.cyan('\n🎯 FEATURES:'));
-  console.log(`   ${chalk.yellow('•')} ${chalk.white('Smart Messages:')} Auto-generates descriptive stash messages`);
-  console.log(`   ${chalk.yellow('•')} ${chalk.white('Selective Stashing:')} Choose specific files or changes`);
-  console.log(`   ${chalk.yellow('•')} ${chalk.white('Untracked Support:')} Include untracked files in stash`);
-  console.log(`   ${chalk.yellow('•')} ${chalk.white('Detailed Listing:')} See stash contents and metadata`);
-  console.log(`   ${chalk.yellow('•')} ${chalk.white('Safe Operations:')} Warns about potential issues`);
+  console.log(chalk.cyan('Command:'), chalk.white('gstash [options] [message]\n'));
   
-  console.log(chalk.cyan('\n💡 STASH STRATEGIES:'));
-  console.log(`   ${chalk.blue('Quick Save:')} ${chalk.green('gstash "checkpoint"')} - Save current work`);
-  console.log(`   ${chalk.blue('Full Save:')} ${chalk.green('gstash --include-untracked "backup"')} - Everything`);
-  console.log(`   ${chalk.blue('Partial Save:')} ${chalk.green('gstash --partial')} - Select specific changes`);
-  console.log(`   ${chalk.blue('Index Keep:')} ${chalk.green('gstash --keep-index')} - Keep staged for commit`);
+  console.log(chalk.cyan('Parameters:'));
+  console.log('  ' + chalk.white('[message]') + ' - Optional descriptive message for the stash\n');
   
-  console.log(chalk.cyan('\n⚡ WORKFLOW EXAMPLES:'));
-  console.log(`   ${chalk.blue('1.')} Working on feature A`);
-  console.log(`   ${chalk.blue('2.')} ${chalk.green('gstash "feature A in progress"')} - Save work`);
-  console.log(`   ${chalk.blue('3.')} ${chalk.green('gcheckout hotfix-branch')} - Switch to hotfix`);
-  console.log(`   ${chalk.blue('4.')} Fix urgent issue and commit`);
-  console.log(`   ${chalk.blue('5.')} ${chalk.green('gcheckout feature-branch')} - Back to feature`);
-  console.log(`   ${chalk.blue('6.')} ${chalk.green('gpop')} - Restore feature A work`);
+  console.log(chalk.cyan('Essential Options:'));
+  console.log('  ' + chalk.green('--list') + '                  - List all stashes with details');
+  console.log('  ' + chalk.green('-u, --include-untracked') + '  - Include untracked files in stash');
+  console.log('  ' + chalk.green('-a, --all') + '              - Include all files (untracked and ignored)');
+  console.log('  ' + chalk.green('-k, --keep-index') + '       - Keep staged changes in index');
+  console.log('  ' + chalk.green('-p, --patch') + '            - Interactive patch mode for selective stashing');
+  console.log('  ' + chalk.green('--pathspec-from-file') + '    - Read pathspec from file');
+  console.log('  ' + chalk.green('-q, --quiet') + '            - Operate quietly, suppress output');
+  console.log('  ' + chalk.green('-h, --help') + '             - Show detailed help information\n');
   
-  console.log(chalk.cyan('\n🔄 STASH LIFECYCLE:'));
-  console.log(`   ${chalk.blue('Create:')} ${chalk.green('gstash "message"')} - Save current state`);
-  console.log(`   ${chalk.blue('List:')} ${chalk.green('gstash --list')} - See all stashes`);
-  console.log(`   ${chalk.blue('Apply:')} ${chalk.green('gpop')} - Restore and remove stash`);
-  console.log(`   ${chalk.blue('Keep:')} ${chalk.green('gpop --keep')} - Apply but keep in list`);
+  console.log(chalk.cyan('Advanced Options:'));
+  console.log('  ' + chalk.green('--staged') + '               - Stash only staged changes');
+  console.log('  ' + chalk.green('--worktree') + '             - Stash only working tree changes');
+  console.log('  ' + chalk.green('--index') + '                - Try to reinstate index as well');
+  console.log('  ' + chalk.green('-- <pathspec>...') + '       - Stash specific files or directories\n');
   
-  console.log(chalk.gray('\n═══════════════════════════════════════════════════════════'));
+  console.log(chalk.cyan('Common Use Cases:'));
+  console.log(chalk.white('  gstash') + '                     # Stash all changes with auto-generated message');
+  console.log(chalk.white('  gstash "work in progress"') + '  # Stash with custom message');
+  console.log(chalk.white('  gstash -u "backup all"') + '    # Include untracked files');
+  console.log(chalk.white('  gstash --keep-index') + '       # Stash but keep staged changes');
+  console.log(chalk.white('  gstash -p') + '                 # Interactive selective stashing');
+  console.log(chalk.white('  gstash --list') + '             # View all stashes');
+  console.log(chalk.white('  gstash -- src/') + '            # Stash only files in src/ directory\n');
+  
+  console.log(chalk.cyan('💡 Workflow Tips:'));
+  console.log('  • Use descriptive messages to identify stashes later');
+  console.log('  • ' + chalk.yellow('gstash --list') + ' shows all stashes with timestamps');
+  console.log('  • Use ' + chalk.yellow('gpop') + ' to apply and remove latest stash');
+  console.log('  • ' + chalk.yellow('--keep-index') + ' useful when you want to commit staged changes');
+  console.log('  • ' + chalk.yellow('--include-untracked') + ' captures new files not yet tracked\n');
+  
+  console.log(chalk.cyan('⚠️  Important Notes:'));
+  console.log('  • Stashes are local to your repository');
+  console.log('  • Use ' + chalk.yellow('git stash apply') + ' to apply without removing from stack');
+  console.log('  • ' + chalk.yellow('git reflog show --format="%C(blue)%gd %C(red)%h%C(reset) %gs" refs/stash') + ' shows stash history');
+  console.log('  • Stashes can accumulate - clean up old ones periodically');
+  console.log('\n' + chalk.gray('═'.repeat(60)));
 }
 
 // Check if there are changes to stash

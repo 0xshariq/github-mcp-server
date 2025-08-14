@@ -1,232 +1,127 @@
 #!/usr/bin/env node
-
-/**
- * gpull - Enhanced Git Pull with Smart Handling
- * 
- * Features:
- * - Repository validation and safety checks
- * - Conflict detection and resolution guidance
- * - Beautiful progress display with status
- * - Post-pull repository status display
- * - Automatic merge conflict handling
- * 
- * Usage:
- *   gpull                   - Pull latest changes from remote
- *   gpull --status          - Show detailed status after pull
- *   gpull --force           - Force pull (resets local changes)
- *   gpull --help            - Show this help
- */
-
-import { execSync } from 'child_process';
-import path from 'path';
+import { spawn } from 'child_process';
 import chalk from 'chalk';
 
-// Check if we're in a git repository
-function validateRepository() {
-  try {
-    execSync('git rev-parse --is-inside-work-tree', { stdio: 'pipe' });
-    return true;
-  } catch (error) {
-    console.log(chalk.red('❌ Error: Not a git repository'));
-    console.log(chalk.yellow('💡 Initialize with: git init'));
-    return false;
-  }
+const args = process.argv.slice(2);
+
+// Handle help command
+if (args.includes('--help') || args.includes('-h')) {
+  console.log(chalk.magenta.bold('\n🔄 gpull - Fetch and Merge Remote Changes\n'));
+  console.log(chalk.cyan('Purpose:'), 'Fetch from remote repository and integrate changes into current branch with comprehensive merge and rebase options.\n');
+  
+  console.log(chalk.cyan('Command:'), chalk.white('gpull [options] [remote] [branch]\n'));
+  
+  console.log(chalk.cyan('Parameters:'));
+  console.log('  ' + chalk.white('[remote]') + '  - Remote repository name (default: origin)');
+  console.log('  ' + chalk.white('[branch]') + '  - Branch name (default: current branch tracking)\n');
+  
+  console.log(chalk.cyan('Essential Options:'));
+  console.log('  ' + chalk.green('--rebase') + '               - Rebase instead of merge');
+  console.log('  ' + chalk.green('--ff-only') + '              - Only allow fast-forward merges');
+  console.log('  ' + chalk.green('--no-ff') + '                - Create merge commit even for fast-forward');
+  console.log('  ' + chalk.green('--squash') + '               - Squash commits into single commit');
+  console.log('  ' + chalk.green('-v, --verbose') + '          - Show verbose output');
+  console.log('  ' + chalk.green('--dry-run') + '              - Show what would be done without doing it');
+  console.log('  ' + chalk.green('--force') + '                - Force pull (use with extreme caution)');
+  console.log('  ' + chalk.green('--all') + '                  - Fetch from all configured remotes');
+  console.log('  ' + chalk.green('--tags') + '                 - Fetch all tags from remote');
+  console.log('  ' + chalk.green('--depth <n>') + '            - Create shallow clone with limited history');
+  console.log('  ' + chalk.green('--unshallow') + '            - Convert shallow repository to complete');
+  console.log('  ' + chalk.green('-q, --quiet') + '            - Operate quietly, suppress output');
+  console.log('  ' + chalk.green('--autostash') + '            - Automatically stash/unstash local changes');
+  console.log('  ' + chalk.green('-h, --help') + '             - Show detailed help information\n');
+  
+  console.log(chalk.cyan('Advanced Options:'));
+  console.log('  ' + chalk.green('--strategy=<strategy>') + '   - Merge strategy (ours, theirs, recursive, etc.)');
+  console.log('  ' + chalk.green('--strategy-option=<opt>') + ' - Pass option to merge strategy');
+  console.log('  ' + chalk.green('--commit, --no-commit') + '   - Control automatic commit creation');
+  console.log('  ' + chalk.green('--edit, --no-edit') + '       - Control commit message editing');
+  console.log('  ' + chalk.green('--verify-signatures') + '     - Verify commit signatures');
+  console.log('  ' + chalk.green('--allow-unrelated-histories') + ' - Allow merging unrelated histories\n');
+  
+  console.log(chalk.cyan('Common Use Cases:'));
+  console.log(chalk.white('  gpull') + '                       # Pull from tracking branch');
+  console.log(chalk.white('  gpull --rebase') + '              # Pull with rebase instead of merge');
+  console.log(chalk.white('  gpull --ff-only') + '             # Only fast-forward, fail if merge needed');
+  console.log(chalk.white('  gpull origin main') + '           # Pull specific branch from origin');
+  console.log(chalk.white('  gpull upstream develop') + '      # Pull from upstream remote');
+  console.log(chalk.white('  gpull --all') + '                 # Fetch from all remotes');
+  console.log(chalk.white('  gpull --dry-run') + '             # Preview what would happen');
+  console.log(chalk.white('  gpull --autostash') + '           # Auto-stash uncommitted changes\n');
+  
+  console.log(chalk.cyan('⚠️  Safety Notes:'));
+  console.log('  • Use ' + chalk.yellow('--ff-only') + ' to prevent merge commits');
+  console.log('  • Use ' + chalk.yellow('--rebase') + ' to keep linear history');
+  console.log('  • ' + chalk.yellow('--force') + ' can overwrite local changes - use carefully');
+  console.log('  • Use ' + chalk.yellow('--dry-run') + ' to preview before actual pull');
+  console.log('\n' + chalk.gray('═'.repeat(60)));
+  process.exit(0);
 }
 
-// Execute git command with progress display
-function runGitCommand(command, description, showOutput = true) {
-  try {
-    console.log(chalk.cyan(`🔧 ${description}...`));
-    const result = execSync(command, { 
-      encoding: 'utf8',
-      stdio: showOutput ? 'inherit' : 'pipe'
-    });
-    console.log(chalk.green('✅ Operation completed successfully!'));
-    return { success: true, output: result };
-  } catch (error) {
-    console.log(chalk.red(`❌ Failed: ${error.message}`));
-    return { success: false, error: error.message };
-  }
-}
+console.log(chalk.cyan.bold('🔄 Git Pull - Fetch and Merge Remote Changes'));
+console.log(chalk.gray('━'.repeat(50)));
 
-// Show help information
-function showHelp() {
-  console.log(chalk.bold.blue(`
-⬇️ gpull - Enhanced Git Pull with Smart Handling
-`));
-  console.log(chalk.cyan('📋 USAGE:'));
-  console.log(`   ${chalk.green('gpull')}                     ${chalk.gray('# Pull latest changes from remote')}`);
-  console.log(`   ${chalk.green('gpull --status')}            ${chalk.gray('# Pull and show detailed status')}`);
-  console.log(`   ${chalk.green('gpull --force')}             ${chalk.gray('# Force pull (resets local changes)')}`);
-  console.log(`   ${chalk.green('gpull --help')}              ${chalk.gray('# Show this help message')}`);
-  
-  console.log(chalk.cyan('\n🎯 FEATURES:'));
-  console.log(`   ${chalk.yellow('•')} ${chalk.white('Smart Conflict Detection:')} Identifies and helps resolve merge conflicts`);
-  console.log(`   ${chalk.yellow('•')} ${chalk.white('Safety Checks:')} Validates repository state before pulling`);
-  console.log(`   ${chalk.yellow('•')} ${chalk.white('Progress Display:')} Shows detailed pull operation progress`);
-  console.log(`   ${chalk.yellow('•')} ${chalk.white('Status Integration:')} Optional post-pull status display`);
-  console.log(`   ${chalk.yellow('•')} ${chalk.white('Force Option:')} Safe way to discard local changes`);
-  
-  console.log(chalk.cyan('\n💡 CONFLICT RESOLUTION:'));
-  console.log(`   ${chalk.blue('1.')} When conflicts occur, gpull will show affected files`);
-  console.log(`   ${chalk.blue('2.')} Edit conflicted files to resolve issues`);
-  console.log(`   ${chalk.blue('3.')} Use ${chalk.green('gadd .')} to stage resolved files`);
-  console.log(`   ${chalk.blue('4.')} Use ${chalk.green('gcommit "Resolve merge conflicts"')} to complete`);
-  
-  console.log(chalk.cyan('\n⚡ QUICK WORKFLOW:'));
-  console.log(`   ${chalk.blue('1.')} Run ${chalk.green('gpull')} to get latest changes`);
-  console.log(`   ${chalk.blue('2.')} If conflicts, resolve them manually`);
-  console.log(`   ${chalk.blue('3.')} Continue your development work`);
-  console.log(`   ${chalk.blue('4.')} Use ${chalk.green('gflow "message"')} for your next commit`);
-  
-  console.log(chalk.gray('\n═══════════════════════════════════════════════════════════'));
-}
+// Show context information
+const contextProcess = spawn('git', ['status', '--porcelain', '-b'], { stdio: 'pipe' });
+let contextOutput = '';
 
-// Check if there are uncommitted changes
-function hasUncommittedChanges() {
-  try {
-    const result = execSync('git status --porcelain', { encoding: 'utf8', stdio: 'pipe' });
-    return result.trim().length > 0;
-  } catch {
-    return false;
-  }
-}
+contextProcess.stdout.on('data', (data) => {
+  contextOutput += data.toString();
+});
 
-// Display repository status
-function displayStatus() {
-  try {
-    console.log(chalk.cyan('\n📊 Repository Status After Pull:'));
-    console.log(chalk.gray('─'.repeat(40)));
-    const statusOutput = execSync('git status --porcelain -b', { encoding: 'utf8' });
-    
-    if (statusOutput.trim() === '') {
-      console.log(chalk.green('✨ Working directory clean'));
-      return;
-    }
-    
-    const lines = statusOutput.split('\n').filter(line => line.trim());
-    for (const line of lines) {
-      if (line.startsWith('##')) {
-        const branch = line.replace(/^## /, '');
-        console.log(chalk.blue('🌿 Branch:'), chalk.white(branch));
-      } else {
-        const status = line.substring(0, 2);
-        const file = line.substring(3);
-        let icon = '📄';
-        let color = chalk.white;
-        
-        if (status === '??') {
-          icon = '❓'; color = chalk.gray;
-        } else if (status.includes('M')) {
-          icon = '📝'; color = chalk.yellow;
-        } else if (status.includes('A')) {
-          icon = '➕'; color = chalk.green;
-        } else if (status.includes('D')) {
-          icon = '🗑️'; color = chalk.red;
+contextProcess.on('close', (code) => {
+  if (code === 0) {
+    const lines = contextOutput.trim().split('\n').filter(line => line);
+    if (lines.length > 0) {
+      const branchLine = lines[0];
+      const branchMatch = branchLine.match(/## (.+?)(?:\.\.\.|$)/);
+      const currentBranch = branchMatch ? branchMatch[1] : 'unknown';
+      
+      console.log(chalk.blue('📍 Current Context:'));
+      console.log(`   Branch: ${chalk.green(currentBranch)}`);
+      
+      // Check for uncommitted changes
+      const changes = lines.slice(1);
+      if (changes.length > 0) {
+        console.log(`   ${chalk.yellow('⚠️  Uncommitted changes detected!')}`);
+        console.log(`   ${chalk.gray('Consider committing or stashing before pulling')}`);
+      }
+      
+      // Check tracking branch
+      if (branchLine.includes('...')) {
+        const trackingMatch = branchLine.match(/\.\.\.(.+?)(?:\s|$)/);
+        if (trackingMatch) {
+          console.log(`   Tracking: ${chalk.cyan(trackingMatch[1])}`);
         }
-        
-        console.log(`   ${icon} ${color(file)}`);
       }
+      console.log('');
     }
-  } catch (error) {
-    console.log(chalk.yellow('⚠️  Could not display status'));
   }
-}
 
-// Main function
-async function main() {
-  const args = process.argv.slice(2);
+  // Execute git pull with provided arguments
+  console.log(chalk.blue(`🔍 Running: git pull ${args.join(' ')}`));
   
-  // Help functionality
-  if (args.includes('-h') || args.includes('--help')) {
-    showHelp();
-    return;
-  }
-  
-  // Validate repository
-  if (!validateRepository()) {
-    process.exit(1);
-  }
-  
-  try {
-    const forceMode = args.includes('--force');
-    const showStatus = args.includes('--status');
-    
-    if (forceMode) {
-      // Force mode - reset local changes and pull
-      console.log(chalk.bold.red('\n⚠️  Force Pull Mode'));
-      console.log(chalk.gray('─'.repeat(40)));
-      console.log(chalk.yellow('This will discard all local changes!'));
-      
-      if (hasUncommittedChanges()) {
-        console.log(chalk.yellow('💾 Uncommitted changes detected - they will be lost'));
-      }
-      
-      const resetResult = runGitCommand('git reset --hard HEAD', 'Resetting local changes', false);
-      if (!resetResult.success) {
-        throw new Error(`Failed to reset: ${resetResult.error}`);
-      }
-      
-      const pullResult = runGitCommand('git pull', 'Force pulling from remote');
-      if (!pullResult.success) {
-        throw new Error(`Failed to pull: ${pullResult.error}`);
-      }
-      
+  const git = spawn('git', ['pull', ...args], { stdio: 'inherit' });
+
+  git.on('close', (code) => {
+    console.log(chalk.gray('━'.repeat(50)));
+    if (code === 0) {
+      console.log(chalk.green('✅ Pull completed successfully!'));
+      console.log('');
+      console.log(chalk.blue('💡 What\'s Next:'));
+      console.log('  gstatus                   # Check current status');
+      console.log('  glog -n 5                 # View recent commits');
+      console.log('  gdiff                     # Check for conflicts');
+      console.log('  gpush                     # Push if you have commits');
     } else {
-      // Normal pull
-      console.log(chalk.bold.blue('\n⬇️ Pulling Latest Changes'));
-      console.log(chalk.gray('─'.repeat(40)));
-      
-      if (hasUncommittedChanges()) {
-        console.log(chalk.yellow('💡 Local changes detected - they will be preserved'));
-      }
-      
-      const pullResult = runGitCommand('git pull', 'Pulling from remote');
-      
-      if (!pullResult.success) {
-        if (pullResult.error.includes('CONFLICT')) {
-          console.log(chalk.red.bold('\n⚠️  Merge Conflicts Detected!'));
-          console.log(chalk.yellow('🔧 Resolution steps:'));
-          console.log(chalk.gray('   1. Check conflicted files with: gstatus'));
-          console.log(chalk.gray('   2. Edit files to resolve conflicts'));
-          console.log(chalk.gray('   3. Stage resolved files: gadd .'));
-          console.log(chalk.gray('   4. Complete merge: gcommit "Resolve conflicts"'));
-          process.exit(1);
-        } else {
-          throw new Error(`Pull failed: ${pullResult.error}`);
-        }
-      }
+      console.log(chalk.red('❌ Pull failed!'));
+      console.log('');
+      console.log(chalk.yellow('🔧 Troubleshooting:'));
+      console.log('  gstatus                   # Check repository status');
+      console.log('  gdiff                     # Check for conflicts');
+      console.log('  gstash                    # Stash uncommitted changes');
+      console.log('  glog                      # Review recent history');
+      process.exit(1);
     }
-    
-    // Show success message
-    console.log(chalk.green.bold('\n✅ Pull completed successfully!'));
-    
-    // Show status if requested
-    if (showStatus || args.length === 0) {
-      displayStatus();
-    }
-    
-    // Show helpful suggestions
-    console.log(chalk.blue('\n💡 Next steps:'));
-    console.log(chalk.gray(`   • ${chalk.green('gstatus')} - Check repository status`));
-    console.log(chalk.gray(`   • ${chalk.green('glog')} - View recent commits`));
-    console.log(chalk.gray(`   • Continue with your development work`));
-    
-  } catch (error) {
-    console.log(chalk.red.bold('\n❌ Pull operation failed!'));
-    console.log(chalk.red(`Error: ${error.message}`));
-    console.log(chalk.yellow('\n💡 Troubleshooting:'));
-    console.log(chalk.gray('   • Check network connection'));
-    console.log(chalk.gray('   • Verify remote repository access'));
-    console.log(chalk.gray('   • Use --force to discard local changes'));
-    process.exit(1);
-  }
-}
-
-// Run as standalone script
-if (import.meta.url === `file://${process.argv[1]}`) {
-  main().catch(error => {
-    console.error(chalk.red('❌ Fatal error:'), error.message);
-    process.exit(1);
   });
-}
+});

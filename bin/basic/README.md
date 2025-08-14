@@ -1,29 +1,31 @@
 # Basic Git Operations - CLI Aliases
 
-This directory contains 15 essential Git operation aliases that provide simplified access to the most commonly used Git commands. Each alias is a standalone executable script with comprehensive help documentation and error handling.
+This directory contains 15 essential Git operation aliases that provide simplified access to the most commonly used Git commands. Each alias is a standalone executable script with comprehensive help documentation, error handling, and real Git command execution.
 
 ## Overview
 
-Basic operations cover fundamental Git tasks that every developer needs on a daily basis. These commands are designed to be simple, safe, and intuitive while providing access to the most important Git functionality.
+Basic operations cover fundamental Git tasks that every developer needs on a daily basis. These commands are designed to be simple, safe, and intuitive while providing access to comprehensive Git functionality with all standard options.
 
 **All 15 Basic Commands:**
-- `gadd` - Stage files and directories
-- `gbranch` - List and create branches  
-- `gcheckout` - Switch and create branches
-- `gclone` - Clone repositories
-- `gcommit` - Create commits with messages
-- `gdiff` - Show differences and changes
-- `ginit` - Initialize new repositories
-- `glog` - View commit history
-- `gpop` - Apply stashed changes
-- `gpull` - Pull changes from remote
-- `gpush` - Push commits to remote
-- `gremote` - Manage remote repositories
-- `greset` - Reset repository state
-- `gstash` - Stash uncommitted changes
-- `gstatus` - Show repository status
+- `gadd` - Stage files and directories with comprehensive options
+- `gbranch` - List, create, and manage branches  
+- `gcheckout` - Switch branches and checkout files/commits
+- `gclone` - Clone repositories with full Git clone options
+- `gcommit` - Create commits with extensive message and author options
+- `gdiff` - Show differences with formatting and filtering options
+- `ginit` - Initialize repositories with templates and configurations
+- `glog` - View commit history with filtering and graph visualization
+- `gpop` - Apply and manage stashed changes
+- `gpull` - Pull changes with merge and rebase options
+- `gpush` - Push commits with safety and upstream management
+- `gremote` - Comprehensive remote repository management
+- `greset` - Reset repository state with precision control
+- `gstash` - Stash changes with selective and advanced options
+- `gstatus` - Show repository status with detailed formatting
 
-**💡 Pro Tip:** Every command supports `--help` or `-h` for detailed usage information!
+**💡 Pro Tip:** Every command supports `--help` or `-h` for detailed usage information with comprehensive options!
+
+**🎯 All Options Are Real Git Options:** Every option documented is a genuine Git command option - no custom flags that don't exist in Git.
 
 ## Command Details
 
