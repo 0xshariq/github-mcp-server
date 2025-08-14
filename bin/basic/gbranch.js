@@ -176,25 +176,84 @@ async function main() {
                     const branches = result.split('\n').filter(line => line.trim());
                     const currentBranch = getCurrentBranch();
                     
-                    console.log(chalk.cyan('\n📋 Branches:'));
-                    branches.forEach(branch => {
+                    // Get branch counts
+                    const localBranches = branches.filter(b => !b.includes('remotes/'));
+                    const remoteBranches = branches.filter(b => b.includes('remotes/'));
+                    
+                    console.log(chalk.cyan('📋 Branch Summary:'));
+                    console.log(`  Local branches: ${chalk.white(localBranches.length)}`);
+                    if (args.includes('-a') || args.includes('--all') || args.includes('-r') || args.includes('--remotes')) {
+                        console.log(`  Remote branches: ${chalk.white(remoteBranches.length)}`);
+                    }
+                    
+                    console.log(chalk.cyan('🌿 Branches:'));
+                    
+                    // Sort branches - current first, then alphabetically
+                    const sortedBranches = branches.sort((a, b) => {
+                        if (a.startsWith('*')) return -1;
+                        if (b.startsWith('*')) return 1;
+                        return a.localeCompare(b);
+                    });
+                    
+                    sortedBranches.forEach(branch => {
                         const cleanBranch = branch.replace(/^\*?\s*/, '');
                         const isCurrent = branch.startsWith('*');
                         
                         if (isCurrent) {
-                            console.log(`  ${chalk.green('*')} ${chalk.green.bold(cleanBranch)} ${chalk.gray('(current)')}`);
+                            console.log(`  ${chalk.green('➤')} ${chalk.green.bold(cleanBranch)} ${chalk.gray('← current branch')}`);
+                        } else if (branch.includes('remotes/origin/')) {
+                            const remoteName = cleanBranch.replace('remotes/origin/', '');
+                            console.log(`  ${chalk.blue('📡')} ${chalk.blue(remoteName)} ${chalk.gray('(remote)')}`);
                         } else if (branch.includes('remotes/')) {
-                            console.log(`    ${chalk.blue(cleanBranch)}`);
+                            console.log(`  ${chalk.blue('📡')} ${chalk.blue(cleanBranch)} ${chalk.gray('(remote)')}`);
                         } else {
-                            console.log(`    ${chalk.white(cleanBranch)}`);
+                            // Check if this local branch has a remote
+                            try {
+                                const upstream = execSync(`git rev-parse --abbrev-ref ${cleanBranch}@{upstream} 2>/dev/null || echo ""`, { encoding: 'utf-8' }).trim();
+                                if (upstream) {
+                                    console.log(`  ${chalk.white('🔗')} ${chalk.white(cleanBranch)} ${chalk.gray('→ ' + upstream)}`);
+                                } else {
+                                    console.log(`  ${chalk.white('📝')} ${chalk.white(cleanBranch)}`);
+                                }
+                            } catch (e) {
+                                console.log(`  ${chalk.white('📝')} ${chalk.white(cleanBranch)}`);
+                            }
                         }
                     });
                     
-                    console.log(chalk.gray('\n━'.repeat(40)));
-                    console.log(chalk.cyan('💡 Branch Tips:'));
+                    // Show additional information if verbose
+                    if (args.includes('-v') || args.includes('--verbose')) {
+                        console.log(chalk.cyan('📊 Branch Details:'));
+                        try {
+                            // Show last commit for each local branch
+                            const localBranchNames = localBranches.map(b => b.replace(/^\*?\s*/, '')).filter(b => !b.includes('remotes/'));
+                            for (const branchName of localBranchNames.slice(0, 5)) { // Limit to 5 branches
+                                try {
+                                    const lastCommit = execSync(`git log -1 --format="%h %s" ${branchName} 2>/dev/null`, { encoding: 'utf-8' }).trim();
+                                    const isCurrent = branchName === currentBranch;
+                                    const icon = isCurrent ? '➤' : '📝';
+                                    const color = isCurrent ? chalk.green : chalk.white;
+                                    
+                                    console.log(`  ${color(icon)} ${color(branchName)}: ${chalk.gray(lastCommit)}`);
+                                } catch (e) {
+                                    // Ignore errors for individual branches
+                                }
+                            }
+                            if (localBranchNames.length > 5) {
+                                console.log(`  ${chalk.gray(`... and ${localBranchNames.length - 5} more branches`)}`);
+                            }
+                        } catch (e) {
+                            // Ignore verbose errors
+                        }
+                    }
+                    
+                    console.log(chalk.gray('━'.repeat(40)));
+                    console.log(chalk.cyan('💡 Branch Operations:'));
                     console.log(chalk.white('  gcheckout <branch>') + '       # Switch to branch');
                     console.log(chalk.white('  gbranch <new-name>') + '       # Create new branch');
-                    console.log(chalk.white('  gbranch -a') + '               # Show remote branches');
+                    console.log(chalk.white('  gbranch -a') + '               # Show all branches (local + remote)');
+                    console.log(chalk.white('  gbranch -v') + '               # Verbose output with commit info');
+                    console.log(chalk.white('  gbranch -d <branch>') + '      # Delete branch safely');
                 }
                 
             } catch (error) {
