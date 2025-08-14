@@ -1,226 +1,243 @@
 #!/usr/bin/env node
 
-/**
- * gbranch - Enhanced Git Branch Management
- * 
- * Features:
- * - Comprehensive branch listing with colors
- * - Safe branch creation with validation
- * - Current branch highlighting
- * - Remote branch tracking information
- * - Branch switching recommendations
- * 
- * Usage:
- *   gbranch                    - List all branches
- *   gbranch "new-branch"       - Create new branch
- *   gbranch --remote           - Show remote branches
- *   gbranch --all              - Show local and remote branches
- *   gbranch --help             - Show this help
- */
-
 import { execSync } from 'child_process';
-import path from 'path';
+import { existsSync } from 'fs';
 import chalk from 'chalk';
 
-// Check if we're in a git repository
 function validateRepository() {
-  try {
-    execSync('git rev-parse --is-inside-work-tree', { stdio: 'pipe' });
-    return true;
-  } catch (error) {
-    console.log(chalk.red('❌ Error: Not a git repository'));
-    console.log(chalk.yellow('💡 Initialize with: git init'));
-    return false;
-  }
+    if (!existsSync('.git')) {
+        console.error(chalk.red('❌ Error: Not a git repository (or any of the parent directories): .git'));
+        process.exit(1);
+    }
 }
 
-// Show help information
 function showHelp() {
-  console.log(chalk.bold.magenta(`
-🌿 gbranch - Enhanced Git Branch Management
-`));
-  console.log(chalk.cyan('📋 USAGE:'));
-  console.log(`   ${chalk.green('gbranch')}                      ${chalk.gray('# List all local branches')}`);
-  console.log(`   ${chalk.green('gbranch "new-branch"')}         ${chalk.gray('# Create new branch')}`);
-  console.log(`   ${chalk.green('gbranch --remote')}             ${chalk.gray('# Show remote branches')}`);
-  console.log(`   ${chalk.green('gbranch --all')}                ${chalk.gray('# Show local and remote branches')}`);
-  console.log(`   ${chalk.green('gbranch --merged')}             ${chalk.gray('# Show merged branches only')}`);
-  console.log(`   ${chalk.green('gbranch --help')}               ${chalk.gray('# Show this help message')}`);
-  
-  console.log(chalk.cyan('\n🎯 FEATURES:'));
-  console.log(`   ${chalk.yellow('•')} ${chalk.white('Smart Listing:')} Current branch highlighted in green`);
-  console.log(`   ${chalk.yellow('•')} ${chalk.white('Safe Creation:')} Validates branch names and checks duplicates`);
-  console.log(`   ${chalk.yellow('•')} ${chalk.white('Remote Tracking:')} Shows upstream branch relationships`);
-  console.log(`   ${chalk.yellow('•')} ${chalk.white('Branch Info:')} Last commit dates and authors`);
-  console.log(`   ${chalk.yellow('•')} ${chalk.white('Quick Switching:')} Recommendations for branch navigation`);
-  
-  console.log(chalk.cyan('\n💡 BRANCH CREATION:'));
-  console.log(`   ${chalk.blue('Valid Names:')} feature/login, bugfix/header, hotfix/security`);
-  console.log(`   ${chalk.blue('Conventions:')} Use descriptive names with prefixes`);
-  console.log(`   ${chalk.blue('Best Practice:')} Keep names short but meaningful`);
-  
-  console.log(chalk.cyan('\n⚡ COMMON WORKFLOW:'));
-  console.log(`   ${chalk.blue('1.')} ${chalk.green('gbranch "feature/new-page"')} - Create feature branch`);
-  console.log(`   ${chalk.blue('2.')} ${chalk.green('gcheckout feature/new-page')} - Switch to new branch`);
-  console.log(`   ${chalk.blue('3.')} ${chalk.green('gbranch')} - List branches to verify`);
-  console.log(`   ${chalk.blue('4.')} ${chalk.green('gbranch --merged')} - Check merged branches`);
-  
-  console.log(chalk.gray('\n═══════════════════════════════════════════════════════════'));
+    console.log(chalk.magenta.bold('\n🌿 gbranch - Branch Management\n'));
+    console.log(chalk.cyan('Purpose:'), 'List, create, and manage branches with comprehensive options for local and remote branches.\n');
+    
+    console.log(chalk.cyan('Command:'), chalk.white('gbranch [branch-name] [options]\n'));
+    
+    console.log(chalk.cyan('Parameters:'));
+    console.log('  ' + chalk.white('[branch-name]') + ' - Name of new branch to create\n');
+    
+    console.log(chalk.cyan('Essential Options:'));
+    console.log('  ' + chalk.green('-r, --remotes') + '         - List remote branches');
+    console.log('  ' + chalk.green('-a, --all') + '             - List both local and remote branches');
+    console.log('  ' + chalk.green('-v, --verbose') + '         - Show commit info for each branch');
+    console.log('  ' + chalk.green('--merged [commit]') + '     - List branches merged into commit');
+    console.log('  ' + chalk.green('--no-merged [commit]') + '  - List branches not merged into commit');
+    console.log('  ' + chalk.green('--contains <commit>') + '   - List branches containing the commit');
+    console.log('  ' + chalk.green('--sort <key>') + '          - Sort by key (committerdate, authordate, etc.)');
+    console.log('  ' + chalk.green('-d, --delete') + '          - Delete branch (safe)');
+    console.log('  ' + chalk.green('-D, --force-delete') + '    - Force delete branch');
+    console.log('  ' + chalk.green('-m, --move') + '            - Rename/move branch');
+    console.log('  ' + chalk.green('-c, --copy') + '            - Copy branch');
+    console.log('  ' + chalk.green('--track') + '               - Set up tracking when creating');
+    console.log('  ' + chalk.green('--no-track') + '            - Don\'t set up tracking');
+    console.log('  ' + chalk.green('-h, --help') + '            - Show detailed help information\n');
+    
+    console.log(chalk.cyan('Common Use Cases:'));
+    console.log(chalk.white('  gbranch') + '                     # List local branches');
+    console.log(chalk.white('  gbranch feature-auth') + '        # Create new branch');
+    console.log(chalk.white('  gbranch -a') + '                  # List all branches');
+    console.log(chalk.white('  gbranch -r') + '                  # List remote branches');
+    console.log(chalk.white('  gbranch -v') + '                  # Verbose branch list');
+    console.log(chalk.white('  gbranch --merged') + '            # Show merged branches');
+    console.log(chalk.white('  gbranch -d old-feature') + '      # Delete branch safely');
+    console.log(chalk.white('  gbranch --sort=-committerdate') + ' # Sort by recent commits\n');
+    
+    console.log(chalk.cyan('🔧 Branch Management:'));
+    console.log('  • Use ' + chalk.yellow('gcheckout') + ' to switch between branches');
+    console.log('  • Current branch is highlighted with ' + chalk.green('*') + ' and color');
+    console.log('  • Remote tracking information shown when available');
+    console.log('\n' + chalk.gray('═'.repeat(60)));
 }
 
-// Validate branch name
-function validateBranchName(branchName) {
-  if (!branchName || branchName.trim() === '') {
-    return { valid: false, reason: 'Branch name cannot be empty' };
-  }
-  
-  // Check for invalid characters
-  const invalidChars = /[~^:?*[\\\s]/;
-  if (invalidChars.test(branchName)) {
-    return { valid: false, reason: 'Branch name contains invalid characters (spaces, ~, ^, :, ?, *, [, \\)' };
-  }
-  
-  // Check if it starts with a dot or hyphen
-  if (branchName.startsWith('.') || branchName.startsWith('-')) {
-    return { valid: false, reason: 'Branch name cannot start with . or -' };
-  }
-  
-  return { valid: true };
-}
-
-// Check if branch exists
-function branchExists(branchName) {
-  try {
-    execSync(`git rev-parse --verify ${branchName}`, { stdio: 'pipe' });
-    return true;
-  } catch (error) {
-    return false;
-  }
-}
-
-// Run git command with error handling
-function runGitCommand(command, successMessage) {
-  try {
-    const result = execSync(command, { encoding: 'utf8' });
-    if (successMessage) {
-      console.log(chalk.green(`✅ ${successMessage}`));
-    }
-    return result;
-  } catch (error) {
-    console.log(chalk.red(`❌ Git command failed: ${error.message}`));
-    throw error;
-  }
-}
-
-// Get current branch name
 function getCurrentBranch() {
-  try {
-    return execSync('git branch --show-current', { encoding: 'utf8' }).trim();
-  } catch (error) {
-    return null;
-  }
+    try {
+        return execSync('git branch --show-current', { encoding: 'utf-8' }).trim();
+    } catch (error) {
+        return null;
+    }
 }
 
-// Main function
 async function main() {
-  const args = process.argv.slice(2);
-  
-  // Help functionality
-  if (args.includes('-h') || args.includes('--help')) {
-    showHelp();
-    return;
-  }
-  
-  // Validate repository
-  if (!validateRepository()) {
-    process.exit(1);
-  }
-  
-  try {
-    // Check if creating a new branch
-    const branchName = args.find(arg => !arg.startsWith('--'))?.trim();
-    const showRemote = args.includes('--remote') || args.includes('-r');
-    const showAll = args.includes('--all') || args.includes('-a');
-    const showMerged = args.includes('--merged');
+    const args = process.argv.slice(2);
     
-    if (branchName) {
-      // Create new branch
-      console.log(chalk.bold.magenta('\n🌿 Creating New Branch'));
-      console.log(chalk.gray('─'.repeat(40)));
-      
-      // Validate branch name
-      const validation = validateBranchName(branchName);
-      if (!validation.valid) {
-        console.log(chalk.red(`❌ Invalid branch name: ${validation.reason}`));
-        console.log(chalk.yellow('💡 Use descriptive names like: feature/login, bugfix/header'));
-        process.exit(1);
-      }
-      
-      // Check if branch already exists
-      if (branchExists(branchName)) {
-        console.log(chalk.red(`❌ Branch "${branchName}" already exists`));
-        console.log(chalk.yellow(`💡 Switch to it with: ${chalk.green(`gcheckout ${branchName}`)}`));
-        process.exit(1);
-      }
-      
-      console.log(chalk.blue('🔍 Validating:'), chalk.white(branchName));
-      console.log(chalk.blue('📍 Based on:'), chalk.white(getCurrentBranch() || 'HEAD'));
-      
-      // Create the branch
-      runGitCommand(`git branch ${branchName}`, `Branch "${branchName}" created successfully`);
-      
-      console.log(chalk.cyan('\n💡 Next steps:'));
-      console.log(chalk.gray(`   • Switch to branch: ${chalk.green(`gcheckout ${branchName}`)}`));
-      console.log(chalk.gray(`   • Push to remote: ${chalk.green(`gpush -u origin ${branchName}`)}`));
-      console.log(chalk.gray(`   • List all branches: ${chalk.green('gbranch')}`));
-      
+    if (args.includes('-h') || args.includes('--help')) {
+        showHelp();
+        return;
+    }
+    
+    validateRepository();
+    
+    console.log(chalk.magenta.bold('🌿 Branch Management'));
+    console.log(chalk.gray('━'.repeat(40)));
+    
+    // Build git branch command
+    let branchCmd = 'git branch';
+    let branchName = '';
+    let action = 'list';
+    
+    // Parse arguments
+    let i = 0;
+    while (i < args.length) {
+        const arg = args[i];
+        
+        if (arg === '-r' || arg === '--remotes') {
+            branchCmd += ' --remotes';
+        } else if (arg === '-a' || arg === '--all') {
+            branchCmd += ' --all';
+        } else if (arg === '-v' || arg === '--verbose') {
+            branchCmd += ' --verbose';
+        } else if (arg === '--merged') {
+            branchCmd += ' --merged';
+            if (args[i + 1] && !args[i + 1].startsWith('-')) {
+                branchCmd += ` ${args[i + 1]}`;
+                i++; // Skip next argument
+            }
+        } else if (arg === '--no-merged') {
+            branchCmd += ' --no-merged';
+            if (args[i + 1] && !args[i + 1].startsWith('-')) {
+                branchCmd += ` ${args[i + 1]}`;
+                i++; // Skip next argument
+            }
+        } else if (arg === '--contains') {
+            if (args[i + 1] && !args[i + 1].startsWith('-')) {
+                branchCmd += ` --contains ${args[i + 1]}`;
+                i++; // Skip next argument
+            }
+        } else if (arg === '--sort') {
+            if (args[i + 1] && !args[i + 1].startsWith('-')) {
+                branchCmd += ` --sort=${args[i + 1]}`;
+                i++; // Skip next argument
+            }
+        } else if (arg === '-d' || arg === '--delete') {
+            action = 'delete';
+            branchCmd = 'git branch --delete';
+        } else if (arg === '-D' || arg === '--force-delete') {
+            action = 'force-delete';
+            branchCmd = 'git branch --delete --force';
+        } else if (arg === '-m' || arg === '--move') {
+            action = 'move';
+            branchCmd = 'git branch --move';
+        } else if (arg === '-c' || arg === '--copy') {
+            action = 'copy';
+            branchCmd = 'git branch --copy';
+        } else if (arg === '--track') {
+            branchCmd += ' --track';
+        } else if (arg === '--no-track') {
+            branchCmd += ' --no-track';
+        } else if (!arg.startsWith('-')) {
+            branchName = arg;
+        }
+        i++;
+    }
+    
+    // Handle different actions
+    if (action === 'list') {
+        if (branchName) {
+            // Creating a new branch
+            branchCmd = `git branch ${branchName}`;
+            if (args.includes('--track')) {
+                branchCmd += ' --track';
+            } else if (args.includes('--no-track')) {
+                branchCmd += ' --no-track';
+            }
+            
+            console.log(chalk.cyan(`🔍 Running: ${branchCmd}`));
+            
+            try {
+                const result = execSync(branchCmd, { encoding: 'utf-8' });
+                if (result) console.log(result);
+                
+                console.log(chalk.green(`✅ Branch '${branchName}' created successfully`));
+                console.log(chalk.gray('━'.repeat(40)));
+                console.log(chalk.cyan('� Next Steps:'));
+                console.log(chalk.white(`  gcheckout ${branchName}`) + '      # Switch to new branch');
+                console.log(chalk.white('  gbranch') + '                  # View all branches');
+                
+            } catch (error) {
+                console.error(chalk.red(`❌ Error: ${error.message}`));
+                if (error.message.includes('already exists')) {
+                    console.log(chalk.yellow(`💡 Branch '${branchName}' already exists. Use gcheckout to switch to it.`));
+                }
+                process.exit(1);
+            }
+        } else {
+            // Listing branches
+            console.log(chalk.cyan(`🔍 Running: ${branchCmd}`));
+            
+            try {
+                const result = execSync(branchCmd, { encoding: 'utf-8' });
+                
+                // Enhanced output formatting for branch listing
+                if (result) {
+                    const branches = result.split('\n').filter(line => line.trim());
+                    const currentBranch = getCurrentBranch();
+                    
+                    console.log(chalk.cyan('\n📋 Branches:'));
+                    branches.forEach(branch => {
+                        const cleanBranch = branch.replace(/^\*?\s*/, '');
+                        const isCurrent = branch.startsWith('*');
+                        
+                        if (isCurrent) {
+                            console.log(`  ${chalk.green('*')} ${chalk.green.bold(cleanBranch)} ${chalk.gray('(current)')}`);
+                        } else if (branch.includes('remotes/')) {
+                            console.log(`    ${chalk.blue(cleanBranch)}`);
+                        } else {
+                            console.log(`    ${chalk.white(cleanBranch)}`);
+                        }
+                    });
+                    
+                    console.log(chalk.gray('\n━'.repeat(40)));
+                    console.log(chalk.cyan('💡 Branch Tips:'));
+                    console.log(chalk.white('  gcheckout <branch>') + '       # Switch to branch');
+                    console.log(chalk.white('  gbranch <new-name>') + '       # Create new branch');
+                    console.log(chalk.white('  gbranch -a') + '               # Show remote branches');
+                }
+                
+            } catch (error) {
+                console.error(chalk.red(`❌ Error: ${error.message}`));
+                process.exit(1);
+            }
+        }
     } else {
-      // List branches
-      console.log(chalk.bold.magenta('\n🌿 Git Branches'));
-      console.log(chalk.gray('─'.repeat(40)));
-      
-      let command = 'git branch -v';
-      if (showAll) {
-        command = 'git branch -av';
-        console.log(chalk.blue('📊 Showing:'), chalk.white('All branches (local + remote)'));
-      } else if (showRemote) {
-        command = 'git branch -rv';
-        console.log(chalk.blue('📊 Showing:'), chalk.white('Remote branches only'));
-      } else if (showMerged) {
-        command = 'git branch --merged';
-        console.log(chalk.blue('📊 Showing:'), chalk.white('Merged branches only'));
-      } else {
-        console.log(chalk.blue('📊 Showing:'), chalk.white('Local branches'));
-      }
-      
-      console.log();
-      
-      // Execute branch listing command
-      execSync(command, { stdio: 'inherit' });
-      
-      console.log(chalk.cyan('\n💡 Useful commands:'));
-      console.log(chalk.gray(`   • Create branch: ${chalk.green('gbranch "branch-name"')}`));
-      console.log(chalk.gray(`   • Switch branch: ${chalk.green('gcheckout branch-name')}`));
-      console.log(chalk.gray(`   • Show all branches: ${chalk.green('gbranch --all')}`));
-      console.log(chalk.gray(`   • Delete branch: ${chalk.green('git branch -d branch-name')}`));
+        // Delete, move, or copy operations
+        if (!branchName) {
+            console.error(chalk.red(`❌ Error: Branch name required for ${action} operation`));
+            process.exit(1);
+        }
+        
+        branchCmd += ` ${branchName}`;
+        
+        if (action === 'force-delete') {
+            console.log(chalk.red('⚠️  WARNING: Force deleting branch can cause data loss!'));
+        }
+        
+        console.log(chalk.cyan(`🔍 Running: ${branchCmd}`));
+        
+        try {
+            const result = execSync(branchCmd, { encoding: 'utf-8' });
+            if (result) console.log(result);
+            
+            console.log(chalk.green(`✅ Branch ${action} operation completed successfully`));
+            
+        } catch (error) {
+            console.error(chalk.red(`❌ Error: ${error.message}`));
+            
+            if (action === 'delete' && error.message.includes('not fully merged')) {
+                console.log(chalk.yellow('💡 Use gbranch -D to force delete unmerged branch'));
+            }
+            
+            process.exit(1);
+        }
     }
     
-  } catch (error) {
-    console.log(chalk.red.bold('\n❌ Branch operation failed!'));
-    console.log(chalk.red(`Error: ${error.message}`));
-    
-    if (error.message.includes('not a git repository')) {
-      console.log(chalk.yellow('💡 Initialize repository with: git init'));
-    }
-    
-    process.exit(1);
-  }
+    console.log(chalk.green('\n✅ Command completed successfully'));
 }
 
-// Run as standalone script
 if (import.meta.url === `file://${process.argv[1]}`) {
-  main().catch(error => {
-    console.error(chalk.red('❌ Fatal error:'), error.message);
-    process.exit(1);
-  });
+    main().catch(console.error);
 }
+  
