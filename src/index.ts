@@ -23,8 +23,8 @@
  * • Workflow Combinations: 15+ CLI aliases for enhanced productivity
  * • Developer Tools: Smart workflows, backup systems, cleanup utilities
  * 
- * @author GitHub MCP Server Team
- * @version 1.8.3
+ * @author Sharique Chaudhary
+ * @version 2.4.0
  * @license ISC
  */
 

@@ -26,7 +26,7 @@
  * • Team Collaboration: conflict resolution, branch synchronization
  * 
  * @module github
- * @version 2.1.0
+ * @version 2.4.0
  */
 
 // Node.js built-in modules for executing shell commands and file operations
