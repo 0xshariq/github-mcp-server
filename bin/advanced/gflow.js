@@ -3,22 +3,26 @@
 /**
  * gflow - Enhanced Complete Git Workflow
  * 
- * Supports both specific files and full repository workflows:
- * - Add specific files or all changes
- * - Commit with message
- * - Push to remote
+ * Complete git workflow: add → commit → push
  * 
  * Usage:
- *   gflow "commit message"                    - Add all changes, commit, push
- *   gflow "commit message" file1.js file2.js - Add specific files, commit, push
- *   gflow "commit message" src/              - Add specific directory, commit, push
- *   gflow --help                            - Show this help
+ *   gflow "commit message"                         - Add ALL changes, commit, push
+ *   gflow "commit message" file1.js file2.js      - Add SPECIFIC files, commit, push  
+ *   gflow "commit message" src/ docs/             - Add SPECIFIC folders, commit, push
+ *   gflow "commit message" file.js src/ README.md - Add MIX of files and folders
+ *   gflow --help                                  - Show this help
+ * 
+ * Logic:
+ * - First argument: commit message (required, must be quoted)
+ * - Remaining arguments: files/folders to add (optional)
+ * - If no files specified: adds all changes (git add .)
+ * - Always commits and pushes after adding
  * 
  * Features:
- * - Flexible file handling (with or without quotes)
- * - Repository validation and safety checks
- * - Detailed progress display with styling
- * - Automatic workflow execution
+ * - Smart file validation (checks if files exist)
+ * - Repository safety checks
+ * - Detailed progress display with colors
+ * - Error handling and recovery suggestions
  */
 
 import { execSync } from 'child_process';
@@ -59,36 +63,32 @@ function showHelp() {
   console.log(chalk.bold.magenta(`
 ⚡ gflow - Enhanced Complete Git Workflow
 `));
-  console.log(chalk.cyan('📋 USAGE:'));
-  console.log(`   ${chalk.green('gflow "commit message"')}                    ${chalk.gray('# Add all changes, commit, push')}`);
-  console.log(`   ${chalk.green('gflow "message" file1.js file2.js')}        ${chalk.gray('# Add specific files, commit, push')}`);
-  console.log(`   ${chalk.green('gflow "message" src/ docs/')}               ${chalk.gray('# Add directories, commit, push')}`);
-  console.log(`   ${chalk.green('gflow "fix: update API" package.json')}     ${chalk.gray('# Mix of files and directories')}`);
-  
-  console.log(chalk.cyan('\n🎯 KEY FEATURES:'));
-  console.log(`   ${chalk.yellow('•')} ${chalk.white('Flexible File Handling:')} Works with files, directories, or all changes`);
-  console.log(`   ${chalk.yellow('•')} ${chalk.white('No Quotes Required:')} File names can be passed with or without quotes`);
-  console.log(`   ${chalk.yellow('•')} ${chalk.white('Smart Detection:')} Automatically detects if files exist before adding`);
-  console.log(`   ${chalk.yellow('•')} ${chalk.white('Safety Checks:')} Repository validation and error handling`);
-  console.log(`   ${chalk.yellow('•')} ${chalk.white('Progress Display:')} Step-by-step execution with colored output`);
+  console.log(chalk.cyan('📋 SYNTAX:'));
+  console.log(`   ${chalk.green('gflow "commit message" [files/folders...]')}`);
+  console.log('');
+  console.log(chalk.cyan('📖 LOGIC:'));
+  console.log(`   ${chalk.blue('1.')} First argument = commit message (required, quoted)`);
+  console.log(`   ${chalk.blue('2.')} Remaining arguments = files/folders to add (optional)`);
+  console.log(`   ${chalk.blue('3.')} If no files given → adds ALL changes (git add .)`);
+  console.log(`   ${chalk.blue('4.')} Always commits and pushes after adding`);
   
   console.log(chalk.cyan('\n💡 EXAMPLES:'));
-  console.log(`   ${chalk.green('gflow "Initial commit"')}                   ${chalk.gray('# Add all changes')}`);
-  console.log(`   ${chalk.green('gflow "Fix login bug" src/auth.js')}        ${chalk.gray('# Add specific file')}`);
-  console.log(`   ${chalk.green('gflow "Update docs" README.md docs/')}      ${chalk.gray('# Add file and directory')}`);
-  console.log(`   ${chalk.green('gflow "New feature" src/ tests/ README.md')} ${chalk.gray('# Multiple items')}`);
+  console.log(`   ${chalk.green('gflow "Initial commit"')}                   ${chalk.gray('→ Add ALL changes')}`);
+  console.log(`   ${chalk.green('gflow "Fix bug" src/auth.js')}              ${chalk.gray('→ Add ONLY src/auth.js')}`);
+  console.log(`   ${chalk.green('gflow "Update docs" README.md docs/')}      ${chalk.gray('→ Add README.md + docs/ folder')}`);
+  console.log(`   ${chalk.green('gflow "Release" src/ tests/ package.json')} ${chalk.gray('→ Add multiple items')}`);
   
-  console.log(chalk.cyan('\n🔄 WORKFLOW STEPS:'));
-  console.log(`   ${chalk.blue('1.')} ${chalk.white('Validate Repository')} - Ensure we\'re in a Git repo`);
-  console.log(`   ${chalk.blue('2.')} ${chalk.white('Add Files/Changes')} - Add specified files or all changes`);
-  console.log(`   ${chalk.blue('3.')} ${chalk.white('Commit Changes')} - Create commit with your message`);
-  console.log(`   ${chalk.blue('4.')} ${chalk.white('Push to Remote')} - Upload changes to GitHub/remote`);
+  console.log(chalk.cyan('\n🔄 WORKFLOW:'));
+  console.log(`   ${chalk.blue('①')} Validate git repository`);
+  console.log(`   ${chalk.blue('②')} Add files (specific files OR all changes)`);
+  console.log(`   ${chalk.blue('③')} Commit with message`);
+  console.log(`   ${chalk.blue('④')} Push to remote`);
   
-  console.log(chalk.cyan('\n⚠️  NOTES:'));
-  console.log(`   ${chalk.yellow('•')} Commit message is required (first argument)`);
-  console.log(`   ${chalk.yellow('•')} If no files specified, adds all changes (git add .)`);
-  console.log(`   ${chalk.yellow('•')} File paths are validated before adding`);
+  console.log(chalk.cyan('\n⚠️  IMPORTANT:'));
+  console.log(`   ${chalk.yellow('•')} Commit message MUST be quoted`);
+  console.log(`   ${chalk.yellow('•')} Files/folders are validated before adding`);
   console.log(`   ${chalk.yellow('•')} Process stops on any error for safety`);
+  console.log(`   ${chalk.yellow('•')} No files specified = add everything`);
   
   console.log(chalk.gray('\n═══════════════════════════════════════════════════════════'));
 }
@@ -108,14 +108,14 @@ async function main() {
     process.exit(1);
   }
 
-  // Extract commit message (first argument)
+  // Extract commit message (first argument) and files (remaining arguments)
   const commitMessage = args[0];
-  const filesToAdd = args.slice(1); // Remaining arguments are files
+  const filesToAdd = args.slice(1); // Remaining arguments are files/folders
 
   // Validate commit message
   if (!commitMessage || commitMessage.trim().length < 3) {
     console.log(chalk.red('❌ Error: Commit message is required and must be at least 3 characters'));
-    console.log(chalk.yellow('💡 Usage: gflow "your commit message" [files...]'));
+    console.log(chalk.yellow('💡 Usage: gflow "your commit message" [files/folders...]'));
     console.log(chalk.gray('💡 Or run: gflow --help for more information'));
     process.exit(1);
   }

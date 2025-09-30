@@ -19,6 +19,8 @@ gstatus
 glist
 ```
 
+> **🛠️ Having Issues?** If commands aren't working after installation, see our **[Complete Troubleshooting Guide](markdown/TROUBLESHOOTING.md)** for solutions to all common problems including "command not found" errors, path conflicts, and PNPM issues.
+
 ## 🎯 About
 
 **GitHub MCP Server** bridges AI assistants with Git repositories and provides powerful developer productivity tools. It provides:
@@ -119,6 +121,7 @@ github-mcp-server/
 - **[bin/basic/README.md](bin/basic/README.md)** - Complete guide to 17 essential Git operations
 - **[bin/advanced/README.md](bin/advanced/README.md)** - Comprehensive advanced workflows documentation
 - **[markdown/INSTALLATION.md](markdown/INSTALLATION.md)** - Step-by-step installation for all platforms
+- **[markdown/TROUBLESHOOTING.md](markdown/TROUBLESHOOTING.md)** - 🛠️ **Complete troubleshooting guide** - Solutions to all common issues
 - **[markdown/MCP_UNIVERSAL_CONFIG.md](markdown/MCP_UNIVERSAL_CONFIG.md)** - Universal MCP configuration for all LLM clients
 - **[markdown/QUICK_REFERENCES.md](markdown/QUICK_REFERENCES.md)** - Copy-paste commands for quick reference
 - **[markdown/DOCKER.md](markdown/DOCKER.md)** - Docker setup, deployment, and containerization
@@ -156,6 +159,32 @@ github-mcp-server/
 - **⏱️ Timeout Protection**: 30-second timeout for operations
 - **🚫 Input Sanitization**: Prevents command injection
 - **📝 Detailed Error Messages**: Clear, actionable error descriptions
+
+## 🛠️ Troubleshooting
+
+Having issues with installation or commands not working? We've got you covered! Our comprehensive troubleshooting guide covers solutions to all common problems:
+
+### 🚨 Most Common Issues & Quick Fixes
+
+| Problem | Quick Solution |
+|---------|----------------|
+| 💥 `command not found` errors | `unset command_not_found_handle` |
+| 📁 Path conflicts with PNPM | Remove `/5/` from global directory |
+| 🔗 Commands show help instead of executing | Update wrapper scripts to pass command names |
+| 🚫 Permission denied | `chmod +x ~/.local/share/pnpm/g*` |
+
+**👉 For detailed solutions, step-by-step fixes, and diagnostic tools, see our [Complete Troubleshooting Guide](markdown/TROUBLESHOOTING.md)**
+
+### 🆘 Quick Diagnostic
+
+```bash
+# Test if commands are working
+gstatus                    # Should show repository status
+env gstatus               # Alternative if above fails
+which gstatus             # Should show path to command
+
+# If still having issues, see TROUBLESHOOTING.md for complete solutions
+```
 
 ## License
 
