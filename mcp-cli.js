@@ -10,21 +10,71 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Get the command name from the actual command used to invoke this script
-// Handle both direct calls and npm symlinks
+// Handle both direct calls and npm/pnpm symlinks
 const fullPath = process.argv[1];
 let commandName = path.basename(fullPath);
 
-// For pnpm-generated wrappers, the original command name is lost
-// We need to detect it from the calling script or environment
-// Check if we're being called through a pnpm wrapper
+// For pnpm-generated wrappers, we need a more reliable detection method
 if (commandName === 'mcp-cli.js') {
-  // Try to get the original command from the wrapper script path
-  const wrapperPath = process.env._ || process.argv[1];
-  if (wrapperPath) {
-    const originalCommand = path.basename(wrapperPath);
-    if (originalCommand.startsWith('g') && originalCommand !== 'github-mcp-server') {
-      commandName = originalCommand;
+  let detectedCommand = null;
+  
+  // Method 1: Check the parent process command line to find the wrapper name
+  try {
+    const ppid = process.ppid;
+    if (ppid) {
+      const psOutput = execSync(`ps -p ${ppid} -o args= 2>/dev/null || echo ""`, { encoding: 'utf8' }).trim();
+      // Look for patterns like "bash /path/to/gstatus" or "sh /path/to/gadd"
+      const wrapperMatch = psOutput.match(/(?:bash|sh|dash)\s+.*?\/([g][a-z]+)(?:\s|$)/);
+      if (wrapperMatch && wrapperMatch[1]) {
+        detectedCommand = wrapperMatch[1];
+      }
     }
+  } catch (e) {
+    // Ignore ps command errors
+  }
+  
+  // Method 2: Check process.env._ as fallback
+  if (!detectedCommand && process.env._) {
+    const envCommand = path.basename(process.env._);
+    if (envCommand.startsWith('g') && envCommand !== 'github-mcp-server' && envCommand !== 'global') {
+      detectedCommand = envCommand;
+    }
+  }
+  
+  // Method 3: Try to find the most recently accessed wrapper script
+  if (!detectedCommand) {
+    try {
+      const pnpmBinDir = '/home/sharique/.local/share/pnpm';
+      const gitAliases = ['gstatus', 'gadd', 'gcommit', 'gpush', 'gpull', 'gbranch', 'gcheckout', 'gclone', 
+                         'gdiff', 'glog', 'gremote', 'greset', 'gstash', 'gpop', 'ginit', 'gflow', 'gquick', 
+                         'gsync', 'gdev', 'gworkflow', 'gfix', 'gfresh', 'gbackup', 'gclean', 'gsave', 
+                         'glist', 'grelease'];
+      
+      let latestTime = 0;
+      let latestCommand = null;
+      
+      for (const alias of gitAliases) {
+        const wrapperPath = path.join(pnpmBinDir, alias);
+        if (fs.existsSync(wrapperPath)) {
+          const stats = fs.statSync(wrapperPath);
+          if (stats.atimeMs > latestTime) {
+            latestTime = stats.atimeMs;
+            latestCommand = alias;
+          }
+        }
+      }
+      
+      // Only use this if the access time is very recent (within last 5 seconds)
+      if (latestCommand && (Date.now() - latestTime < 5000)) {
+        detectedCommand = latestCommand;
+      }
+    } catch (e) {
+      // Ignore file system errors
+    }
+  }
+  
+  if (detectedCommand) {
+    commandName = detectedCommand;
   }
 }
 
@@ -92,8 +142,7 @@ const aliasMap = {
 async function main() {
   const args = process.argv.slice(2);
   
-  // Debug output - remove this later
-  console.log(`Debug: commandName = "${commandName}", args = [${args.join(', ')}]`);
+  // Remove debug output for production
   
   // Detect if we're being called as an alias (e.g., gbranch, gadd, etc.)
   let command;
