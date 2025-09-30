@@ -71,6 +71,7 @@
     "grelease": "mcp-cli.js"
   },
   "scripts": {
+    "gms": "mcp-cli.js",
     "build": "tsc -p .",
     "start": "node dist/index.js",
     "clean": "rm -rf dist",

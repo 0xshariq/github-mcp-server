@@ -37,49 +37,64 @@ function validateRepository() {
 
 // Show help information
 function showHelp() {
-  console.log(chalk.bold.magenta(`
-🗄️  gbackup - Enhanced Repository Backup Manager
-`));
-  console.log(chalk.cyan('📋 USAGE:'));
-  console.log(`   ${chalk.green('gbackup')}                     ${chalk.gray('# Smart automatic backup')}`);
-  console.log(`   ${chalk.green('gbackup --branch')}            ${chalk.gray('# Create backup branch')}`);
-  console.log(`   ${chalk.green('gbackup --tag')}               ${chalk.gray('# Create backup tag')}`);
-  console.log(`   ${chalk.green('gbackup --stash')}             ${chalk.gray('# Create backup stash')}`);
-  console.log(`   ${chalk.green('gbackup --remote')}            ${chalk.gray('# Push backup to remote')}`);
-  console.log(`   ${chalk.green('gbackup --all')}               ${chalk.gray('# Full backup suite')}`);
-  console.log(`   ${chalk.green('gbackup --help')}              ${chalk.gray('# Show this help message')}`);
+  console.log(chalk.bold.magenta('\n🗄️ gbackup - Repository Backup'));
   
-  console.log(chalk.cyan('\n🚀 BACKUP STRATEGIES:'));
-  console.log(`   ${chalk.blue('Smart Backup:')} Automatically chooses best strategy based on repo state`);
-  console.log(`   ${chalk.blue('Branch Backup:')} Creates timestamped backup branch`);
-  console.log(`   ${chalk.blue('Tag Backup:')} Creates immutable backup tag`);
-  console.log(`   ${chalk.blue('Stash Backup:')} Stashes uncommitted changes`);
-  console.log(`   ${chalk.blue('Remote Backup:')} Pushes backup to remote repository`);
+  console.log(chalk.cyan('Purpose:'), 'Create comprehensive repository backups with various strategies for data protection and disaster recovery.\n');
   
-  console.log(chalk.cyan('\n📁 BACKUP OPTIONS:'));
-  console.log(`   ${chalk.yellow('--name "custom"')} - Custom backup name`);
-  console.log(`   ${chalk.yellow('--message "desc"')} - Custom backup description`);
-  console.log(`   ${chalk.yellow('--verify')} - Verify backup integrity`);
-  console.log(`   ${chalk.yellow('--compress')} - Create compressed archive`);
+  console.log(chalk.cyan('Command:'), 'gbackup [strategy] [options]');
   
-  console.log(chalk.cyan('\n🗂️  BACKUP MANAGEMENT:'));
-  console.log(`   ${chalk.blue('gbackup --list')} - List all available backups`);
-  console.log(`   ${chalk.blue('gbackup --restore <name>')} - Restore from backup`);
-  console.log(`   ${chalk.blue('gbackup --cleanup')} - Clean old backup files`);
-  console.log(`   ${chalk.blue('gbackup --verify <name>')} - Verify backup integrity`);
+  console.log(chalk.cyan('\nParameters:'));
+  console.log('  [strategy]   - Optional backup strategy (branch, tag, full, incremental)');
   
-  console.log(chalk.cyan('\n⚡ BACKUP EXAMPLES:'));
-  console.log(`   ${chalk.blue('1.')} ${chalk.green('gbackup')} - Quick smart backup before changes`);
-  console.log(`   ${chalk.blue('2.')} ${chalk.green('gbackup --branch --name "before-refactor"')} - Named branch backup`);
-  console.log(`   ${chalk.blue('3.')} ${chalk.green('gbackup --all --verify')} - Complete backup with verification`);
-  console.log(`   ${chalk.blue('4.')} ${chalk.green('gbackup --tag --message "stable-version"')} - Release tag backup`);
+  console.log(chalk.cyan('\nEssential Options:'));
+  console.log('  ' + chalk.green('--branch <name>') + '      - Backup specific branch');
+  console.log('  ' + chalk.green('--all-branches') + '       - Backup all branches');  
+  console.log('  ' + chalk.green('--tags') + '               - Include all tags in backup');
+  console.log('  ' + chalk.green('--full') + '               - Complete repository backup');
+  console.log('  ' + chalk.green('--incremental') + '        - Incremental backup since last backup');
+  console.log('  ' + chalk.green('--compress') + '           - Compress backup archives');
+  console.log('  ' + chalk.green('--remote <url>') + '       - Push backup to remote location');
+  console.log('  ' + chalk.green('--verify') + '             - Verify backup integrity after creation');
+  console.log('  ' + chalk.green('--name <name>') + '        - Custom backup name');
+  console.log('  ' + chalk.green('--message <msg>') + '      - Custom backup description');
+  console.log('  ' + chalk.green('--list') + '               - List all available backups');
+  console.log('  ' + chalk.green('--restore <name>') + '     - Restore from backup');
+  console.log('  ' + chalk.green('--cleanup') + '            - Clean old backup files');
+  console.log('  ' + chalk.green('-h, --help') + '           - Show detailed help information');
   
-  console.log(chalk.cyan('\n🔧 RESTORATION:'));
-  console.log(`   ${chalk.gray('Use')} ${chalk.green('gbackup --list')} ${chalk.gray('to see available backups')}`);
-  console.log(`   ${chalk.gray('Use')} ${chalk.green('gbackup --restore <backup-name>')} ${chalk.gray('to restore')}`);
-  console.log(`   ${chalk.gray('Use')} ${chalk.green('gcheckout <backup-branch>')} ${chalk.gray('for branch backups')}`);
+  console.log(chalk.cyan('\nCommon Use Cases:'));
+  console.log(chalk.white('  gbackup') + '                               # Default backup strategy');
+  console.log(chalk.white('  gbackup --help') + '                        # Show help');
+  console.log(chalk.white('  gbackup --branch main') + '                 # Backup main branch only');
+  console.log(chalk.white('  gbackup --all-branches') + '                # Backup all branches');
+  console.log(chalk.white('  gbackup --tags') + '                        # Backup with all tags');
+  console.log(chalk.white('  gbackup --full --compress') + '             # Complete compressed backup');
+  console.log(chalk.white('  gbackup --incremental') + '                 # Incremental since last backup');
+  console.log(chalk.white('  gbackup --remote backup-server') + '        # Push to backup server');
+  console.log(chalk.white('  gbackup --verify --compress') + '           # Compressed backup with verification');
+  console.log(chalk.white('  gbackup --name "before-refactor"') + '       # Named branch backup');
+  console.log(chalk.white('  gbackup --list') + '                        # List available backups');
+  console.log(chalk.white('  gbackup --restore backup-name') + '         # Restore from backup');
   
-  console.log(chalk.gray('\n═══════════════════════════════════════════════════════════'));
+  console.log(chalk.cyan('\nBackup Strategies:'));
+  console.log('  • Branch backup      - Backs up specific branch with history');
+  console.log('  • Full backup        - Complete repository including all branches and tags');
+  console.log('  • Incremental backup - Only changes since last backup');
+  console.log('  • Tag backup         - Backup specific tagged versions');
+  console.log('  • Remote backup      - Push backups to remote storage');
+  
+  console.log(chalk.cyan('\nWorkflow Tips:'));
+  console.log('  • Use ' + chalk.yellow('--verify') + ' to ensure backup integrity');
+  console.log('  • Use ' + chalk.yellow('--compress') + ' to save storage space');
+  console.log('  • Use ' + chalk.yellow('--incremental') + ' for faster regular backups');
+  console.log('  • Use ' + chalk.yellow('--list') + ' to see available backups before restoring');
+  
+  console.log(chalk.cyan('\nSafety Notes:'));
+  console.log('  • Backups are timestamped to prevent conflicts');
+  console.log('  • Use ' + chalk.yellow('--cleanup') + ' to remove old backup files');
+  console.log('  • Verify backup integrity before important operations');
+  
+  console.log(chalk.gray('\n════════════════════════════════════════════════════════════'));
 }
 
 // Get current branch name

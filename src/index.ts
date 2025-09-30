@@ -74,10 +74,10 @@ import {
 // Initialize MCP server with enhanced metadata and capabilities
 const server = new Server({
   name: "github-mcp-server",
-  version: "1.8.0",
+  version: "2.3.0",
   description: "Comprehensive Git repository management server for AI assistants",
-  author: "GitHub MCP Server Team",
-  license: "ISC"
+  author: "Sharique Chaudhary",
+  license: "MIT"
 }, {
   capabilities: {
     tools: {},

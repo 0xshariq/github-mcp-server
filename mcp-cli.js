@@ -14,6 +14,20 @@ const __dirname = path.dirname(__filename);
 const fullPath = process.argv[1];
 let commandName = path.basename(fullPath);
 
+// For pnpm-generated wrappers, the original command name is lost
+// We need to detect it from the calling script or environment
+// Check if we're being called through a pnpm wrapper
+if (commandName === 'mcp-cli.js') {
+  // Try to get the original command from the wrapper script path
+  const wrapperPath = process.env._ || process.argv[1];
+  if (wrapperPath) {
+    const originalCommand = path.basename(wrapperPath);
+    if (originalCommand.startsWith('g') && originalCommand !== 'github-mcp-server') {
+      commandName = originalCommand;
+    }
+  }
+}
+
 // Special case: if we get gms as command name but have args, 
 // and the first arg looks like a g* command, use that instead
 if (commandName === 'gms' && process.argv.length > 2) {
@@ -78,11 +92,14 @@ const aliasMap = {
 async function main() {
   const args = process.argv.slice(2);
   
+  // Debug output - remove this later
+  console.log(`Debug: commandName = "${commandName}", args = [${args.join(', ')}]`);
+  
   // Detect if we're being called as an alias (e.g., gbranch, gadd, etc.)
   let command;
   let commandArgs = args;
   
-  if (commandName === 'mcp-cli.js' || commandName === 'gms' || commandName === 'github-mcp-server') {
+  if (commandName === 'mcp-cli.js' || commandName === 'github-mcp-server') {
     // Called as main CLI - command is first argument
     if (args.length === 0) {
       showUsage();

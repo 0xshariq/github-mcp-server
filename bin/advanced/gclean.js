@@ -32,31 +32,59 @@ function validateRepository() {
 }
 
 function showHelp() {
-  console.log(chalk.bold.magenta(`
-🧹 gclean - Enhanced Repository Cleanup Manager
-`));
-  console.log(chalk.cyan('📋 USAGE:'));
-  console.log(`   ${chalk.green('gclean')}                   ${chalk.gray('# Smart safe cleanup')}`);
-  console.log(`   ${chalk.green('gclean --branches')}        ${chalk.gray('# Clean merged branches')}`);
-  console.log(`   ${chalk.green('gclean --all')}             ${chalk.gray('# Deep cleanup with confirmation')}`);
-  console.log(`   ${chalk.green('gclean --gc')}              ${chalk.gray('# Garbage collection optimization')}`);
-  console.log(`   ${chalk.green('gclean --stash')}           ${chalk.gray('# Clean old stashes')}`);
-  console.log(`   ${chalk.green('gclean --help')}            ${chalk.gray('# Show this help message')}`);
+  console.log(chalk.bold.magenta('\n🧹 gclean - Repository Cleanup'));
   
-  console.log(chalk.cyan('\n🧹 CLEANUP CATEGORIES:'));
-  console.log(`   ${chalk.blue('Branches:')} Remove merged and stale feature branches`);
-  console.log(`   ${chalk.blue('References:')} Clean deleted remote references`);
-  console.log(`   ${chalk.blue('Stashes:')} Remove old stash entries`);
-  console.log(`   ${chalk.blue('Objects:')} Optimize repository with garbage collection`);
-  console.log(`   ${chalk.blue('Untracked:')} Remove untracked files and directories`);
+  console.log(chalk.cyan('Purpose:'), 'Clean and maintain repository health with comprehensive cleanup options for optimization and maintenance.\n');
   
-  console.log(chalk.cyan('\n⚡ CLEANUP FEATURES:'));
-  console.log(`   ${chalk.yellow('•')} ${chalk.white('Safe Operations:')} Protects important branches and data`);
-  console.log(`   ${chalk.yellow('•')} ${chalk.white('Smart Detection:')} Identifies truly safe-to-remove items`);
-  console.log(`   ${chalk.yellow('•')} ${chalk.white('Backup Creation:')} Creates backups before destructive ops`);
-  console.log(`   ${chalk.yellow('•')} ${chalk.white('Statistics:')} Shows cleanup results and space saved`);
+  console.log(chalk.cyan('Command:'), 'gclean [target] [options]');
   
-  console.log(chalk.gray('\n═══════════════════════════════════════════════════════════'));
+  console.log(chalk.cyan('\nParameters:'));
+  console.log('  [target]     - Optional cleanup target (branches, cache, files, all)');
+  
+  console.log(chalk.cyan('\nEssential Options:'));
+  console.log('  ' + chalk.green('--branches') + '           - Clean merged/stale branches');
+  console.log('  ' + chalk.green('--cache') + '              - Clear Git cache and temporary files');
+  console.log('  ' + chalk.green('--files') + '              - Remove untracked files and directories');
+  console.log('  ' + chalk.green('--all') + '                - Comprehensive cleanup (all targets)');
+  console.log('  ' + chalk.green('--dry-run') + '            - Preview cleanup operations');
+  console.log('  ' + chalk.green('--force') + '              - Force cleanup without confirmation');
+  console.log('  ' + chalk.green('--keep <pattern>') + '     - Keep files matching pattern');
+  console.log('  ' + chalk.green('--aggressive') + '         - Aggressive cleanup including packed refs');
+  console.log('  ' + chalk.green('--gc') + '                 - Garbage collection optimization');
+  console.log('  ' + chalk.green('--stash') + '              - Clean old stashes');
+  console.log('  ' + chalk.green('-h, --help') + '           - Show detailed help information');
+  
+  console.log(chalk.cyan('\nCommon Use Cases:'));
+  console.log(chalk.white('  gclean --help') + '                        # Show help');
+  console.log(chalk.white('  gclean') + '                              # Smart safe cleanup');
+  console.log(chalk.white('  gclean --branches') + '                   # Clean merged branches');
+  console.log(chalk.white('  gclean --all') + '                        # Deep cleanup (all targets)');
+  console.log(chalk.white('  gclean --cache') + '                      # Clear cache');
+  console.log(chalk.white('  gclean --files') + '                      # Remove untracked files');
+  console.log(chalk.white('  gclean --dry-run') + '                    # Preview cleanup');
+  console.log(chalk.white('  gclean --force') + '                      # Force cleanup');
+  console.log(chalk.white('  gclean --keep "*.md"') + '                # Keep markdown files');
+  console.log(chalk.white('  gclean --aggressive') + '                 # Aggressive cleanup');
+  
+  console.log(chalk.cyan('\nCleanup Categories:'));
+  console.log('  • Branches      - Remove merged and stale feature branches');
+  console.log('  • References    - Clean deleted remote references');
+  console.log('  • Stashes       - Remove old stash entries');
+  console.log('  • Objects       - Optimize repository with garbage collection');
+  console.log('  • Untracked     - Remove untracked files and directories');
+  
+  console.log(chalk.cyan('\nWorkflow Tips:'));
+  console.log('  • Use ' + chalk.yellow('--dry-run') + ' to preview operations before execution');
+  console.log('  • Use ' + chalk.yellow('--keep') + ' patterns to protect important files');
+  console.log('  • Use ' + chalk.yellow('--aggressive') + ' for deep optimization');
+  console.log('  • Run cleanup regularly to maintain repository health');
+  
+  console.log(chalk.cyan('\nSafety Notes:'));
+  console.log('  • Safe operations protect important branches and data');
+  console.log('  • Backups are created before destructive operations');
+  console.log('  • Use ' + chalk.yellow('--force') + ' carefully as it bypasses confirmations');
+  
+  console.log(chalk.gray('\n════════════════════════════════════════════════════════════'));
 }
 
 function runGitCommand(command, successMessage) {
