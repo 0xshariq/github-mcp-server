@@ -159,7 +159,14 @@ async function main() {
   } else {
     // Called as alias (e.g., gbranch, gadd, etc.)
     command = commandName;
-    commandArgs = args;
+    
+    // If the first argument is the same as the command name, skip it
+    // This happens when wrapper scripts pass the command name as an argument
+    if (args.length > 0 && args[0] === commandName) {
+      commandArgs = args.slice(1);
+    } else {
+      commandArgs = args;
+    }
   }
 
   // Check if it's a valid alias and route to script
