@@ -7,9 +7,11 @@
 # globally without needing npm link or pnpm global installation.
 # 
 # Compatible with:
-# - Linux (Ubuntu, Debian, CentOS, etc.)
-# - macOS
+# - Linux (Ubuntu, Debian, CentOS, Fedora, Arch, etc.)
+# - macOS (Intel and Apple Silicon)
 # - Windows WSL/WSL2
+# - Windows Git Bash/MSYS2
+# - FreeBSD, OpenBSD, NetBSD
 # - Any POSIX-compliant system
 #
 # Usage:
@@ -86,9 +88,42 @@ declare -a GIT_ALIASES=(
     "grelease"
 )
 
+# === PLATFORM DETECTION ===
+detect_platform() {
+    local os_type=""
+    local shell_type=""
+    
+    # Detect OS
+    if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+        os_type="linux"
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+        os_type="macos"
+    elif [[ "$OSTYPE" == "cygwin" ]]; then
+        os_type="windows-cygwin"
+    elif [[ "$OSTYPE" == "msys" ]]; then
+        os_type="windows-msys"
+    elif [[ "$OSTYPE" == "freebsd"* ]]; then
+        os_type="freebsd"
+    else
+        os_type="unknown"
+    fi
+    
+    # Detect if running in WSL
+    if [[ -f /proc/version ]] && grep -q Microsoft /proc/version 2>/dev/null; then
+        os_type="windows-wsl"
+    fi
+    
+    echo "$os_type"
+}
+
 # === UTILITY FUNCTIONS ===
 log() {
-    echo -e "${1}" >&2
+    # Use printf for better cross-platform compatibility
+    if command -v printf >/dev/null 2>&1; then
+        printf "${1}\n" >&2
+    else
+        echo -e "${1}" >&2
+    fi
 }
 
 info() {
@@ -168,7 +203,11 @@ EOF
 
 # === VALIDATION FUNCTIONS ===
 validate_environment() {
+    local platform
+    platform=$(detect_platform)
+    
     header "${GEAR} Validating Environment..."
+    info "Platform detected: ${CYAN}$platform${RESET}"
     
     # Check if we're in the correct directory
     if [[ ! -f "$MCP_CLI_PATH" ]]; then
@@ -180,22 +219,50 @@ validate_environment() {
     # Check if Node.js is available
     if ! command -v node >/dev/null 2>&1; then
         error "Node.js is not installed or not in PATH"
-        error "Please install Node.js first: https://nodejs.org/"
+        case "$platform" in
+            "linux")
+                error "Install with: ${WHITE}curl -fsSL https://fnm.vercel.app/install | bash${RESET}"
+                ;;
+            "macos")
+                error "Install with: ${WHITE}brew install node${RESET} or visit https://nodejs.org/"
+                ;;
+            "windows-"*)
+                error "Install from: ${WHITE}https://nodejs.org/${RESET} or use ${WHITE}winget install nodejs${RESET}"
+                ;;
+            *)
+                error "Please install Node.js first: https://nodejs.org/"
+                ;;
+        esac
         exit 1
     fi
+    
+    # Display Node.js version for confirmation
+    local node_version
+    node_version=$(node --version 2>/dev/null || echo "unknown")
+    info "Node.js version: ${GREEN}$node_version${RESET}"
     
     # Check if project is built
     if [[ ! -f "$PROJECT_DIR/dist/index.js" ]]; then
         warning "Project not built. Running build command..."
         cd "$PROJECT_DIR"
+        
+        # Check if npm is available
+        if ! command -v npm >/dev/null 2>&1; then
+            error "npm is not available. Please install Node.js with npm."
+            exit 1
+        fi
+        
         npm run build || {
             error "Failed to build project"
             exit 1
         }
     fi
     
-    # Make mcp-cli.js executable
-    chmod +x "$MCP_CLI_PATH"
+    # Make mcp-cli.js executable (cross-platform)
+    chmod +x "$MCP_CLI_PATH" 2>/dev/null || {
+        warning "Could not set executable permissions on mcp-cli.js"
+        warning "You may need to run: ${WHITE}chmod +x $MCP_CLI_PATH${RESET}"
+    }
     
     success "Environment validation completed"
 }
@@ -203,21 +270,56 @@ validate_environment() {
 # === TARGET DIRECTORY FUNCTIONS ===
 determine_target_directory() {
     local target_dir=""
+    local platform
+    platform=$(detect_platform)
     
     if [[ $# -eq 0 ]]; then
-        # Default: /usr/local/bin (requires sudo)
-        target_dir="/usr/local/bin"
+        # Platform-specific default directories
+        case "$platform" in
+            "linux"|"freebsd")
+                target_dir="/usr/local/bin"
+                ;;
+            "macos")
+                target_dir="/usr/local/bin"
+                ;;
+            "windows-wsl"|"windows-cygwin"|"windows-msys")
+                target_dir="$HOME/.local/bin"
+                warning "Windows environment detected - using user installation by default"
+                ;;
+            *)
+                target_dir="$HOME/.local/bin"
+                warning "Unknown platform - using user installation by default"
+                ;;
+        esac
         
-        if [[ $EUID -ne 0 ]]; then
+        # Check for sudo requirement (except on Windows environments)
+        if [[ "$platform" != "windows-"* && "$target_dir" == "/usr/local/bin" && $EUID -ne 0 ]]; then
             error "Default installation requires sudo privileges"
             info "Run: ${WHITE}sudo $0${RESET}"
             info "Or use: ${WHITE}$0 --user${RESET} for user installation"
             exit 1
         fi
+        
+        # Create directory if it doesn't exist
+        if [[ ! -d "$target_dir" ]]; then
+            mkdir -p "$target_dir" 2>/dev/null || {
+                error "Failed to create directory: $target_dir"
+                exit 1
+            }
+        fi
+        
     elif [[ "$1" == "--user" ]]; then
-        # User installation
-        target_dir="$HOME/.local/bin"
+        # User installation - platform specific
+        case "$platform" in
+            "windows-"*)
+                target_dir="$HOME/.local/bin"
+                ;;
+            *)
+                target_dir="$HOME/.local/bin"
+                ;;
+        esac
         mkdir -p "$target_dir"
+        
     elif [[ "$1" == "--help" || "$1" == "-h" ]]; then
         show_help
         exit 0
@@ -230,7 +332,7 @@ determine_target_directory() {
         
         if [[ ! -d "$target_dir" ]]; then
             error "Directory does not exist: $target_dir"
-            info "Create it first: ${WHITE}mkdir -p $target_dir${RESET}"
+            info "Create it first: ${WHITE}mkdir -p \"$target_dir\"${RESET}"
             exit 1
         fi
         
@@ -293,6 +395,8 @@ create_symbolic_links() {
 # === PATH VERIFICATION ===
 verify_path_access() {
     local target_dir="$1"
+    local platform
+    platform=$(detect_platform)
     
     header "${GEAR} Verifying PATH Configuration..."
     
@@ -301,14 +405,58 @@ verify_path_access() {
     else
         warning "Directory is NOT in PATH: $target_dir"
         echo ""
-        info "Add to your shell profile (${WHITE}~/.bashrc${RESET}, ${WHITE}~/.zshrc${RESET}, etc.):"
+        
+        # Platform-specific PATH configuration instructions
+        case "$platform" in
+            "linux"|"freebsd")
+                info "Add to your shell profile:"
+                echo -e "    ${WHITE}~/.bashrc${RESET} (Bash)"
+                echo -e "    ${WHITE}~/.zshrc${RESET} (Zsh)"
+                echo -e "    ${WHITE}~/.profile${RESET} (Generic)"
+                echo ""
+                echo -e "    ${WHITE}export PATH=\"$target_dir:\$PATH\"${RESET}"
+                ;;
+            "macos")
+                info "Add to your shell profile:"
+                echo -e "    ${WHITE}~/.zshrc${RESET} (Default on macOS)"
+                echo -e "    ${WHITE}~/.bash_profile${RESET} (If using Bash)"
+                echo ""
+                echo -e "    ${WHITE}export PATH=\"$target_dir:\$PATH\"${RESET}"
+                ;;
+            "windows-wsl")
+                info "Add to your WSL shell profile:"
+                echo -e "    ${WHITE}~/.bashrc${RESET} (WSL Bash)"
+                echo -e "    ${WHITE}~/.zshrc${RESET} (WSL Zsh)"
+                echo ""
+                echo -e "    ${WHITE}export PATH=\"$target_dir:\$PATH\"${RESET}"
+                ;;
+            "windows-cygwin"|"windows-msys")
+                info "Add to your Windows shell profile:"
+                echo -e "    ${WHITE}~/.bashrc${RESET} (Git Bash/MSYS2)"
+                echo ""
+                echo -e "    ${WHITE}export PATH=\"$target_dir:\$PATH\"${RESET}"
+                ;;
+            *)
+                info "Add to your shell profile:"
+                echo ""
+                echo -e "    ${WHITE}export PATH=\"$target_dir:\$PATH\"${RESET}"
+                ;;
+        esac
+        
+        echo ""
+        info "Or apply immediately:"
         echo ""
         echo -e "    ${WHITE}export PATH=\"$target_dir:\$PATH\"${RESET}"
-        echo ""
-        info "Or source immediately:"
-        echo ""
-        echo -e "    ${WHITE}export PATH=\"$target_dir:\$PATH\"${RESET}"
-        echo -e "    ${WHITE}source ~/.bashrc${RESET}"
+        
+        # Platform-specific source command
+        case "$platform" in
+            "macos")
+                echo -e "    ${WHITE}source ~/.zshrc${RESET}  ${GRAY}# or ~/.bash_profile${RESET}"
+                ;;
+            *)
+                echo -e "    ${WHITE}source ~/.bashrc${RESET}  ${GRAY}# or your shell's profile${RESET}"
+                ;;
+        esac
     fi
 }
 
@@ -352,7 +500,26 @@ test_installation() {
 remove_symbolic_links() {
     header "${TRASH} Removing Symbolic Links..."
     
-    local common_dirs=("/usr/local/bin" "$HOME/.local/bin" "/opt/local/bin")
+    local platform
+    platform=$(detect_platform)
+    
+    # Platform-specific common directories
+    local common_dirs=()
+    case "$platform" in
+        "linux"|"freebsd")
+            common_dirs=("/usr/local/bin" "$HOME/.local/bin" "/opt/local/bin" "/usr/bin")
+            ;;
+        "macos")
+            common_dirs=("/usr/local/bin" "$HOME/.local/bin" "/opt/local/bin" "/opt/homebrew/bin")
+            ;;
+        "windows-"*)
+            common_dirs=("$HOME/.local/bin" "$HOME/bin" "/usr/local/bin")
+            ;;
+        *)
+            common_dirs=("/usr/local/bin" "$HOME/.local/bin" "/opt/local/bin")
+            ;;
+    esac
+    
     local removed_count=0
     
     for dir in "${common_dirs[@]}"; do

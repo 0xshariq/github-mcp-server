@@ -334,6 +334,149 @@ node dist/index.js
 
 ---
 
+## 🔗 Alternative Solution: Symbolic Links Setup
+
+### Problem: Want to Avoid npm/pnpm Global Installation Issues Entirely
+
+If you're experiencing persistent issues with npm/pnpm global installations, path conflicts, or wrapper scripts, you can use our **cross-platform symbolic links setup script** as a complete alternative.
+
+**✅ Benefits:**
+- ✅ **No Package Manager Dependency** - Works without npm/pnpm
+- ✅ **Cross-Platform Compatible** - Linux, macOS, Windows (WSL/Git Bash/MSYS2), FreeBSD
+- ✅ **Direct Control** - You control exactly where links are created
+- ✅ **Easy Management** - Simple setup, update, and removal
+- ✅ **No Version Conflicts** - Avoids all pnpm directory structure issues
+
+### Solution: Use setup-symbolic.sh Script
+
+The repository includes a comprehensive `setup-symbolic.sh` script that creates symbolic links for all git aliases.
+
+**🚀 Quick Setup:**
+
+```bash
+# Navigate to the GitHub MCP Server directory
+cd /path/to/github-mcp-server
+
+# System-wide installation (Linux/macOS - requires sudo)
+sudo ./setup-symbolic.sh
+
+# User-only installation (recommended for Windows/WSL)
+./setup-symbolic.sh --user
+
+# Custom directory installation
+./setup-symbolic.sh ~/bin
+
+# Show all options
+./setup-symbolic.sh --help
+```
+
+**🎯 Platform-Specific Examples:**
+
+```bash
+# Linux/Ubuntu
+sudo ./setup-symbolic.sh                    # Install to /usr/local/bin
+./setup-symbolic.sh --user                  # Install to ~/.local/bin
+
+# macOS
+sudo ./setup-symbolic.sh                    # Install to /usr/local/bin
+./setup-symbolic.sh ~/bin                   # Install to ~/bin
+
+# Windows WSL/WSL2
+./setup-symbolic.sh --user                  # Install to ~/.local/bin (recommended)
+
+# Windows Git Bash/MSYS2
+./setup-symbolic.sh --user                  # Install to ~/.local/bin
+
+# FreeBSD/OpenBSD
+sudo ./setup-symbolic.sh                    # Install to /usr/local/bin
+```
+
+**🧹 Management Commands:**
+
+```bash
+# Remove all symbolic links
+./setup-symbolic.sh --remove
+
+# Update existing links (run setup again)
+./setup-symbolic.sh --user
+
+# Test installation
+gstatus
+glist
+gflow --help
+```
+
+**📋 What the Script Does:**
+
+1. **🔍 Platform Detection** - Automatically detects your OS and environment
+2. **🛠️ Environment Validation** - Checks Node.js, project build status
+3. **🔗 Smart Linking** - Creates symbolic links for all 27 git aliases
+4. **📊 Progress Tracking** - Shows created/skipped/failed counts
+5. **🧪 Installation Testing** - Verifies commands work after setup
+6. **🎯 PATH Management** - Provides platform-specific PATH configuration help
+
+**🎨 Example Output:**
+
+```bash
+╔══════════════════════════════════════════════════════════════╗
+║  🔗 GitHub MCP Server - Symbolic Link Setup                 ║
+║  ⭐ Version: 2.3.0                                         ║
+║  ⚙️ Creates global git aliases via symbolic links           ║
+╚══════════════════════════════════════════════════════════════╝
+
+⚙️ Validating Environment...
+➤ Platform detected: linux
+➤ Node.js version: v20.0.0
+✅ Environment validation completed
+
+🔗 Creating Symbolic Links in: /home/user/.local/bin
+✅ gadd - created
+✅ gcommit - created
+✅ gflow - created
+... (all 27 aliases)
+
+✅ Summary:
+➤ Created: 27 symbolic links
+➤ Skipped: 0 existing links
+➤ Target: /home/user/.local/bin
+
+🚀 Testing Installation...
+✅ gstatus - working
+✅ glist - working
+✅ gflow - working
+
+⭐ Setup Complete!
+➤ All git aliases are now available globally
+➤ Run glist to see all available commands
+```
+
+**🔧 Troubleshooting the Script:**
+
+If you encounter issues with the setup script:
+
+```bash
+# Check if script is executable
+ls -la setup-symbolic.sh
+# Should show: -rwxr-xr-x ... setup-symbolic.sh
+
+# Make executable if needed
+chmod +x setup-symbolic.sh
+
+# Check Node.js installation
+node --version
+npm --version
+
+# Ensure project is built
+npm run build
+
+# Run with verbose output
+bash -x ./setup-symbolic.sh --user
+```
+
+This approach completely bypasses all npm/pnpm global installation issues and provides a clean, predictable way to install the git aliases system-wide.
+
+---
+
 ## ⚡ Quick Solutions Summary
 
 ### Immediate Fixes (Copy-Paste Ready)
@@ -359,7 +502,15 @@ for cmd in gadd gbackup gbranch gcheckout gclean gclone gcommit gdev gdiff gfix 
 done
 ```
 
-**4. Test Everything Works:**
+**4. Alternative: Use Symbolic Links (Bypasses All Issues):**
+```bash
+cd /path/to/github-mcp-server
+./setup-symbolic.sh --user                    # Cross-platform user installation
+# OR
+sudo ./setup-symbolic.sh                      # System-wide installation (Linux/macOS)
+```
+
+**5. Test Everything Works:**
 ```bash
 gstatus
 gadd --help

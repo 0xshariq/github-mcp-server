@@ -10,8 +10,9 @@ A **Model Context Protocol (MCP) server** that provides **29 Git operations + 11
 
 ## 🚀 Quick Installation
 
+### Option 1: Install from npm (Recommended)
 ```bash
-# Install from npm (recommended)
+# Install from npm
 npm install -g @0xshariq/github-mcp-server
 
 # Test the installation
@@ -19,7 +20,24 @@ gstatus
 glist
 ```
 
-> **🛠️ Having Issues?** If commands aren't working after installation, see our **[Complete Troubleshooting Guide](markdown/TROUBLESHOOTING.md)** for solutions to all common problems including "command not found" errors, path conflicts, and PNPM issues.
+### Option 2: Symbolic Links (Alternative - No Package Manager)
+```bash
+# Clone and setup
+git clone https://github.com/0xshariq/github-mcp-server.git
+cd github-mcp-server
+npm install && npm run build
+
+# Create symbolic links (cross-platform)
+./setup-symbolic.sh --user          # User installation
+# OR
+sudo ./setup-symbolic.sh           # System-wide (Linux/macOS)
+
+# Test the installation
+gstatus
+glist
+```
+
+> **🛠️ Having Issues?** If commands aren't working after installation, see our **[Complete Troubleshooting Guide](markdown/TROUBLESHOOTING.md)** for solutions to all common problems including "command not found" errors, path conflicts, PNPM issues, and the symbolic links alternative.
 
 ## 🎯 About
 
