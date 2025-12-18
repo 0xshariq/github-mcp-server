@@ -8,7 +8,20 @@ Simple step-by-step installation for GitHub MCP Server. Works on Windows, macOS,
 - **Git** - [Download here](https://git-scm.com/)
 - A terminal or command prompt
 
-## 🚀 NPM Package Installation (Recommended)
+## MCP SERVER
+
+```bash
+{
+  "mcpServers": {
+    "github-mcp-server": {
+      "command": "npx",
+      "args": ["-y", "@0xshariq/github-mcp-server@latest"]
+    }
+  }
+}
+```
+
+## 🚀 NPM Package Installation (Recommended for cli)
 
 **The easiest way to install GitHub MCP Server from npm registry:**
 
@@ -24,16 +37,19 @@ glist
 **That's it!** ✅ You now have access to all 29 aliases globally.
 
 ### Available Commands After NPM Install:
+
 - **Main commands**: `github-mcp-server`, `gms` (short alias)
 - **17 Basic operations**: `gstatus`, `gadd`, `gcommit`, `gpush`, `gpull`, `gbranch`, `gcheckout`, `glog`, `gdiff`, `gstash`, `gpop`, `greset`, `gclone`, `ginit`, `gremote`
 - **12 Advanced workflows**: `gflow`, `gquick`, `gsync`, `gdev`, `gworkflow`, `gfix`, `gfresh`, `gbackup`, `gclean`, `gsave`, `glist`, `grelease`, `gtag`, `gmerge`, `grebase`, `gcherry`, `gblame`, `gbisect`
 
 ### Update to Latest Version:
+
 ```bash
 npm update -g @0xshariq/github-mcp-server
 ```
 
 ### Uninstall:
+
 ```bash
 npm uninstall -g @0xshariq/github-mcp-server
 ```
@@ -45,12 +61,14 @@ npm uninstall -g @0xshariq/github-mcp-server
 ## 🛠️ Manual Installation (From Source)
 
 ### Step 1: Download the Code
+
 ```bash
 git clone https://github.com/0xshariq/github-mcp-server.git
 cd github-mcp-server
 ```
 
 ### Step 2: Install Everything
+
 ```bash
 npm install
 npm run build
@@ -58,6 +76,7 @@ npm link
 ```
 
 ### Step 3: Test It Works
+
 ```bash
 gstatus
 glist
@@ -72,13 +91,16 @@ glist
 ### Option 1: PowerShell (Easy Way)
 
 1. **Check if you have Node.js and Git:**
+
    ```powershell
    node --version
    git --version
    ```
+
    If these don't work, install them first from the links above.
 
 2. **Download and install:**
+
    ```powershell
    git clone https://github.com/0xshariq/github-mcp-server.git
    cd github-mcp-server
@@ -93,6 +115,7 @@ glist
    ```
 
 ### Option 2: Command Prompt
+
 Same commands as PowerShell, just use `cmd` instead.
 
 ---
@@ -102,16 +125,20 @@ Same commands as PowerShell, just use `cmd` instead.
 ### Option 1: Using Terminal (Recommended)
 
 1. **Check if you have everything:**
+
    ```bash
    node --version
    git --version
    ```
+
    If missing, install from the links above or use Homebrew:
+
    ```bash
    brew install node git
    ```
 
 2. **Download and install:**
+
    ```bash
    git clone https://github.com/0xshariq/github-mcp-server.git
    cd github-mcp-server
@@ -130,13 +157,16 @@ Same commands as PowerShell, just use `cmd` instead.
 ## 🐧 Linux/WSL Detailed Steps
 
 ### For Ubuntu/Debian
+
 1. **Install Node.js and Git:**
+
    ```bash
    sudo apt update
    sudo apt install nodejs npm git
    ```
 
 2. **Download and install:**
+
    ```bash
    git clone https://github.com/0xshariq/github-mcp-server.git
    cd github-mcp-server
@@ -151,6 +181,7 @@ Same commands as PowerShell, just use `cmd` instead.
    ```
 
 ### For WSL (Windows Subsystem for Linux)
+
 Same steps as Ubuntu/Debian above.
 
 ---
@@ -162,19 +193,20 @@ After installing via npm or manually, configure your LLM client to use GitHub MC
 ### For NPM Installation (Recommended)
 
 **Claude Desktop** (`~/.config/claude/claude_desktop_config.json` or `%APPDATA%\Claude\claude_desktop_config.json`):
+
 ```json
 {
   "mcpServers": {
     "github-mcp-server": {
-      "command": "@0xshariq/github-mcp-server",
-      "args": [],
-      "env": {}
+      "command": "npx",
+      "args": ["-y", "@0xshariq/github-mcp-server@latest"]
     }
   }
 }
 ```
 
 **VS Code (Continue Extension)** (`~/.continue/config.json`):
+
 ```json
 {
   "models": [
@@ -186,8 +218,8 @@ After installing via npm or manually, configure your LLM client to use GitHub MC
       "mcpServers": [
         {
           "name": "github-mcp-server",
-          "command": "@0xshariq/github-mcp-server",
-          "args": [],
+          "command": "npx",
+          "args": ["-y", "@0xshariq/github-mcp-server@latest"],
           "env": {}
         }
       ]
@@ -197,10 +229,12 @@ After installing via npm or manually, configure your LLM client to use GitHub MC
 ```
 
 **Open WebUI** (Admin Panel → Tools → MCP Servers):
+
 ```json
 {
   "name": "github-mcp-server",
-  "command": ["@0xshariq/github-mcp-server"],
+  "command": "npx",
+  "args": ["-y", "@0xshariq/github-mcp-server@latest"],
   "env": {},
   "description": "GitHub MCP Server for Git operations"
 }
@@ -209,6 +243,7 @@ After installing via npm or manually, configure your LLM client to use GitHub MC
 ### For Manual Installation (From Source)
 
 **Claude Desktop**:
+
 ```json
 {
   "mcpServers": {
@@ -222,6 +257,7 @@ After installing via npm or manually, configure your LLM client to use GitHub MC
 ```
 
 **VS Code Settings** (`.vscode/settings.json`):
+
 ```json
 {
   "mcpServers": {
@@ -242,32 +278,40 @@ After installing via npm or manually, configure your LLM client to use GitHub MC
 ## ❓ Troubleshooting
 
 ### "Command not found" errors
+
 **Problem:** `gstatus` or other commands don't work.
 
 **Solutions:**
+
 1. Make sure you ran `npm link` in the github-mcp-server folder
 2. Restart your terminal/command prompt
 3. Try running commands with full path: `npx gstatus`
 
 ### Permission errors on macOS/Linux
+
 **Problem:** Permission denied when running `npm link`.
 
 **Solution:**
+
 ```bash
 sudo npm link
 ```
 
 ### Node.js version too old
+
 **Problem:** Error about Node.js version.
 
 **Solution:**
+
 - Download newer Node.js from [nodejs.org](https://nodejs.org/)
 - Or use a version manager like nvm
 
 ### Git not found
+
 **Problem:** `git` command doesn't work.
 
 **Solution:**
+
 - Download Git from [git-scm.com](https://git-scm.com/)
 - Make sure it's added to your PATH
 
@@ -278,18 +322,21 @@ sudo npm link
 After successful installation, you can use these commands anywhere:
 
 ### Basic Commands
+
 - `gstatus` - Check repository status
 - `gadd` - Add files to staging
 - `gcommit "message"` - Commit changes
 - `gpush` - Push to remote
 - `gpull` - Pull from remote
 
-### Advanced Commands  
+### Advanced Commands
+
 - `gflow "message"` - Add, commit, and push in one command
 - `gdev` - Start development session
 - `glist` - See all available commands
 
 ### Get Help
+
 - `glist` - Shows all commands with examples
 - `glist --help` - More detailed help
 
@@ -298,6 +345,7 @@ After successful installation, you can use these commands anywhere:
 ## 🔄 Updating
 
 To update to the latest version:
+
 ```bash
 cd github-mcp-server
 git pull
@@ -310,6 +358,7 @@ npm run build
 ## 🗑️ Uninstalling
 
 To remove GitHub MCP Server:
+
 ```bash
 npm unlink -g github-mcp-server
 rm -rf github-mcp-server
@@ -326,7 +375,8 @@ npm link
 REM Test installation
 gstatus
 glist
-```
+
+````
 
 ### Windows Troubleshooting
 ```powershell
@@ -341,13 +391,14 @@ $env:PATH += ";C:\Users\YourName\AppData\Roaming\npm"
 & "C:\Users\YourName\AppData\Roaming\npm\gstatus.cmd"
 
 # Restart PowerShell after PATH changes
-```
+````
 
 ## 🍎 macOS Installation
 
 ### Using Terminal
 
 #### Step 1: Install Prerequisites
+
 ```bash
 # Check if Node.js is installed
 node --version
@@ -360,6 +411,7 @@ brew install node git
 ```
 
 #### Step 2: Clone and Install
+
 ```bash
 # Clone the repository
 git clone https://github.com/0xshariq/github-mcp-server.git
@@ -371,6 +423,7 @@ npm run build
 ```
 
 #### Step 3: Global Installation
+
 ```bash
 # Install globally (run this INSIDE the github-mcp-server directory)
 npm link
@@ -381,6 +434,7 @@ glist
 ```
 
 ### macOS Troubleshooting
+
 ```bash
 # If permission issues
 sudo npm link
@@ -403,6 +457,7 @@ source ~/.zshrc
 ### WSL2 Setup
 
 #### Step 1: Install Prerequisites
+
 ```bash
 # Update package list
 sudo apt update
@@ -418,6 +473,7 @@ git --version
 ```
 
 #### Step 2: Clone and Install
+
 ```bash
 # Clone the repository
 git clone https://github.com/0xshariq/github-mcp-server.git
@@ -429,6 +485,7 @@ npm run build
 ```
 
 #### Step 3: Global Installation
+
 ```bash
 # Install globally (run this INSIDE the github-mcp-server directory)
 npm link
@@ -439,6 +496,7 @@ glist
 ```
 
 ### WSL Integration Tips
+
 ```bash
 # Access Windows files from WSL
 cd /mnt/c/Users/YourName/Documents/projects
@@ -457,6 +515,7 @@ git config --global credential.helper "/mnt/c/Program\ Files/Git/mingw64/libexec
 ### Ubuntu/Debian
 
 #### Step 1: Install Prerequisites
+
 ```bash
 # Update package list
 sudo apt update
@@ -470,6 +529,7 @@ sudo apt-get install -y nodejs
 ```
 
 #### Step 2: Clone and Install
+
 ```bash
 # Clone the repository
 git clone https://github.com/0xshariq/github-mcp-server.git
@@ -481,6 +541,7 @@ npm run build
 ```
 
 #### Step 3: Global Installation
+
 ```bash
 # Install globally
 npm link
@@ -493,6 +554,7 @@ glist
 ### CentOS/RHEL/Fedora
 
 #### Step 1: Install Prerequisites
+
 ```bash
 # Fedora
 sudo dnf install nodejs npm git
@@ -507,22 +569,26 @@ sudo yum install nodejs  # CentOS/RHEL
 ```
 
 #### Step 2-3: Same as Ubuntu
+
 Follow steps 2-3 from Ubuntu installation above.
 
 ### Arch Linux
 
 #### Step 1: Install Prerequisites
+
 ```bash
 # Install Node.js and Git
 sudo pacman -S nodejs npm git
 ```
 
 #### Step 2-3: Same as Ubuntu
+
 Follow steps 2-3 from Ubuntu installation above.
 
 ## 🐳 Docker Installation (All Platforms)
 
 ### Quick Docker Setup
+
 ```bash
 # Pull the ready-to-use Docker image
 docker pull 0xshariq/github-mcp-server:latest
@@ -535,6 +601,7 @@ docker run -it --rm -v $(pwd):/app/workspace -w /app/workspace 0xshariq/github-m
 ```
 
 ### Build from Source (Docker)
+
 ```bash
 # Clone and build
 git clone https://github.com/0xshariq/github-mcp-server.git
@@ -550,7 +617,9 @@ docker run -it --rm github-mcp-server
 ## 🔗 VS Code MCP Integration
 
 ### Local Installation Setup
+
 Add to your project's `.vscode/settings.json`:
+
 ```json
 {
   "mcpServers": {
@@ -565,22 +634,28 @@ Add to your project's `.vscode/settings.json`:
 ```
 
 **Important:** Replace `/absolute/path/to/github-mcp-server/` with your actual installation path:
+
 - **Windows**: `"C:\\Users\\YourName\\github-mcp-server\\dist\\index.js"`
 - **macOS/Linux**: `"/home/username/github-mcp-server/dist/index.js"`
 - **WSL**: `"/home/username/github-mcp-server/dist/index.js"`
 
 ### Docker Integration Setup
+
 ```json
 {
   "mcpServers": {
     "github-mcp-server": {
       "command": "docker",
       "args": [
-        "run", "--rm", 
-        "-v", "${workspaceFolder}:/app/workspace", 
-        "-w", "/app/workspace", 
-        "0xshariq/github-mcp-server:latest", 
-        "node", "dist/index.js"
+        "run",
+        "--rm",
+        "-v",
+        "${workspaceFolder}:/app/workspace",
+        "-w",
+        "/app/workspace",
+        "0xshariq/github-mcp-server:latest",
+        "node",
+        "dist/index.js"
       ],
       "env": {},
       "disabled": false
@@ -590,12 +665,15 @@ Add to your project's `.vscode/settings.json`:
 ```
 
 ### Global VS Code Settings
+
 Add to your global VS Code settings:
+
 - **Windows**: `%APPDATA%\\Code\\User\\settings.json`
 - **macOS**: `~/Library/Application Support/Code/User/settings.json`
 - **Linux**: `~/.config/Code/User/settings.json`
 
 #### Option 1: Using gms command (Recommended)
+
 ```json
 {
   "mcpServers": {
@@ -610,6 +688,7 @@ Add to your global VS Code settings:
 ```
 
 #### Option 2: Using node directly
+
 ```json
 {
   "mcpServers": {
@@ -628,6 +707,7 @@ Add to your global VS Code settings:
 ## 🔧 Local vs Global Usage
 
 ### Global Usage (After npm link)
+
 ```bash
 # Works from any directory on your system
 cd ~/any-project
@@ -636,6 +716,7 @@ gflow "Fix bug"            # ✅ Global workflow
 ```
 
 ### Local Usage (Project-specific)
+
 ```bash
 # Inside the github-mcp-server directory only
 cd /path/to/github-mcp-server
@@ -644,6 +725,7 @@ node mcp-cli.js git-status # ✅ Direct execution
 ```
 
 ### Docker Usage (Platform Independent)
+
 ```bash
 # Works anywhere Docker is installed
 docker run -it --rm -v $(pwd):/app/workspace -w /app/workspace 0xshariq/github-mcp-server:latest gstatus
@@ -652,16 +734,18 @@ docker run -it --rm -v $(pwd):/app/workspace -w /app/workspace 0xshariq/github-m
 ## 📍 Important Notes
 
 ### Where to run npm link
+
 - **✅ Run `npm link` INSIDE** the `github-mcp-server` project directory
 - **❌ Do NOT run** `npm link` in other project directories
 - **🎯 Purpose:** Makes all aliases (`gstatus`, `gadd`, `gcommit`, etc.) available globally
 - **📍 Location:** Must be executed from `/path/to/github-mcp-server/` directory
 
 ### After npm link, you can use aliases from ANY directory:
+
 ```bash
 cd ~/my-project              # Navigate to any Git repository
 gstatus                      # ✅ Works from any location
-gadd                         # ✅ Works from any location  
+gadd                         # ✅ Works from any location
 gcommit "Fix bug"           # ✅ Works from any location
 glist                       # ✅ Works from any location
 ```
@@ -669,6 +753,7 @@ glist                       # ✅ Works from any location
 ## 🔧 Troubleshooting
 
 ### Command Not Found Issues
+
 ```bash
 # 1. Check if npm link was successful
 which gstatus               # Should show path to global command
@@ -687,6 +772,7 @@ gms git-status            # Should show repository status
 ```
 
 ### Path Issues (Windows)
+
 ```powershell
 # Add npm global directory to PATH
 $npmPath = npm config get prefix
@@ -696,6 +782,7 @@ $env:PATH += ";$npmPath"
 ```
 
 ### Permission Issues (macOS/Linux)
+
 ```bash
 # If npm link fails with permission errors
 sudo npm link
@@ -708,6 +795,7 @@ source ~/.bashrc
 ```
 
 ### Node.js Version Issues
+
 ```bash
 # Check Node.js version
 node --version
@@ -721,6 +809,7 @@ node --version
 ## ✅ Verification
 
 After installation, verify everything works:
+
 ```bash
 # Test basic commands
 gstatus                     # Should show git status
@@ -738,6 +827,7 @@ gstatus                     # Should work from any Git repository
 ## 🆘 Getting Help
 
 If you encounter issues:
+
 1. Check this troubleshooting section
 2. Run `glist` to see available tools
 3. Open an issue on [GitHub](https://github.com/0xshariq/github-mcp-server/issues)
@@ -746,6 +836,7 @@ If you encounter issues:
 ## 🔄 Updating
 
 To update to the latest version:
+
 ```bash
 cd /path/to/github-mcp-server
 git pull origin main
@@ -755,6 +846,7 @@ npm run build
 ```
 
 For Docker users:
+
 ```bash
 docker pull 0xshariq/github-mcp-server:latest
 ```

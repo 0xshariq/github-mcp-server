@@ -71,7 +71,7 @@ gadd --ignore-errors src/             # Continue on errors
 ```
 
 **Related Commands:** `gstatus` (check staging area), `gcommit` (commit staged files), `greset` (unstage files)
-**MCP Tool:** `git-add`
+**MCP Tool:** `git_add`
 
 ---
 
@@ -119,7 +119,7 @@ gbranch -c backup-branch             # Copy current branch
 ```
 
 **Related Commands:** `gcheckout` (switch branches), `gstatus` (current branch), `gpush` (push branches)
-**MCP Tool:** `git-branch`
+**MCP Tool:** `git_branch`
 
 ---
 
@@ -166,7 +166,7 @@ gcheckout -m feature/update          # Merge local changes when switching
 ```
 
 **Related Commands:** `gbranch` (manage branches), `gstatus` (check state), `gstash` (save changes)
-**MCP Tool:** `git-checkout`
+**MCP Tool:** `git_checkout`
 
 ---
 
@@ -212,7 +212,7 @@ gclone --jobs 4 --recursive https://github.com/user/repo.git # Parallel submodul
 ```
 
 **Related Commands:** `ginit` (create repository), `gremote` (manage remotes), `gpull` (update)
-**MCP Tool:** `git-clone`
+**MCP Tool:** `git_clone`
 
 ---
 
@@ -255,7 +255,7 @@ gcommit --date "2024-01-01" "feat: new feature" # Set specific date
 ```
 
 **Related Commands:** `gadd` (stage files), `gpush` (upload commits), `glog` (view history)
-**MCP Tool:** `git-commit`
+**MCP Tool:** `git_commit`
 
 ---
 
@@ -302,7 +302,7 @@ gdiff HEAD~2 HEAD src/                   # Changes in directory over time
 ```
 
 **Related Commands:** `gstatus` (overview), `glog` (commit history), `gcheckout` (view versions)
-**MCP Tool:** `git-diff`
+**MCP Tool:** `git_diff`
 
 ---
 
@@ -339,7 +339,7 @@ ginit -q                                # Quiet initialization
 ```
 
 **Related Commands:** `gclone` (clone existing), `gremote` (add remotes), `gcommit` (first commit)
-**MCP Tool:** `git-init`
+**MCP Tool:** `git_init`
 
 ---
 
@@ -388,7 +388,7 @@ glog src/app.js                         # History for specific file
 ```
 
 **Related Commands:** `gdiff` (compare commits), `gcheckout` (view old versions), `gbranch` (branch history)
-**MCP Tool:** `git-log`
+**MCP Tool:** `git_log`
 
 ---
 
@@ -424,7 +424,7 @@ gpop --quiet                           # Silent application
 ```
 
 **Related Commands:** `gstash` (create stash), `gstatus` (check state), `gdiff` (view changes)
-**MCP Tool:** `git-stash-pop`
+**MCP Tool:** `git_stash_pop`
 
 ---
 
@@ -470,7 +470,7 @@ gpull --verify-signatures              # Verify commit signatures
 ```
 
 **Related Commands:** `gpush` (upload changes), `gstatus` (check conflicts), `gmerge` (manual merge)
-**MCP Tool:** `git-pull`
+**MCP Tool:** `git_pull`
 
 ---
 
@@ -526,7 +526,7 @@ gpush --delete origin feature          # Delete remote branch
 - Use `--dry-run` to preview changes before pushing
 
 **Related Commands:** `gpull` (download changes), `gbranch` (manage branches), `gstatus` (check state)
-**MCP Tool:** `git-push`
+**MCP Tool:** `git_push`
 
 ---
 
@@ -571,7 +571,7 @@ gremote --get-url upstream             # Get remote URL
 ```
 
 **Related Commands:** `gclone` (clone with remotes), `gpush` (push to remotes), `gpull` (pull from remotes)
-**MCP Tool:** `git-remote`
+**MCP Tool:** `git_remote`
 
 ---
 
@@ -619,7 +619,7 @@ greset --keep HEAD~1                   # Keep local modifications
 ```
 
 **Related Commands:** `gcheckout` (switch states), `gstash` (save changes), `glog` (find commits)
-**MCP Tool:** `git-reset`
+**MCP Tool:** `git_reset`
 
 ---
 
@@ -664,7 +664,7 @@ gstash clear                          # Delete all stashes
 ```
 
 **Related Commands:** `gpop` (apply stash), `gstatus` (check changes), `gcheckout` (switch branches)
-**MCP Tool:** `git-stash`
+**MCP Tool:** `git_stash`
 
 ---
 
@@ -702,7 +702,7 @@ gstatus --column                     # Column display format
 ```
 
 **Related Commands:** `gadd` (stage files), `gcommit` (commit changes), `gdiff` (show changes)
-**MCP Tool:** `git-status`
+**MCP Tool:** `git_status`
 
 ---
 

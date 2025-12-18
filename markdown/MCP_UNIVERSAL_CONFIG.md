@@ -8,9 +8,49 @@ This guide provides configuration examples for using GitHub MCP Server with vari
 
 ## 📋 **Prerequisites**
 
+### Option 1: NPX Installation (Recommended - Easiest)
+✅ Node.js v16+ installed  
+✅ Internet connection for package download  
+✅ No build or setup required
+
+### Option 2: Manual Installation
 ✅ Node.js v24.4.1 (managed by fnm)  
 ✅ GitHub MCP Server built (`npm run build`)  
 ✅ Universal startup script (`start-mcp.sh`)
+
+---
+
+## 🚀 **Quick Start with NPX (Recommended)**
+
+The easiest way to use GitHub MCP Server is via NPX. This method requires no installation, no building, and automatically uses the latest version.
+
+### **Universal NPX Configuration**
+
+```json
+{
+  "mcpServers": {
+    "github-mcp-server": {
+      "command": "npx",
+      "args": ["-y", "@0xshariq/github-mcp-server@latest"]
+    }
+  }
+}
+```
+
+**✅ Benefits:**
+- ✅ **No installation required** - Downloads and runs automatically
+- ✅ **Always latest version** - Automatically uses the newest release
+- ✅ **No maintenance** - No need to update or rebuild
+- ✅ **Cross-platform** - Works on Windows, macOS, Linux
+- ✅ **Simple configuration** - Just 4 lines of JSON
+
+**📝 Use this configuration with:**
+- Claude Desktop
+- VS Code (.vscode/mcp.json)
+- Continue Extension
+- Cursor IDE
+- Zed Editor
+- Any MCP-compatible client
 
 ---
 
@@ -169,7 +209,7 @@ Test the setup with any client:
 
 1. **Check Node.js version**: Should be v24.4.1
 2. **Verify MCP tools**: Should list 29 Git operations
-3. **Test basic operation**: Try `git-status` tool
+3. **Test basic operation**: Try `git_status` tool
 4. **Check logs**: Look for startup messages in client
 
 ---
@@ -205,9 +245,9 @@ Test the setup with any client:
 After successful setup, these tools will be available:
 
 ### Basic Operations (15)
-`git-add`, `git-commit`, `git-push`, `git-pull`, `git-status`, `git-branch`, `git-checkout`, `git-log`, `git-diff`, `git-stash`, `git-stash-pop`, `git-reset`, `git-clone`, `git-remote`, `git-init`
+`git_add`, `git_commit`, `git_push`, `git_pull`, `git_status`, `git_branch`, `git_checkout`, `git_log`, `git_diff`, `git_stash`, `git_stash_pop`, `git_reset`, `git_clone`, `git_remote`, `git_init`
 
 ### Advanced Operations (14)
-`git-tag`, `git-merge`, `git-rebase`, `git-cherry-pick`, `git-blame`, `git-bisect-start`, `git-bisect-bad`, `git-bisect-good`, `git-bisect-reset`, `git-show`, `git-reflog`, `git-clean`, `git-archive`, `git-worktree`
+`git_tag`, `git_merge`, `git_rebase`, `git_cherry_pick`, `git_blame`, `git_bisect_start`, `git_bisect_bad`, `git_bisect_good`, `git_bisect_reset`, `git_show`, `git_reflog`, `git_clean`, `git_archive`, `git_worktree`
 
 All tools include comprehensive error handling, validation, and helpful output formatting.

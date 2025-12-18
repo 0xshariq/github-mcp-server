@@ -10,17 +10,21 @@ A **Model Context Protocol (MCP) server** that provides **29 Git operations + 11
 
 ## 🚀 Quick Installation
 
-### Option 1: Install from npm (Recommended)
-```bash
-# Install from npm
-npm install -g @0xshariq/github-mcp-server
+### Option 1: .vscode/mcp.json (Recommended)
 
-# Test the installation
-gstatus
-glist
+```bash
+{
+  "mcpServers": {
+    "github-mcp-server": {
+      "command": "npx",
+      "args": ["-y", "@0xshariq/github-mcp-server@latest"]
+    }
+  }
+}
 ```
 
 ### Option 2: Symbolic Links (Alternative - No Package Manager)
+
 ```bash
 # Clone and setup
 git clone https://github.com/0xshariq/github-mcp-server.git
@@ -184,12 +188,12 @@ Having issues with installation or commands not working? We've got you covered! 
 
 ### 🚨 Most Common Issues & Quick Fixes
 
-| Problem | Quick Solution |
-|---------|----------------|
-| 💥 `command not found` errors | `unset command_not_found_handle` |
-| 📁 Path conflicts with PNPM | Remove `/5/` from global directory |
+| Problem                                    | Quick Solution                               |
+| ------------------------------------------ | -------------------------------------------- |
+| 💥 `command not found` errors              | `unset command_not_found_handle`             |
+| 📁 Path conflicts with PNPM                | Remove `/5/` from global directory           |
 | 🔗 Commands show help instead of executing | Update wrapper scripts to pass command names |
-| 🚫 Permission denied | `chmod +x ~/.local/share/pnpm/g*` |
+| 🚫 Permission denied                       | `chmod +x ~/.local/share/pnpm/g*`            |
 
 **👉 For detailed solutions, step-by-step fixes, and diagnostic tools, see our [Complete Troubleshooting Guide](markdown/TROUBLESHOOTING.md)**
 

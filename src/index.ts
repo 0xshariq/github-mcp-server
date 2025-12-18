@@ -106,7 +106,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
     tools: [
       {
-        name: "git-add-all",
+        name: "git_add_all",
         description: "Adds all files to the staging area",
         inputSchema: {
           type: "object",
@@ -119,7 +119,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         }
       },
       {
-        name: "git-add",
+        name: "git_add",
         description: "Adds a specific file to the staging area",
         inputSchema: {
           type: "object",
@@ -138,7 +138,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         }
       },
       {
-        name: "git-remove",
+        name: "git_remove",
         description: "Removes a specific file from the staging area",
         inputSchema: {
           type: "object",
@@ -156,7 +156,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         }
       },
       {
-        name: "git-remove-all",
+        name: "git_remove_all",
         description: "Removes all files from the staging area",
         inputSchema: {
           type: "object",
@@ -169,7 +169,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         }
       },
       {
-        name: "git-status",
+        name: "git_status",
         description: "Displays the status of the git repository",
         inputSchema: {
           type: "object",
@@ -182,7 +182,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         }
       },
       {
-        name: "git-commit",
+        name: "git_commit",
         description: "Commits staged files",
         inputSchema: {
           type: "object",
@@ -200,7 +200,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         }
       },
       {
-        name: "git-push",
+        name: "git_push",
         description: "Pushes committed files to the remote repository",
         inputSchema: {
           type: "object",
@@ -213,7 +213,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         }
       },
       {
-        name: "git-pull",
+        name: "git_pull",
         description: "Pulls changes from the remote repository",
         inputSchema: {
           type: "object",
@@ -226,7 +226,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         }
       },
       {
-        name: "git-branch",
+        name: "git_branch",
         description: "Lists all branches or creates a new branch",
         inputSchema: {
           type: "object",
@@ -243,7 +243,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         }
       },
       {
-        name: "git-checkout",
+        name: "git_checkout",
         description: "Switches to a branch or creates and switches to a new branch",
         inputSchema: {
           type: "object",
@@ -265,7 +265,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         }
       },
       {
-        name: "git-log",
+        name: "git_log",
         description: "Shows commit history",
         inputSchema: {
           type: "object",
@@ -282,7 +282,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         }
       },
       {
-        name: "git-diff",
+        name: "git_diff",
         description: "Shows differences between commits, branches, or working directory",
         inputSchema: {
           type: "object",
@@ -299,7 +299,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         }
       },
       {
-        name: "git-stash",
+        name: "git_stash",
         description: "Stashes current changes",
         inputSchema: {
           type: "object",
@@ -316,7 +316,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         }
       },
       {
-        name: "git-stash-pop",
+        name: "git_stash_pop",
         description: "Applies the most recent stash",
         inputSchema: {
           type: "object",
@@ -329,7 +329,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         }
       },
       {
-        name: "git-reset",
+        name: "git_reset",
         description: "Resets repository to a specific commit or state",
         inputSchema: {
           type: "object",
@@ -351,7 +351,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         }
       },
       {
-        name: "git-clone",
+        name: "git_clone",
         description: "Clones a repository",
         inputSchema: {
           type: "object",
@@ -373,7 +373,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         }
       },
       {
-        name: "git-init",
+        name: "git_init",
         description: "Initializes a new Git repository",
         inputSchema: {
           type: "object",
@@ -386,7 +386,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         }
       },
       {
-        name: "git-remote-list",
+        name: "git_remote_list",
         description: "Lists all remote repositories",
         inputSchema: {
           type: "object",
@@ -399,7 +399,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         }
       },
       {
-        name: "git-remote-add",
+        name: "git_remote_add",
         description: "Adds a remote repository",
         inputSchema: {
           type: "object",
@@ -421,7 +421,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         }
       },
       {
-        name: "git-remote-remove",
+        name: "git_remote_remove",
         description: "Removes a remote repository",
         inputSchema: {
           type: "object",
@@ -439,7 +439,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         }
       },
       {
-        name: "git-remote-set-url",
+        name: "git_remote_set_url",
         description: "Changes the URL of an existing remote repository",
         inputSchema: {
           type: "object",
@@ -461,7 +461,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         }
       },
       {
-        name: "git-flow",
+        name: "git_flow",
         description: "Complete Git workflow: add all changes, commit with message, and push to remote",
         inputSchema: {
           type: "object",
@@ -479,7 +479,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         }
       },
       {
-        name: "git-quick-commit",
+        name: "git_quick_commit",
         description: "Quick commit with automatic message generation based on changes",
         inputSchema: {
           type: "object",
@@ -497,7 +497,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         }
       },
       {
-        name: "git-sync",
+        name: "git_sync",
         description: "Synchronize repository: pull from remote, then push local changes",
         inputSchema: {
           type: "object",
@@ -510,7 +510,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         }
       },
       {
-        name: "git-tag",
+        name: "git_tag",
         description: "Manage Git tags: create, list, delete, or show tag details",
         inputSchema: {
           type: "object",
@@ -536,7 +536,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         }
       },
       {
-        name: "git-flow",
+        name: "git_flow",
         description: "Enhanced Git workflow automation with intelligent defaults and team collaboration",
         inputSchema: {
           type: "object",
@@ -563,7 +563,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         }
       },
       {
-        name: "git-dev",
+        name: "git_dev",
         description: "Development session management with auto-save and branch switching",
         inputSchema: {
           type: "object",
@@ -590,7 +590,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         }
       },
       {
-        name: "git-sync",
+        name: "git_sync",
         description: "Advanced synchronization with conflict resolution and remote management",
         inputSchema: {
           type: "object",
@@ -620,7 +620,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         }
       },
       {
-        name: "git-release",
+        name: "git_release",
         description: "Automated release management with version tagging and changelog generation",
         inputSchema: {
           type: "object",
@@ -651,7 +651,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         }
       },
       {
-        name: "git-clean",
+        name: "git_clean",
         description: "Repository cleanup and maintenance with backup options",
         inputSchema: {
           type: "object",
@@ -681,7 +681,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         }
       },
       {
-        name: "git-merge",
+        name: "git_merge",
         description: "Merge a branch into the current branch with conflict detection",
         inputSchema: {
           type: "object",
@@ -703,7 +703,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         }
       },
       {
-        name: "git-rebase",
+        name: "git_rebase",
         description: "Rebase current branch onto another branch or commit",
         inputSchema: {
           type: "object",
@@ -724,7 +724,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         }
       },
       {
-        name: "git-cherry-pick",
+        name: "git_cherry_pick",
         description: "Apply changes from a specific commit to the current branch",
         inputSchema: {
           type: "object",
@@ -742,7 +742,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         }
       },
       {
-        name: "git-blame",
+        name: "git_blame",
         description: "Show line-by-line authorship information for a file",
         inputSchema: {
           type: "object",
@@ -764,7 +764,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         }
       },
       {
-        name: "git-bisect",
+        name: "git_bisect",
         description: "Binary search through commit history to find bugs",
         inputSchema: {
           type: "object",
@@ -796,7 +796,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
   try {
     switch (name) {
-      case "git-add-all":
+      case "git_add_all":
         return {
           content: [
             {
@@ -806,20 +806,20 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ]
         };
 
-      case "git-add":
+      case "git_add":
         if (!args?.files || !Array.isArray(args.files)) {
           throw new Error("files parameter is required and must be an array");
         }
         return {
           content: [
             {
-              type: "text", 
+              type: "text",
               text: JSON.stringify(await gitAdd(args.files as string[], args?.directory as string))
             }
           ]
         };
 
-      case "git-remove":
+      case "git_remove":
         if (!args?.file) {
           throw new Error("file parameter is required");
         }
@@ -832,7 +832,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ]
         };
 
-      case "git-remove-all":
+      case "git_remove_all":
         return {
           content: [
             {
@@ -842,7 +842,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ]
         };
 
-      case "git-status":
+      case "git_status":
         return {
           content: [
             {
@@ -852,7 +852,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ]
         };
 
-      case "git-commit":
+      case "git_commit":
         if (!args?.message) {
           throw new Error("message parameter is required");
         }
@@ -865,7 +865,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ]
         };
 
-      case "git-push":
+      case "git_push":
         return {
           content: [
             {
@@ -875,7 +875,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ]
         };
 
-      case "git-pull":
+      case "git_pull":
         return {
           content: [
             {
@@ -885,7 +885,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ]
         };
 
-      case "git-branch":
+      case "git_branch":
         return {
           content: [
             {
@@ -895,7 +895,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ]
         };
 
-      case "git-checkout":
+      case "git_checkout":
         if (!args?.branchName) {
           throw new Error("branchName parameter is required");
         }
@@ -908,7 +908,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ]
         };
 
-      case "git-log":
+      case "git_log":
         return {
           content: [
             {
@@ -918,7 +918,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ]
         };
 
-      case "git-diff":
+      case "git_diff":
         return {
           content: [
             {
@@ -928,7 +928,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ]
         };
 
-      case "git-stash":
+      case "git_stash":
         return {
           content: [
             {
@@ -938,7 +938,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ]
         };
 
-      case "git-stash-pop":
+      case "git_stash_pop":
         return {
           content: [
             {
@@ -948,7 +948,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ]
         };
 
-      case "git-reset":
+      case "git_reset":
         return {
           content: [
             {
@@ -958,7 +958,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ]
         };
 
-      case "git-clone":
+      case "git_clone":
         if (!args?.url) {
           throw new Error("url parameter is required");
         }
@@ -971,7 +971,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ]
         };
 
-      case "git-init":
+      case "git_init":
         return {
           content: [
             {
@@ -981,7 +981,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ]
         };
 
-      case "git-remote-list":
+      case "git_remote_list":
         return {
           content: [
             {
@@ -991,7 +991,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ]
         };
 
-      case "git-remote-add":
+      case "git_remote_add":
         if (!args?.name || !args?.url) {
           throw new Error("name and url parameters are required");
         }
@@ -1004,7 +1004,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ]
         };
 
-      case "git-remote-remove":
+      case "git_remote_remove":
         if (!args?.name) {
           throw new Error("name parameter is required");
         }
@@ -1017,7 +1017,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ]
         };
 
-      case "git-remote-set-url":
+      case "git_remote_set_url":
         if (!args?.name || !args?.url) {
           throw new Error("name and url parameters are required");
         }
@@ -1030,7 +1030,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ]
         };
 
-      case "git-flow":
+      case "git_flow":
         if (!args?.message) {
           throw new Error("message parameter is required");
         }
@@ -1043,7 +1043,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ]
         };
 
-      case "git-quick-commit":
+      case "git_quick_commit":
         if (!args?.message) {
           throw new Error("message parameter is required");
         }
@@ -1056,7 +1056,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ]
         };
 
-      case "git-sync":
+      case "git_sync":
         return {
           content: [
             {
@@ -1066,7 +1066,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ]
         };
 
-      case "git-tag":
+      case "git_tag":
         return {
           content: [
             {
@@ -1076,7 +1076,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ]
         };
 
-      case "git-merge":
+      case "git_merge":
         return {
           content: [
             {
@@ -1086,7 +1086,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ]
         };
 
-      case "git-rebase":
+      case "git_rebase":
         return {
           content: [
             {
@@ -1096,7 +1096,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ]
         };
 
-      case "git-cherry-pick":
+      case "git_cherry_pick":
         return {
           content: [
             {
@@ -1106,7 +1106,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ]
         };
 
-      case "git-blame":
+      case "git_blame":
         return {
           content: [
             {
@@ -1116,7 +1116,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ]
         };
 
-      case "git-bisect":
+      case "git_bisect":
         return {
           content: [
             {
@@ -1126,7 +1126,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ]
         };
 
-      case "git-flow":
+      case "git_flow":
         return {
           content: [
             {
@@ -1136,7 +1136,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ]
         };
 
-      case "git-dev":
+      case "git_dev":
         return {
           content: [
             {
@@ -1146,7 +1146,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ]
         };
 
-      case "git-sync":
+      case "git_sync":
         return {
           content: [
             {
@@ -1156,7 +1156,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ]
         };
 
-      case "git-release":
+      case "git_release":
         return {
           content: [
             {
@@ -1166,7 +1166,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           ]
         };
 
-      case "git-clean":
+      case "git_clean":
         return {
           content: [
             {

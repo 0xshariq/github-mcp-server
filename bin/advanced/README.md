@@ -70,7 +70,7 @@ gbackup --verify --compress          # Compressed backup with verification
 - **Remote backup** - Push backups to remote storage
 
 **Related Commands:** `gfresh` (restore), `gclean` (maintenance), `grelease` (versioning)
-**MCP Tool:** `git-backup`
+**MCP Tool:** `git_backup`
 
 ---
 
@@ -126,7 +126,7 @@ gclean --branches --keep "main|develop"  # Keep specific branches
 - Backup creation before major cleanups
 
 **Related Commands:** `gbackup` (before cleanup), `gstatus` (check state), `gfresh` (reset)
-**MCP Tool:** `git-clean`
+**MCP Tool:** `git_clean`
 
 ---
 
@@ -177,7 +177,7 @@ gdev --review                        # Prepare for code review
 - **Review Preparation** - Automated code review preparation
 
 **Related Commands:** `gflow` (quick workflow), `gsync` (sync), `gbackup` (safety)
-**MCP Tool:** `git-dev`
+**MCP Tool:** `git_dev`
 
 ---
 
@@ -226,7 +226,7 @@ gfix --dry-run --conflicts           # Preview conflict resolution
 - **References** - Fix broken references and remotes
 
 **Related Commands:** `gdev` (development), `gbackup` (safety), `greset` (basic reset)
-**MCP Tool:** `git-fix`
+**MCP Tool:** `git_fix`
 
 ---
 
@@ -279,7 +279,7 @@ gflow --continue                                    # Resume interrupted workflo
 5. **Verification** - Confirm successful completion
 
 **Related Commands:** `gquick` (local commit), `gdev` (development), `gsave` (smart save)
-**MCP Tool:** `git-flow`
+**MCP Tool:** `git_flow`
 
 ---
 
@@ -328,7 +328,7 @@ gfresh --interactive                 # Interactive reset options
 - **Remote** - Reset to match remote repository state
 
 **Related Commands:** `gbackup` (before reset), `gclean` (cleanup), `gdev` (development)
-**MCP Tool:** `git-fresh`
+**MCP Tool:** `git_fresh`
 
 ---
 
@@ -372,7 +372,7 @@ glist --usage                      # Show usage examples
 - **Maintenance & Cleanup** - Repository maintenance
 
 **Related Commands:** All Git aliases (provides help for entire system)
-**MCP Tool:** `git-list`
+**MCP Tool:** `git_list`
 
 ---
 
@@ -419,7 +419,7 @@ gquick --continue-later "partial work"  # Mark for later completion
 - **Local testing** - Before creating proper commits
 
 **Related Commands:** `gflow` (full workflow), `gsave` (smart save), `gcommit` (basic commit)
-**MCP Tool:** `git-quick`
+**MCP Tool:** `git_quick`
 
 ---
 
@@ -476,7 +476,7 @@ grelease v1.3.0 --push              # Create and push release
 - **Patch (1.1.X)** - Bug fixes, no new features
 
 **Related Commands:** `gbackup` (before release), `gclean` (cleanup), `gtag` (tagging)
-**MCP Tool:** `git-release`
+**MCP Tool:** `git_release`
 
 ---
 
@@ -532,7 +532,7 @@ Automatically creates meaningful messages based on:
 - **Continuation** - Ongoing work sessions
 
 **Related Commands:** `gquick` (quick commit), `gstash` (basic stash), `gflow` (complete workflow)
-**MCP Tool:** `git-save`
+**MCP Tool:** `git_save`
 
 ---
 
@@ -586,7 +586,7 @@ gsync --strategy recursive         # Use specific merge strategy
 - **Team** - Coordinate with team workflows
 
 **Related Commands:** `gpull` (basic pull), `gpush` (basic push), `gdev` (development)
-**MCP Tool:** `git-sync`
+**MCP Tool:** `git_sync`
 
 ---
 
@@ -647,7 +647,7 @@ gworkflow hotfix security-patch --review    # Hotfix with review
 - **Status Tracking** - Workflow progress monitoring
 
 **Related Commands:** `gdev` (development), `grelease` (releases), `gbackup` (safety)
-**MCP Tool:** `git-workflow`
+**MCP Tool:** `git_workflow`
 
 ---
 
