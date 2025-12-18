@@ -146,8 +146,15 @@ async function executeGitCommand(
  */
 async function isGitRepository(dir?: string): Promise<boolean> {
   try {
+    const workingDir = dir || process.cwd();
+    
+    // Check if directory exists
+    if (!fs.existsSync(workingDir)) {
+      return false;
+    }
+    
     await execAsync('git rev-parse --git-dir', { 
-      cwd: dir || process.cwd(),
+      cwd: workingDir,
       timeout: VALIDATION_TIMEOUT
     });
     return true;

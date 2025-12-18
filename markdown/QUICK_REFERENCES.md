@@ -2,6 +2,40 @@
 
 Simple cheat sheet for GitHub MCP Server commands. Copy and paste these!
 
+## 🚀 Quick Installation
+
+### MCP Server Configuration (Easiest Method)
+Add this to your MCP configuration file (.vscode/mcp.json, Claude config, etc.):
+
+```json
+{
+  "mcpServers": {
+    "github-mcp-server": {
+      "command": "npx",
+      "args": ["-y", "@0xshariq/github-mcp-server@latest"]
+    }
+  }
+}
+```
+
+**✅ Benefits:**
+- No installation required
+- Always uses latest version
+- Works on all platforms
+- Zero maintenance
+
+### CLI Installation
+```bash
+# Install globally for terminal use
+npm install -g @0xshariq/github-mcp-server
+
+# Test installation
+gstatus
+glist
+```
+
+---
+
 ## 🚀 Most Used Commands
 
 ### Check Status

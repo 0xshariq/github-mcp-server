@@ -4,7 +4,9 @@ This comprehensive guide covers all common issues and solutions discovered durin
 
 ## 📋 Table of Contents
 
+- [Quick Fixes](#-quick-fixes-try-these-first)
 - [Installation Issues](#-installation-issues)
+- [MCP Server Configuration Issues](#-mcp-server-configuration-issues)
 - [Command Not Found Errors](#-command-not-found-errors)
 - [Path and Directory Conflicts](#-path-and-directory-conflicts)
 - [PNPM Global Installation Issues](#-pnpm-global-installation-issues)
@@ -12,7 +14,194 @@ This comprehensive guide covers all common issues and solutions discovered durin
 - [Shell and Environment Issues](#-shell-and-environment-issues)
 - [MCP Server Connection Issues](#-mcp-server-connection-issues)
 - [Permission Problems](#-permission-problems)
+- [Node.js and NPM Version Issues](#-nodejs-and-npm-version-issues)
+- [Tool Name Issues (git- vs git_)](#-tool-name-issues)
 - [Quick Solutions Summary](#-quick-solutions-summary)
+
+---
+
+## ⚡ Quick Fixes (Try These First!)
+
+### 1. Use NPX Method (Easiest - Bypasses Most Issues)
+
+If you're having any installation or configuration issues, the NPX method is the simplest solution:
+
+```json
+{
+  "mcpServers": {
+    "github-mcp-server": {
+      "command": "npx",
+      "args": ["-y", "@0xshariq/github-mcp-server@latest"]
+    }
+  }
+}
+```
+
+**This solves:**
+- ✅ No build required
+- ✅ No path configuration needed
+- ✅ Always uses latest version
+- ✅ Works across all platforms
+- ✅ No global installation conflicts
+
+### 2. Check Node.js Version
+
+```bash
+node --version
+# Should be v16 or higher
+```
+
+If lower than v16:
+```bash
+# Install latest Node.js from https://nodejs.org/
+# Or use nvm:
+nvm install --lts
+nvm use --lts
+```
+
+### 3. Clear NPM/PNPM Cache
+
+```bash
+# For npm
+npm cache clean --force
+
+# For pnpm
+pnpm store prune
+```
+
+### 4. Reinstall from Scratch
+
+```bash
+# Remove old installation
+npm uninstall -g @0xshariq/github-mcp-server
+# or
+pnpm remove -g @0xshariq/github-mcp-server
+
+# Clear cache
+npm cache clean --force
+
+# Fresh install
+npm install -g @0xshariq/github-mcp-server@latest
+```
+
+---
+
+## 🚨 MCP Server Configuration Issues
+
+### Problem: MCP Server Not Connecting to AI Assistant
+
+**Symptoms:**
+- Tools not showing up in Claude Desktop/VS Code
+- "Server failed to start" error messages
+- Connection timeouts
+
+**Solution 1: Use NPX Method (Recommended)**
+
+Replace your current configuration with:
+
+```json
+{
+  "mcpServers": {
+    "github-mcp-server": {
+      "command": "npx",
+      "args": ["-y", "@0xshariq/github-mcp-server@latest"]
+    }
+  }
+}
+```
+
+**Solution 2: Check Configuration File Location**
+
+Different tools use different config files:
+
+| Tool | Config File Location |
+|------|---------------------|
+| **Claude Desktop (Windows)** | `%APPDATA%\Claude\claude_desktop_config.json` |
+| **Claude Desktop (Mac)** | `~/Library/Application Support/Claude/claude_desktop_config.json` |
+| **Claude Desktop (Linux)** | `~/.config/claude/claude_desktop_config.json` |
+| **VS Code** | `.vscode/mcp.json` in workspace root |
+| **Continue** | `~/.continue/config.json` |
+| **Cursor** | `~/.cursor/mcp_config.json` |
+| **Zed** | `~/.config/zed/settings.json` |
+
+**Solution 3: Validate JSON Syntax**
+
+```bash
+# Check if JSON is valid (Linux/Mac)
+cat ~/.config/claude/claude_desktop_config.json | json_pp
+
+# Or use online validator: https://jsonlint.com/
+```
+
+**Common JSON errors:**
+- Missing commas between objects
+- Extra trailing commas
+- Unquoted keys or values
+- Wrong quote types (use " not ')
+
+**Solution 4: Check Tool Availability**
+
+After configuring, verify tools are loaded:
+- Open AI assistant
+- Try running `git_status` command
+- Check tool list in assistant interface
+
+### Problem: "Tool git-xyz not found" Error
+
+**Symptoms:**
+```
+Error: Tool git-add not found
+Available tools: git_add, git_commit, ...
+```
+
+**Root Cause:** Tool names changed from hyphens (`git-add`) to underscores (`git_add`) in recent versions.
+
+**Solution:**
+
+Update your code/prompts to use underscores:
+- ❌ Old: `git-add`, `git-commit`, `git-stash-pop`
+- ✅ New: `git_add`, `git_commit`, `git_stash_pop`
+
+**All updated tool names:**
+```
+git_add, git_add_all, git_commit, git_push, git_pull,
+git_status, git_branch, git_checkout, git_log, git_diff,
+git_stash, git_stash_pop, git_reset, git_clone, git_init,
+git_remote_list, git_remote_add, git_remote_remove, git_remote_set_url,
+git_flow, git_quick_commit, git_sync, git_tag, git_merge,
+git_rebase, git_cherry_pick, git_blame, git_bisect, git_dev,
+git_release, git_clean
+```
+
+### Problem: MCP Server Works in One App But Not Another
+
+**Solution:**
+
+Different apps may need different configurations. Try both npx and direct node methods:
+
+**Method 1: NPX (Universal)**
+```json
+{
+  "command": "npx",
+  "args": ["-y", "@0xshariq/github-mcp-server@latest"]
+}
+```
+
+**Method 2: Direct Node (If NPX fails)**
+```json
+{
+  "command": "node",
+  "args": ["/absolute/path/to/github-mcp-server/dist/index.js"]
+}
+```
+
+**Method 3: Shell Script (Linux/Mac)**
+```json
+{
+  "command": "bash",
+  "args": ["/absolute/path/to/github-mcp-server/start-mcp.sh"]
+}
+```
 
 ---
 
@@ -477,9 +666,152 @@ This approach completely bypasses all npm/pnpm global installation issues and pr
 
 ---
 
+## 🔧 Node.js and NPM Version Issues
+
+### Problem: "Unsupported engine" or Version Mismatch Errors
+
+**Symptoms:**
+```bash
+npm ERR! engine Unsupported engine
+npm ERR! engine Not compatible with your version of node/npm
+```
+
+**Solution:**
+
+1. **Check current versions:**
+   ```bash
+   node --version
+   npm --version
+   ```
+
+2. **Update Node.js (if needed):**
+   ```bash
+   # Using nvm (recommended):
+   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+   nvm install --lts
+   nvm use --lts
+   
+   # Or download from: https://nodejs.org/
+   ```
+
+3. **Update NPM:**
+   ```bash
+   npm install -g npm@latest
+   ```
+
+4. **Required versions:**
+   - Node.js: v16.0.0 or higher
+   - NPM: v8.0.0 or higher
+
+### Problem: Multiple Node.js Versions Causing Conflicts
+
+**Solution:**
+
+Use nvm to manage versions:
+```bash
+# Install nvm
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.0/install.sh | bash
+
+# Install latest LTS
+nvm install --lts
+
+# Set as default
+nvm alias default node
+
+# Verify
+node --version
+which node
+```
+
+---
+
+## 🔤 Tool Name Issues
+
+### Problem: "Tool git-add not found" After Update
+
+**Background:** In recent versions, all tool names were changed from hyphens to underscores for consistency.
+
+**Symptoms:**
+```
+Error: Unknown tool: git-add
+Available tools include: git_add, git_commit, ...
+```
+
+**Solution:**
+
+Update your code/scripts/prompts to use underscores:
+
+**Before (Old - Don't Use):**
+```javascript
+// ❌ Old tool names with hyphens
+await callTool("git-add");
+await callTool("git-commit");
+await callTool("git-stash-pop");
+await callTool("git-remote-add");
+```
+
+**After (New - Use These):**
+```javascript
+// ✅ New tool names with underscores
+await callTool("git_add");
+await callTool("git_commit");
+await callTool("git_stash_pop");
+await callTool("git_remote_add");
+```
+
+**Complete Tool Name Reference:**
+
+| Old Name (Don't Use) | New Name (Use This) |
+|---------------------|-------------------|
+| `git-add` | `git_add` |
+| `git-add-all` | `git_add_all` |
+| `git-commit` | `git_commit` |
+| `git-push` | `git_push` |
+| `git-pull` | `git_pull` |
+| `git-status` | `git_status` |
+| `git-branch` | `git_branch` |
+| `git-checkout` | `git_checkout` |
+| `git-log` | `git_log` |
+| `git-diff` | `git_diff` |
+| `git-stash` | `git_stash` |
+| `git-stash-pop` | `git_stash_pop` |
+| `git-reset` | `git_reset` |
+| `git-clone` | `git_clone` |
+| `git-init` | `git_init` |
+| `git-remote-list` | `git_remote_list` |
+| `git-remote-add` | `git_remote_add` |
+| `git-remote-remove` | `git_remote_remove` |
+| `git-remote-set-url` | `git_remote_set_url` |
+| `git-flow` | `git_flow` |
+| `git-quick-commit` | `git_quick_commit` |
+| `git-sync` | `git_sync` |
+| `git-tag` | `git_tag` |
+| `git-merge` | `git_merge` |
+| `git-rebase` | `git_rebase` |
+| `git-cherry-pick` | `git_cherry_pick` |
+| `git-blame` | `git_blame` |
+| `git-bisect` | `git_bisect` |
+| `git-dev` | `git_dev` |
+| `git-release` | `git_release` |
+| `git-clean` | `git_clean` |
+
+---
+
 ## ⚡ Quick Solutions Summary
 
 ### Immediate Fixes (Copy-Paste Ready)
+
+**0. Use NPX (Easiest - Recommended for MCP Server):**
+```json
+{
+  "mcpServers": {
+    "github-mcp-server": {
+      "command": "npx",
+      "args": ["-y", "@0xshariq/github-mcp-server@latest"]
+    }
+  }
+}
+```
 
 **1. Fix Command Not Found (Ubuntu/WSL):**
 ```bash

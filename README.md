@@ -23,7 +23,19 @@ A **Model Context Protocol (MCP) server** that provides **29 Git operations + 11
 }
 ```
 
-### Option 2: Symbolic Links (Alternative - No Package Manager)
+### Option 2: For CLI
+
+```bash
+pnpm i -g @0xshariq/github-mcp-server@latest
+
+# Test Commands After Installation
+gstatus
+gadd
+glog 10
+gpush
+```
+
+### Option 3: Symbolic Links (Alternative - No Package Manager)
 
 ```bash
 # Clone and setup

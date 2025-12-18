@@ -56,10 +56,23 @@ The easiest way to use GitHub MCP Server is via NPX. This method requires no ins
 
 ## 🔧 **Configuration for Different LLM Clients**
 
-### 1. **Claude Desktop (Anthropic)**
+### 1. **Claude Desktop (Anthropic)** ⭐ Recommended with NPX
 
 **File**: `%APPDATA%\Claude\claude_desktop_config.json` (Windows) or `~/.config/claude/claude_desktop_config.json` (Linux/Mac)
 
+**Option A: NPX Method (Easiest - Recommended)**
+```json
+{
+  "mcpServers": {
+    "github-mcp-server": {
+      "command": "npx",
+      "args": ["-y", "@0xshariq/github-mcp-server@latest"]
+    }
+  }
+}
+```
+
+**Option B: Manual Installation with Custom Script**
 ```json
 {
   "mcpServers": {
@@ -75,10 +88,62 @@ The easiest way to use GitHub MCP Server is via NPX. This method requires no ins
 }
 ```
 
-### 2. **Continue (VS Code Extension)**
+### 2. **VS Code (.vscode/mcp.json)** ⭐ Recommended with NPX
+
+**File**: Create `.vscode/mcp.json` in your workspace root
+
+**Option A: NPX Method (Easiest - Recommended)**
+```json
+{
+  "mcpServers": {
+    "github-mcp-server": {
+      "command": "npx",
+      "args": ["-y", "@0xshariq/github-mcp-server@latest"]
+    }
+  }
+}
+```
+
+**Option B: Manual Installation**
+```json
+{
+  "mcpServers": {
+    "github-mcp-server": {
+      "command": "node",
+      "args": ["/absolute/path/to/github-mcp-server/dist/index.js"]
+    }
+  }
+}
+```
+
+### 3. **Continue (VS Code Extension)** ⭐ Recommended with NPX
 
 **File**: `~/.continue/config.json`
 
+**Option A: NPX Method (Easiest - Recommended)**
+```json
+{
+  "models": [
+    {
+      "title": "GitHub MCP Assistant",
+      "provider": "anthropic",
+      "model": "claude-3-5-sonnet-20241022",
+      "contextLength": 200000,
+      "mcpServers": [
+        {
+          "name": "github-mcp-server",
+          "command": "npx",
+          "args": ["-y", "@0xshariq/github-mcp-server@latest"]
+        }
+      ]
+    }
+  ]
+}
+```
+
+**Option B: Manual Installation with Custom Script**
+
+**Option B: Manual Installation with Custom Script**
 ```json
 {
   "models": [
@@ -100,23 +165,58 @@ The easiest way to use GitHub MCP Server is via NPX. This method requires no ins
 }
 ```
 
-### 3. **Open WebUI**
+### 4. **Cursor IDE** ⭐ Recommended with NPX
 
-**Configuration**: In Open WebUI Admin Panel → Tools → MCP Servers
+**File**: `~/.cursor/mcp_config.json`
 
+**Option A: NPX Method (Easiest - Recommended)**
 ```json
 {
-  "name": "github-mcp-server",
-  "command": ["bash", "/home/simplysabir/desktop/shariq-projects/github-mcp-server/start-mcp.sh"],
-  "env": {},
-  "description": "GitHub MCP Server for Git operations"
+  "mcpServers": {
+    "github-mcp-server": {
+      "command": "npx",
+      "args": ["-y", "@0xshariq/github-mcp-server@latest"],
+      "capabilities": ["tools", "resources", "prompts"]
+    }
+  }
 }
 ```
 
-### 4. **Zed Editor**
+**Option B: Manual Installation**
+```json
+{
+  "mcpServers": {
+    "github-mcp-server": {
+      "command": "bash",
+      "args": ["/home/simplysabir/desktop/shariq-projects/github-mcp-server/start-mcp.sh"],
+      "env": {},
+      "capabilities": ["tools", "resources", "prompts"]
+    }
+  }
+}
+```
+
+### 5. **Zed Editor** ⭐ Recommended with NPX
 
 **File**: `~/.config/zed/settings.json`
 
+**Option A: NPX Method (Easiest - Recommended)**
+```json
+{
+  "assistant": {
+    "mcp_servers": {
+      "github-mcp-server": {
+        "command": "npx",
+        "args": ["-y", "@0xshariq/github-mcp-server@latest"]
+      }
+    }
+  }
+}
+```
+
+**Option B: Manual Installation**
+
+**Option B: Manual Installation**
 ```json
 {
   "assistant": {
@@ -131,26 +231,38 @@ The easiest way to use GitHub MCP Server is via NPX. This method requires no ins
 }
 ```
 
-### 5. **Cursor IDE**
+### 6. **Open WebUI**
 
-**File**: `~/.cursor/mcp_config.json`
+**Configuration**: In Open WebUI Admin Panel → Tools → MCP Servers
 
+**Option A: NPX Method (Recommended)**
 ```json
 {
-  "mcpServers": {
-    "github-mcp-server": {
-      "command": "bash",
-      "args": ["/home/simplysabir/desktop/shariq-projects/github-mcp-server/start-mcp.sh"],
-      "env": {},
-      "capabilities": ["tools", "resources", "prompts"]
-    }
-  }
+  "name": "github-mcp-server",
+  "command": ["npx", "-y", "@0xshariq/github-mcp-server@latest"],
+  "env": {},
+  "description": "GitHub MCP Server for Git operations"
 }
 ```
 
-### 6. **Generic MCP Client**
+**Option B: Manual Installation**
+```json
+{
+  "name": "github-mcp-server",
+  "command": ["bash", "/home/simplysabir/desktop/shariq-projects/github-mcp-server/start-mcp.sh"],
+  "env": {},
+  "description": "GitHub MCP Server for Git operations"
+}
+```
 
-For any MCP-compatible client:
+### 7. **Generic MCP Client**
+
+**Option A: NPX Method (Recommended)**
+```bash
+npx -y @0xshariq/github-mcp-server@latest
+```
+
+**Option B: Manual Installation**
 
 ```bash
 # Direct command execution

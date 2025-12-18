@@ -2,7 +2,52 @@
 
 Simple ways to use GitHub MCP Server anywhere. No complex setup needed!
 
-## 🐳 Docker Hub (Easiest Way)
+## ⚡ Easiest Method: NPX (Recommended)
+
+**The absolute simplest way** - no installation, no Docker, always latest version.
+
+### 🎯 For MCP Servers (Claude, VS Code, Cursor, etc.)
+
+Just add this to your MCP configuration:
+
+```json
+{
+  "mcpServers": {
+    "github-mcp-server": {
+      "command": "npx",
+      "args": ["-y", "@0xshariq/github-mcp-server@latest"]
+    }
+  }
+}
+```
+
+**Where to add this:**
+- **Claude Desktop**: `~/.config/claude/claude_desktop_config.json` (or `%APPDATA%\Claude\claude_desktop_config.json` on Windows)
+- **VS Code**: `.vscode/mcp.json` in your workspace
+- **Cursor**: `~/.cursor/mcp_config.json`
+- **Continue**: `~/.continue/config.json`
+- **Zed**: `~/.config/zed/settings.json`
+
+**✅ Benefits:**
+- ✅ **Zero Installation** - Just works
+- ✅ **Always Updated** - Latest version automatically
+- ✅ **Cross-Platform** - Works everywhere
+- ✅ **No Maintenance** - Set and forget
+- ✅ **No Build Required** - Ready instantly
+
+### 📦 For Terminal/CLI Use
+
+```bash
+# Run directly without installation
+npx -y @0xshariq/github-mcp-server@latest
+
+# Or install globally for permanent access
+npm install -g @0xshariq/github-mcp-server
+```
+
+---
+
+## 🐳 Docker Hub (Alternative Method)
 
 The GitHub MCP Server is ready to use on Docker Hub:
 
@@ -363,8 +408,21 @@ docker run -it --rm 0xshariq/github-mcp-server:latest
 # Inside: git init, gadd, gcommit, etc.
 ```
 
-### 4. VS Code Integration
-Add to `.vscode/settings.json`:
+### 4. VS Code / AI Assistant Integration
+
+**Option A: NPX (Recommended)**
+```json
+{
+  "mcpServers": {
+    "github-mcp-server": {
+      "command": "npx",
+      "args": ["-y", "@0xshariq/github-mcp-server@latest"]
+    }
+  }
+}
+```
+
+**Option B: Docker**
 ```json
 {
   "mcpServers": {
@@ -376,7 +434,26 @@ Add to `.vscode/settings.json`:
 }
 ```
 
-## � Troubleshooting
+---
+
+## 🚀 Deployment Comparison
+
+| Method | Ease of Use | Speed | Auto-Updates | Best For |
+|--------|-------------|-------|--------------|----------|
+| **NPX** | ⭐⭐⭐⭐⭐ Easiest | ⚡ Instant | ✅ Yes | AI assistants, Quick start |
+| **Global NPM** | ⭐⭐⭐⭐ Easy | ⚡ Fast | ❌ Manual | Daily CLI usage |
+| **Docker** | ⭐⭐⭐ Moderate | ⚡ Fast | ❌ Manual | Isolation, Teams |
+| **Manual Build** | ⭐⭐ Complex | 🐢 Slow | ❌ Manual | Development |
+
+**Recommendation:** 
+- For MCP servers → Use **NPX**
+- For terminal commands → Use **Global NPM**
+- For teams/CI/CD → Use **Docker**
+- For development → Use **Manual Build**
+
+---
+
+## 🔧 Configuration Options
 
 ### Image Won't Pull
 ```bash
@@ -387,9 +464,27 @@ docker --version
 docker pull 0xshariq/github-mcp-server:latest
 ```
 
-### Permission Issues
+## 🛠️ Troubleshooting
+
+### NPX Issues
+
+**Problem: "npx command not found"**
 ```bash
-# Fix file permissions (Linux/Mac)
+# Update npm to latest version
+npm install -g npm@latest
+
+# Verify npx is installed
+npx --version
+```
+
+**Problem: "NPX is slow on first run"**
+- This is normal - npx downloads the package on first use
+- Subsequent runs are much faster
+- Solution: Use global npm install for frequent use
+
+### Docker Issues
+
+### Image Won't Pull
 chmod -R 755 your-project-folder
 
 # Or run with your user ID
